@@ -4,6 +4,7 @@ import { atom } from 'nanostores';
 import { generateId, type JSONValue, type Message } from 'ai';
 import { toast } from 'react-toastify';
 import { workbenchStore } from '~/lib/stores/workbench';
+import { versionsStore } from '~/lib/stores/versions';
 import { logStore } from '~/lib/stores/logs'; // Import logStore
 import {
   getMessages,
@@ -63,74 +64,81 @@ export function useChatHistory() {
     }
 
     if (mixedId) {
-      Promise.all([
-        getMessages(db, mixedId),
-        getSnapshot(db, mixedId), // Fetch snapshot from DB
-      ])
-        .then(async ([storedMessages, snapshot]) => {
-          if (storedMessages && storedMessages.messages.length > 0) {
-            /*
-             * const snapshotStr = localStorage.getItem(`snapshot:${mixedId}`); // Remove localStorage usage
-             * const snapshot: Snapshot = snapshotStr ? JSON.parse(snapshotStr) : { chatIndex: 0, files: {} }; // Use snapshot from DB
-             */
-            const validSnapshot = snapshot || { chatIndex: '', files: {} }; // Ensure snapshot is not undefined
-            const summary = validSnapshot.summary;
+      // First get messages to find the actual internal chatId, then get snapshot with correct ID
+      getMessages(db, mixedId)
+        .then(async (storedMessages) => {
+          if (!storedMessages || storedMessages.messages.length === 0) {
+            navigate('/', { replace: true });
+            setReady(true);
+            return;
+          }
 
-            const rewindId = searchParams.get('rewindTo');
-            let startingIdx = -1;
-            const endingIdx = rewindId
-              ? storedMessages.messages.findIndex((m) => m.id === rewindId) + 1
-              : storedMessages.messages.length;
-            const snapshotIndex = storedMessages.messages.findIndex((m) => m.id === validSnapshot.chatIndex);
+          // Use the internal chatId (like "2") not the URL id (like "2-1768949555849-0")
+          const internalChatId = storedMessages.id;
+          const snapshot = await getSnapshot(db, internalChatId);
 
-            if (snapshotIndex >= 0 && snapshotIndex < endingIdx) {
-              startingIdx = snapshotIndex;
-            }
+          /*
+           * const snapshotStr = localStorage.getItem(`snapshot:${mixedId}`); // Remove localStorage usage
+           * const snapshot: Snapshot = snapshotStr ? JSON.parse(snapshotStr) : { chatIndex: 0, files: {} }; // Use snapshot from DB
+           */
+          const validSnapshot = snapshot || { chatIndex: '', files: {} }; // Ensure snapshot is not undefined
+          const summary = validSnapshot.summary;
 
-            if (snapshotIndex > 0 && storedMessages.messages[snapshotIndex].id == rewindId) {
-              startingIdx = -1;
-            }
+          const rewindId = searchParams.get('rewindTo');
+          let startingIdx = -1;
+          const endingIdx = rewindId
+            ? storedMessages.messages.findIndex((m) => m.id === rewindId) + 1
+            : storedMessages.messages.length;
+          const snapshotIndex = storedMessages.messages.findIndex((m) => m.id === validSnapshot.chatIndex);
 
-            let filteredMessages = storedMessages.messages.slice(startingIdx + 1, endingIdx);
-            let archivedMessages: Message[] = [];
+          if (snapshotIndex >= 0 && snapshotIndex < endingIdx) {
+            startingIdx = snapshotIndex;
+          }
 
-            if (startingIdx >= 0) {
-              archivedMessages = storedMessages.messages.slice(0, startingIdx + 1);
-            }
+          if (snapshotIndex > 0 && storedMessages.messages[snapshotIndex].id == rewindId) {
+            startingIdx = -1;
+          }
 
-            setArchivedMessages(archivedMessages);
+          let filteredMessages = storedMessages.messages.slice(startingIdx + 1, endingIdx);
+          let archivedMessages: Message[] = [];
 
-            if (startingIdx > 0) {
-              const files = Object.entries(validSnapshot?.files || {})
-                .map(([key, value]) => {
-                  if (value?.type !== 'file') {
-                    return null;
-                  }
+          if (startingIdx >= 0) {
+            archivedMessages = storedMessages.messages.slice(0, startingIdx + 1);
+          }
 
-                  return {
-                    content: value.content,
-                    path: key,
-                  };
-                })
-                .filter((x): x is { content: string; path: string } => !!x); // Type assertion
-              const projectCommands = await detectProjectCommands(files);
+          setArchivedMessages(archivedMessages);
 
-              // Call the modified function to get only the command actions string
-              const commandActionsString = createCommandActionsString(projectCommands);
+          if (startingIdx > 0) {
+            const files = Object.entries(validSnapshot?.files || {})
+              .map(([key, value]) => {
+                if (value?.type !== 'file') {
+                  return null;
+                }
 
-              filteredMessages = [
-                {
-                  id: generateId(),
-                  role: 'user',
-                  content: `Restore project from snapshot`, // Removed newline
-                  annotations: ['no-store', 'hidden'],
-                },
-                {
-                  id: storedMessages.messages[snapshotIndex].id,
-                  role: 'assistant',
+                return {
+                  content: value.content,
+                  path: key,
+                };
+              })
+              .filter((x): x is { content: string; path: string } => !!x); // Type assertion
+            const projectCommands = await detectProjectCommands(files);
 
-                  // Combine followup message and the artifact with files and command actions
-                  content: `Bolt Restored your chat from a snapshot. You can revert this message to load the full chat history.
+            // Call the modified function to get only the command actions string
+            const commandActionsString = createCommandActionsString(projectCommands);
+
+            filteredMessages = [
+              {
+                id: generateId(),
+                role: 'user',
+                content: `Restore project from snapshot`, // Removed newline
+                annotations: ['no-store', 'hidden'],
+              },
+              {
+                id: storedMessages.messages[snapshotIndex].id,
+                role: 'assistant',
+
+                // Combine followup message and the artifact with files and command actions
+                content: `Bolt Restored your chat from a snapshot. You can revert this message to load the full chat history.
                   <boltArtifact id="restored-project-setup" title="Restored Project & Setup" type="bundled">
                   ${Object.entries(snapshot?.files || {})
                     .map(([key, value]) => {
@@ -148,40 +156,47 @@ ${value.content}
                   ${commandActionsString} 
                   </boltArtifact>
                   `, // Added commandActionsString, followupMessage, updated id and title
-                  annotations: [
-                    'no-store',
-                    ...(summary
-                      ? [
-                          {
-                            chatId: storedMessages.messages[snapshotIndex].id,
-                            type: 'chatSummary',
-                            summary,
-                          } satisfies ContextAnnotation,
-                        ]
-                      : []),
-                  ],
-                },
+                annotations: [
+                  'no-store',
+                  ...(summary
+                    ? [
+                        {
+                          chatId: storedMessages.messages[snapshotIndex].id,
+                          type: 'chatSummary',
+                          summary,
+                        } satisfies ContextAnnotation,
+                      ]
+                    : []),
+                ],
+              },
 
-                // Remove the separate user and assistant messages for commands
-                /*
-                 *...(commands !== null // This block is no longer needed
-                 *  ? [ ... ]
-                 *  : []),
-                 */
-                ...filteredMessages,
-              ];
-              restoreSnapshot(mixedId);
-            }
-
-            setInitialMessages(filteredMessages);
-
-            setUrlId(storedMessages.urlId);
-            description.set(storedMessages.description);
-            chatId.set(storedMessages.id);
-            chatMetadata.set(storedMessages.metadata);
-          } else {
-            navigate('/', { replace: true });
+              // Remove the separate user and assistant messages for commands
+              /*
+               *...(commands !== null // This block is no longer needed
+               *  ? [ ... ]
+               *  : []),
+               */
+              ...filteredMessages,
+            ];
+            // Set flag SYNCHRONOUSLY before setInitialMessages triggers message parsing
+            workbenchStore.isRestoringSession.set(true);
+            restoreSnapshot(mixedId, validSnapshot);
+          } else if (validSnapshot?.files && Object.keys(validSnapshot.files).length > 0) {
+            // For normal reloads (not rewind), still restore from snapshot for instant load
+            // Set flag SYNCHRONOUSLY before setInitialMessages triggers message parsing
+            workbenchStore.isRestoringSession.set(true);
+            restoreSnapshot(mixedId, validSnapshot);
           }
+
+          setInitialMessages(filteredMessages);
+
+          setUrlId(storedMessages.urlId);
+          description.set(storedMessages.description);
+          chatId.set(storedMessages.id);
+          chatMetadata.set(storedMessages.metadata);
+
+          // Sync versions from chat messages so they appear in the Versions panel
+          versionsStore.syncFromMessages(storedMessages.messages);
 
           setReady(true);
         })
@@ -223,36 +238,46 @@ ${value.content}
   );
 
   const restoreSnapshot = useCallback(async (id: string, snapshot?: Snapshot) => {
-    // const snapshotStr = localStorage.getItem(`snapshot:${id}`); // Remove localStorage usage
     const container = await webcontainer;
 
     const validSnapshot = snapshot || { chatIndex: '', files: {} };
 
-    if (!validSnapshot?.files) {
+    if (!validSnapshot?.files || Object.keys(validSnapshot.files).length === 0) {
       return;
     }
 
-    Object.entries(validSnapshot.files).forEach(async ([key, value]) => {
-      if (key.startsWith(container.workdir)) {
-        key = key.replace(container.workdir, '');
+    // Set the restoring flag BEFORE any file operations
+    workbenchStore.isRestoringSession.set(true);
+
+    // Sync files directly to workbench store for instant UI update
+    const currentFiles = workbenchStore.files.get();
+    const mergedFiles = { ...currentFiles, ...validSnapshot.files };
+    workbenchStore.files.set(mergedFiles);
+    workbenchStore.setDocuments(mergedFiles);
+
+    // Write files to WebContainer in parallel (for runtime)
+    const dirPromises: Promise<void>[] = [];
+    const filePromises: Promise<void>[] = [];
+
+    Object.entries(validSnapshot.files).forEach(([key, value]) => {
+      let adjustedKey = key;
+
+      if (adjustedKey.startsWith(container.workdir)) {
+        adjustedKey = adjustedKey.replace(container.workdir, '');
       }
 
       if (value?.type === 'folder') {
-        await container.fs.mkdir(key, { recursive: true });
-      }
-    });
-    Object.entries(validSnapshot.files).forEach(async ([key, value]) => {
-      if (value?.type === 'file') {
-        if (key.startsWith(container.workdir)) {
-          key = key.replace(container.workdir, '');
-        }
-
-        await container.fs.writeFile(key, value.content, { encoding: value.isBinary ? undefined : 'utf8' });
-      } else {
+        dirPromises.push(container.fs.mkdir(adjustedKey, { recursive: true }));
+      } else if (value?.type === 'file') {
+        filePromises.push(
+          container.fs.writeFile(adjustedKey, value.content, { encoding: value.isBinary ? undefined : 'utf8' }),
+        );
       }
     });
 
-    // workbenchStore.files.setKey(snapshot?.files)
+    // Create dirs first, then files
+    await Promise.all(dirPromises);
+    await Promise.all(filePromises);
   }, []);
 
   return {

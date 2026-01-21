@@ -210,6 +210,9 @@ export const ChatImpl = memo(
 
     const TEXTAREA_MAX_HEIGHT = chatStarted ? 400 : 200;
 
+    // Track if this is the initial parse (for session restore)
+    const hasInitialParsed = useRef(false);
+
     useEffect(() => {
       chatStore.setKey('started', initialMessages.length > 0);
     }, []);
@@ -222,6 +225,16 @@ export const ChatImpl = memo(
         parseMessages,
         storeMessageHistory,
       });
+
+      // Clear the restoring flag after first parse of initial messages
+      if (!hasInitialParsed.current && initialMessages.length > 0) {
+        hasInitialParsed.current = true;
+
+        // Use requestAnimationFrame to ensure parsing has completed
+        requestAnimationFrame(() => {
+          workbenchStore.isRestoringSession.set(false);
+        });
+      }
     }, [messages, isLoading, parseMessages]);
 
     const scrollTextArea = () => {

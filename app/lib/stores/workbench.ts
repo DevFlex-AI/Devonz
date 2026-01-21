@@ -60,6 +60,10 @@ export class WorkbenchStore {
     import.meta.hot?.data.supabaseAlert ?? atom<SupabaseAlert | undefined>(undefined);
   deployAlert: WritableAtom<DeployAlert | undefined> =
     import.meta.hot?.data.deployAlert ?? atom<DeployAlert | undefined>(undefined);
+
+  /** Flag to indicate if we're restoring a session from snapshot */
+  isRestoringSession: WritableAtom<boolean> = import.meta.hot?.data.isRestoringSession ?? atom(false);
+
   modifiedFiles = new Set<string>();
   artifactIdList: string[] = [];
   #globalExecutionQueue = Promise.resolve();
@@ -73,6 +77,7 @@ export class WorkbenchStore {
       import.meta.hot.data.actionAlert = this.actionAlert;
       import.meta.hot.data.supabaseAlert = this.supabaseAlert;
       import.meta.hot.data.deployAlert = this.deployAlert;
+      import.meta.hot.data.isRestoringSession = this.isRestoringSession;
 
       // Ensure binary files are properly preserved across hot reloads
       const filesMap = this.files.get();

@@ -84,6 +84,11 @@ const messageParser = new EnhancedStreamingMessageParser({
     onActionOpen: (data) => {
       logger.trace('onActionOpen', data.action);
 
+      // Skip file actions during session restore - files are already loaded from snapshot
+      if (data.action.type === 'file' && workbenchStore.isRestoringSession.get()) {
+        return;
+      }
+
       /*
        * File actions are streamed, so we add them immediately to show progress
        * Shell actions are complete when created by enhanced parser, so we wait for close
@@ -94,6 +99,11 @@ const messageParser = new EnhancedStreamingMessageParser({
     },
     onActionClose: (data) => {
       logger.trace('onActionClose', data.action);
+
+      // Skip file actions during session restore - files are already loaded from snapshot
+      if (data.action.type === 'file' && workbenchStore.isRestoringSession.get()) {
+        return;
+      }
 
       /*
        * Add non-file actions (shell, build, start, etc.) when they close
@@ -107,6 +117,12 @@ const messageParser = new EnhancedStreamingMessageParser({
     },
     onActionStream: (data) => {
       logger.trace('onActionStream', data.action);
+
+      // Skip file streaming during session restore
+      if (data.action.type === 'file' && workbenchStore.isRestoringSession.get()) {
+        return;
+      }
+
       workbenchStore.runAction(data, true);
     },
   },

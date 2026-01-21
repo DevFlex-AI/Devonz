@@ -238,6 +238,69 @@ class VersionsStore {
       return undefined;
     }
   }
+
+  /**
+   * Sync versions from chat messages on load.
+   * This creates version entries from messages that have artifacts.
+   */
+  syncFromMessages(messages: { id: string; role: string; content: string; createdAt?: Date }[]): void {
+    // Clear existing versions since we're syncing from chat
+    this.versions.set({});
+    this.currentVersionId.set(null);
+
+    const artifactRegex = /<boltArtifact[^>]*title="([^"]*)"[^>]*>/gi;
+
+    let latestVersionId: string | null = null;
+
+    for (const message of messages) {
+      // Only process assistant messages
+      if (message.role !== 'assistant') {
+        continue;
+      }
+
+      const content = typeof message.content === 'string' ? message.content : '';
+
+      // Find all artifacts in this message
+      const matches = [...content.matchAll(artifactRegex)];
+
+      if (matches.length === 0) {
+        continue;
+      }
+
+      // Use the first artifact's title for the version
+      const title = matches[0][1] || 'Project Update';
+
+      /*
+       * Create version entry (files will be empty since we don't have full snapshot).
+       * The revert functionality will use messageId to rewind, not the files.
+       */
+      const id = `ver-${this._generateShortId()}`;
+      const timestamp = message.createdAt ? new Date(message.createdAt).getTime() : Date.now();
+
+      const version: ProjectVersion = {
+        id,
+        messageId: message.id,
+        title,
+        description: `From message: ${message.id.substring(0, 8)}...`,
+        timestamp,
+        files: {}, // Empty - revert uses chat rewind, not file restore
+        isLatest: false,
+      };
+
+      this.versions.setKey(id, version);
+      latestVersionId = id;
+    }
+
+    // Mark the last one as latest
+    if (latestVersionId) {
+      const latest = this.versions.get()[latestVersionId];
+
+      if (latest) {
+        this.versions.setKey(latestVersionId, { ...latest, isLatest: true });
+        this.currentVersionId.set(latestVersionId);
+      }
+    }
+  }
 }
 
 export const versionsStore = new VersionsStore();
