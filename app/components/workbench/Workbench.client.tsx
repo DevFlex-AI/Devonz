@@ -20,6 +20,7 @@ import { cubicEasingFn } from '~/utils/easings';
 import { renderLogger } from '~/utils/logger';
 import { EditorPanel } from './EditorPanel';
 import { Preview } from './Preview';
+import { Versions } from './Versions';
 import useViewport from '~/lib/hooks';
 
 import { usePreviewStore } from '~/lib/stores/previews';
@@ -404,6 +405,20 @@ export const Workbench = memo(
                     }}
                   />
                   <Slider selected={selectedView} options={sliderOptions} setSelected={setSelectedView} />
+
+                  {/* Versions button */}
+                  <button
+                    onClick={() => setSelectedView('versions')}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm transition-colors ml-2"
+                    style={{
+                      background: selectedView === 'versions' ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
+                      color: selectedView === 'versions' ? '#60a5fa' : 'rgba(255,255,255,0.5)',
+                    }}
+                  >
+                    <div className="i-ph:clock-counter-clockwise text-base" />
+                    <span>Versions</span>
+                  </button>
+
                   <div className="ml-auto" />
                   {selectedView === 'code' && (
                     <div className="flex overflow-y-auto">
@@ -503,6 +518,9 @@ export const Workbench = memo(
                   </View>
                   <View initial={{ x: '100%' }} animate={{ x: selectedView === 'preview' ? '0%' : '100%' }}>
                     <Preview setSelectedElement={setSelectedElement} />
+                  </View>
+                  <View initial={{ x: '100%' }} animate={{ x: selectedView === 'versions' ? '0%' : '100%' }}>
+                    <Versions />
                   </View>
                 </div>
               </div>
