@@ -8,9 +8,15 @@ const logger = createScopedLogger('EnhancedMessageParser');
  * even when AI models don't wrap them in proper artifact tags.
  * Fixes issue #1797 where code outputs to chat instead of files.
  */
+export interface EnhancedParseResult {
+  output: string;
+  wasReset: boolean;
+}
+
 export class EnhancedStreamingMessageParser extends StreamingMessageParser {
   private _processedCodeBlocks = new Map<string, Set<string>>();
   private _artifactCounter = 0;
+  private _lastResetOccurred = false;
 
   // Optimized command pattern lookup
   private _commandPatternMap = new Map<string, RegExp>([
@@ -32,7 +38,18 @@ export class EnhancedStreamingMessageParser extends StreamingMessageParser {
     super(options);
   }
 
+  /**
+   * Check if the last parse operation triggered a reset.
+   * Used by useMessageParser to decide whether to replace or append content.
+   */
+  didResetOccur(): boolean {
+    return this._lastResetOccurred;
+  }
+
   parse(messageId: string, input: string): string {
+    // Reset the flag at the start of each parse
+    this._lastResetOccurred = false;
+
     // First try the normal parsing
     let output = super.parse(messageId, input);
 
@@ -42,6 +59,7 @@ export class EnhancedStreamingMessageParser extends StreamingMessageParser {
 
       if (enhancedInput !== input) {
         // Reset and reparse with enhanced input
+        this._lastResetOccurred = true;
         this.reset();
         output = super.parse(messageId, enhancedInput);
       }
@@ -523,5 +541,6 @@ ${content.trim()}
     super.reset();
     this._processedCodeBlocks.clear();
     this._artifactCounter = 0;
+    // Note: We don't reset _lastResetOccurred here because it's read AFTER parse returns
   }
 }

@@ -148,9 +148,24 @@ export function useMessageParser() {
     for (const [index, message] of messages.entries()) {
       if (message.role === 'assistant' || message.role === 'user') {
         const newParsedContent = messageParser.parse(message.id, extractTextContent(message));
+
+        /*
+         * Check if the enhanced parser internally reset (e.g., when wrapping code blocks in artifact tags).
+         * When this happens, we need to REPLACE the previous content, not append to it,
+         * to avoid duplicate content during streaming.
+         */
+        const parserDidReset = messageParser.didResetOccur();
+        const shouldReplace = reset || parserDidReset;
+
+        // DEBUG: Log reset detection
+        if (parserDidReset) {
+          logger.debug('Parser reset detected for message', message.id, 'shouldReplace:', shouldReplace);
+          logger.debug('New content length:', newParsedContent.length);
+        }
+
         setParsedMessages((prevParsed) => ({
           ...prevParsed,
-          [index]: !reset ? (prevParsed[index] || '') + newParsedContent : newParsedContent,
+          [index]: !shouldReplace ? (prevParsed[index] || '') + newParsedContent : newParsedContent,
         }));
       }
     }
