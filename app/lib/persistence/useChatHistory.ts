@@ -1,7 +1,7 @@
 import { useLoaderData, useNavigate, useSearchParams } from '@remix-run/react';
 import { useState, useEffect, useCallback } from 'react';
 import { atom } from 'nanostores';
-import { generateId, type JSONValue, type Message } from 'ai';
+import { type JSONValue, type Message } from 'ai';
 import { toast } from 'react-toastify';
 import { workbenchStore } from '~/lib/stores/workbench';
 import { versionsStore } from '~/lib/stores/versions';
@@ -21,8 +21,6 @@ import {
 import type { FileMap } from '~/lib/stores/files';
 import type { Snapshot } from './types';
 import { webcontainer } from '~/lib/webcontainer';
-import { detectProjectCommands, createCommandActionsString } from '~/utils/projectCommands';
-import type { ContextAnnotation } from '~/types/context';
 
 export interface ChatHistoryItem {
   id: string;
@@ -82,106 +80,22 @@ export function useChatHistory() {
            * const snapshot: Snapshot = snapshotStr ? JSON.parse(snapshotStr) : { chatIndex: 0, files: {} }; // Use snapshot from DB
            */
           const validSnapshot = snapshot || { chatIndex: '', files: {} }; // Ensure snapshot is not undefined
-          const summary = validSnapshot.summary;
 
           const rewindId = searchParams.get('rewindTo');
-          let startingIdx = -1;
           const endingIdx = rewindId
             ? storedMessages.messages.findIndex((m) => m.id === rewindId) + 1
             : storedMessages.messages.length;
-          const snapshotIndex = storedMessages.messages.findIndex((m) => m.id === validSnapshot.chatIndex);
 
-          if (snapshotIndex >= 0 && snapshotIndex < endingIdx) {
-            startingIdx = snapshotIndex;
-          }
+          // SKIP SNAPSHOT MODE: Always load full message history
+          // This avoids the "Bolt Restored your chat" message that requires manual "Revert" click
+          // and prevents jsh command not found errors since we don't intercept command execution
+          const filteredMessages = storedMessages.messages.slice(0, endingIdx);
 
-          if (snapshotIndex > 0 && storedMessages.messages[snapshotIndex].id == rewindId) {
-            startingIdx = -1;
-          }
+          // No archived messages needed when loading full history
+          setArchivedMessages([]);
 
-          let filteredMessages = storedMessages.messages.slice(startingIdx + 1, endingIdx);
-          let archivedMessages: Message[] = [];
-
-          if (startingIdx >= 0) {
-            archivedMessages = storedMessages.messages.slice(0, startingIdx + 1);
-          }
-
-          setArchivedMessages(archivedMessages);
-
-          if (startingIdx > 0) {
-            const files = Object.entries(validSnapshot?.files || {})
-              .map(([key, value]) => {
-                if (value?.type !== 'file') {
-                  return null;
-                }
-
-                return {
-                  content: value.content,
-                  path: key,
-                };
-              })
-              .filter((x): x is { content: string; path: string } => !!x); // Type assertion
-            const projectCommands = await detectProjectCommands(files);
-
-            // Call the modified function to get only the command actions string
-            const commandActionsString = createCommandActionsString(projectCommands);
-
-            filteredMessages = [
-              {
-                id: generateId(),
-                role: 'user',
-                content: `Restore project from snapshot`, // Removed newline
-                annotations: ['no-store', 'hidden'],
-              },
-              {
-                id: storedMessages.messages[snapshotIndex].id,
-                role: 'assistant',
-
-                // Combine followup message and the artifact with files and command actions
-                content: `Bolt Restored your chat from a snapshot. You can revert this message to load the full chat history.
-                  <boltArtifact id="restored-project-setup" title="Restored Project & Setup" type="bundled">
-                  ${Object.entries(snapshot?.files || {})
-                    .map(([key, value]) => {
-                      if (value?.type === 'file') {
-                        return `
-                      <boltAction type="file" filePath="${key}">
-${value.content}
-                      </boltAction>
-                      `;
-                      } else {
-                        return ``;
-                      }
-                    })
-                    .join('\n')}
-                  ${commandActionsString} 
-                  </boltArtifact>
-                  `, // Added commandActionsString, followupMessage, updated id and title
-                annotations: [
-                  'no-store',
-                  ...(summary
-                    ? [
-                      {
-                        chatId: storedMessages.messages[snapshotIndex].id,
-                        type: 'chatSummary',
-                        summary,
-                      } satisfies ContextAnnotation,
-                    ]
-                    : []),
-                ],
-              },
-
-              // Remove the separate user and assistant messages for commands
-              /*
-               *...(commands !== null // This block is no longer needed
-               *  ? [ ... ]
-               *  : []),
-               */
-              ...filteredMessages,
-            ];
-            // Set flag SYNCHRONOUSLY before setInitialMessages triggers message parsing
-            workbenchStore.isRestoringSession.set(true);
-            restoreSnapshot(mixedId, validSnapshot);
-          } else if (validSnapshot?.files && Object.keys(validSnapshot.files).length > 0) {
+          // Still restore files from snapshot for instant load (if snapshot exists)
+          if (validSnapshot?.files && Object.keys(validSnapshot.files).length > 0) {
             // For normal reloads (not rewind), still restore from snapshot for instant load
             // Set flag SYNCHRONOUSLY before setInitialMessages triggers message parsing
             workbenchStore.isRestoringSession.set(true);
