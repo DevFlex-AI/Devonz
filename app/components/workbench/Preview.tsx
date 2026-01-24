@@ -91,6 +91,14 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
   const [inspectorElement, setInspectorElement] = useState<ElementInfo | null>(null);
   const [isInspectorPanelVisible, setIsInspectorPanelVisible] = useState(false);
 
+  // Bulk style changes tracking - accumulates all bulk style changes for CSS injection
+  interface BulkStyleChange {
+    selector: string;
+    property: string;
+    value: string;
+  }
+  const [accumulatedBulkChanges, setAccumulatedBulkChanges] = useState<BulkStyleChange[]>([]);
+
   const resizingState = useRef({
     isResizing: false,
     side: null as ResizeSide,
@@ -764,6 +772,22 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
   const handleBulkStyleChange = useCallback((selector: string, property: string, value: string) => {
     console.log('[Preview] handleBulkStyleChange:', selector, property, value);
 
+    // Accumulate the change for CSS injection
+    setAccumulatedBulkChanges((prev) => {
+      // Check if we already have a change for this selector+property combo
+      const existingIndex = prev.findIndex((c) => c.selector === selector && c.property === property);
+
+      if (existingIndex >= 0) {
+        // Update existing change
+        const updated = [...prev];
+        updated[existingIndex] = { selector, property, value };
+        return updated;
+      } else {
+        // Add new change
+        return [...prev, { selector, property, value }];
+      }
+    });
+
     if (iframeRef.current?.contentWindow) {
       iframeRef.current.contentWindow.postMessage(
         {
@@ -780,6 +804,9 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
   // Handler for bulk revert
   const handleBulkRevert = useCallback((selector: string) => {
     console.log('[Preview] handleBulkRevert:', selector);
+
+    // Remove accumulated changes for this selector
+    setAccumulatedBulkChanges((prev) => prev.filter((c) => c.selector !== selector));
 
     if (iframeRef.current?.contentWindow) {
       iframeRef.current.contentWindow.postMessage(
@@ -891,6 +918,77 @@ Remove this element completely from the JSX/HTML.`;
     setInspectorElement(null);
   }, []);
 
+  // Handler for applying bulk CSS changes directly
+  const handleApplyBulkCSS = useCallback(() => {
+    if (accumulatedBulkChanges.length === 0) {
+      console.log('[Preview] No bulk changes to apply');
+      return;
+    }
+
+    // Group changes by selector for cleaner CSS output
+    const groupedChanges: Record<string, Record<string, string>> = {};
+
+    accumulatedBulkChanges.forEach(({ selector, property, value }) => {
+      if (!groupedChanges[selector]) {
+        groupedChanges[selector] = {};
+      }
+      groupedChanges[selector][property] = value;
+    });
+
+    // Generate CSS
+    const cssRules = Object.entries(groupedChanges)
+      .map(([selector, styles]) => {
+        const styleLines = Object.entries(styles)
+          .map(([prop, value]) => `  ${prop}: ${value} !important;`)
+          .join('\n');
+        return `${selector} {\n${styleLines}\n}`;
+      })
+      .join('\n\n');
+
+    const fullCSS = `/* Bulk Style Changes - Applied via Inspector */\n${cssRules}`;
+
+    console.log('[Preview] Generated bulk CSS:', fullCSS);
+
+    // Create a message for the AI to apply the CSS
+    const message = `Please add the following CSS rules to the project's main stylesheet (or create a new style block if needed):
+
+\`\`\`css
+${fullCSS}
+\`\`\`
+
+Add these rules to style the elements as specified. The !important flags ensure these styles take precedence.`;
+
+    // Send to chat
+    setPendingChatMessage(message);
+
+    // Clear accumulated changes since they're being applied
+    setAccumulatedBulkChanges([]);
+
+    // Close inspector panel
+    setIsInspectorPanelVisible(false);
+    setInspectorElement(null);
+  }, [accumulatedBulkChanges]);
+
+  // Handler for clearing all bulk changes
+  const handleClearBulkChanges = useCallback(() => {
+    setAccumulatedBulkChanges([]);
+
+    // Revert all changes in the iframe
+    if (iframeRef.current?.contentWindow) {
+      // Send revert for all unique selectors
+      const uniqueSelectors = [...new Set(accumulatedBulkChanges.map((c) => c.selector))];
+      uniqueSelectors.forEach((selector) => {
+        iframeRef.current?.contentWindow?.postMessage(
+          {
+            type: 'INSPECTOR_BULK_REVERT',
+            selector,
+          },
+          '*',
+        );
+      });
+    }
+  }, [accumulatedBulkChanges]);
+
   return (
     <div ref={containerRef} className={`w-full h-full flex flex-col relative`}>
       {/* Inspector Panel */}
@@ -908,6 +1006,9 @@ Remove this element completely from the JSX/HTML.`;
         onBulkStyleChange={handleBulkStyleChange}
         onBulkRevert={handleBulkRevert}
         bulkAffectedCount={bulkAffectedCount}
+        accumulatedBulkChanges={accumulatedBulkChanges}
+        onApplyBulkCSS={handleApplyBulkCSS}
+        onClearBulkChanges={handleClearBulkChanges}
       />
 
       {isPortDropdownOpen && (

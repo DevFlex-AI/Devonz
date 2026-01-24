@@ -12,6 +12,12 @@ interface BulkTarget {
   selector: string;
 }
 
+interface BulkStyleChange {
+  selector: string;
+  property: string;
+  value: string;
+}
+
 interface InspectorPanelProps {
   selectedElement: ElementInfo | null;
   isVisible: boolean;
@@ -26,6 +32,9 @@ interface InspectorPanelProps {
   onBulkStyleChange?: (selector: string, property: string, value: string) => void;
   onBulkRevert?: (selector: string) => void;
   bulkAffectedCount?: number;
+  accumulatedBulkChanges?: BulkStyleChange[];
+  onApplyBulkCSS?: () => void;
+  onClearBulkChanges?: () => void;
 }
 
 export const InspectorPanel = ({
@@ -42,6 +51,9 @@ export const InspectorPanel = ({
   onBulkStyleChange,
   onBulkRevert,
   bulkAffectedCount,
+  accumulatedBulkChanges,
+  onApplyBulkCSS,
+  onClearBulkChanges,
 }: InspectorPanelProps) => {
   const [activeTab, setActiveTab] = useState<'styles' | 'text' | 'box' | 'ai' | 'tree' | 'colors'>('styles');
   const [editedStyles, setEditedStyles] = useState<Record<string, string>>({});
@@ -382,6 +394,31 @@ export const InspectorPanel = ({
 
       {/* Footer with action buttons */}
       <div className="p-3 border-t border-bolt-elements-borderColor bg-bolt-elements-background-depth-3 space-y-2">
+        {/* Bulk CSS Apply Section - Show when there are accumulated bulk changes */}
+        {accumulatedBulkChanges && accumulatedBulkChanges.length > 0 && (
+          <div className="space-y-2 p-2 rounded-lg border border-green-500/30 bg-green-500/5">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-green-400 font-medium">
+                {accumulatedBulkChanges.length} bulk {accumulatedBulkChanges.length === 1 ? 'change' : 'changes'} pending
+              </span>
+              <button
+                onClick={onClearBulkChanges}
+                className="text-bolt-elements-textTertiary hover:text-red-400 transition-colors"
+                title="Clear all bulk changes"
+              >
+                <div className="i-ph:x-circle w-4 h-4" />
+              </button>
+            </div>
+            <button
+              onClick={onApplyBulkCSS}
+              className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors"
+            >
+              <div className="i-ph:code w-3.5 h-3.5" />
+              Apply All Bulk CSS
+            </button>
+          </div>
+        )}
+
         {hasChanges ? (
           <div className="space-y-2">
             <div className="flex gap-2">
@@ -412,8 +449,8 @@ export const InspectorPanel = ({
                 setEditedText('');
               }}
               className={`w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg border transition-colors ${bulkTarget
-                  ? 'border-purple-500/30 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 hover:border-purple-500/50'
-                  : 'border-amber-500/30 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 hover:border-amber-500/50'
+                ? 'border-purple-500/30 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 hover:border-purple-500/50'
+                : 'border-amber-500/30 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 hover:border-amber-500/50'
                 }`}
             >
               <div className="i-ph:arrow-counter-clockwise w-3.5 h-3.5" />
