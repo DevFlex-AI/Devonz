@@ -26,18 +26,24 @@ const FrameworkIcon: React.FC<FrameworkIconProps> = ({ template, isSpotlight }) 
 );
 
 const RightIconPanel: React.FC = () => {
-  const [isPaused, setIsPaused] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const [spotlightIndex, setSpotlightIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const animationRef = useRef<number>();
   const positionRef = useRef(0);
   const lastTimeRef = useRef<number>(0);
+  const speedFactorRef = useRef(1); // 1 = normal speed, 0.2 = slow speed on hover
 
   // Triple templates for seamless infinite looping
   const triplicatedTemplates = [...STARTER_TEMPLATES, ...STARTER_TEMPLATES, ...STARTER_TEMPLATES];
   const iconWidth = 56; // 32px icon + 24px gap (gap-6)
   const singleSetWidth = STARTER_TEMPLATES.length * iconWidth;
+
+  // Target speeds
+  const NORMAL_SPEED = 1;
+  const HOVER_SPEED = 0.15; // Slow but not stopped
+  const LERP_FACTOR = 0.05; // Smooth interpolation speed
 
   const updateSpotlight = useCallback(() => {
     if (!containerRef.current || !scrollerRef.current) {
@@ -62,7 +68,7 @@ const RightIconPanel: React.FC = () => {
 
   const animate = useCallback(
     (timestamp: number) => {
-      if (!scrollerRef.current || isPaused) {
+      if (!scrollerRef.current) {
         animationRef.current = requestAnimationFrame(animate);
         return;
       }
@@ -74,9 +80,13 @@ const RightIconPanel: React.FC = () => {
       const delta = timestamp - lastTimeRef.current;
       lastTimeRef.current = timestamp;
 
-      // Move at ~30px per second
-      const speed = 0.03;
-      positionRef.current += speed * delta;
+      // Smoothly interpolate speed factor towards target
+      const targetSpeed = isHovered ? HOVER_SPEED : NORMAL_SPEED;
+      speedFactorRef.current += (targetSpeed - speedFactorRef.current) * LERP_FACTOR;
+
+      // Move at ~30px per second, modified by speed factor
+      const baseSpeed = 0.03;
+      positionRef.current += baseSpeed * delta * speedFactorRef.current;
 
       /*
        * Seamless reset: when we've scrolled through one complete set,
@@ -91,7 +101,7 @@ const RightIconPanel: React.FC = () => {
 
       animationRef.current = requestAnimationFrame(animate);
     },
-    [isPaused, singleSetWidth, updateSpotlight],
+    [isHovered, singleSetWidth, updateSpotlight],
   );
 
   useEffect(() => {
@@ -108,8 +118,8 @@ const RightIconPanel: React.FC = () => {
     <div
       ref={containerRef}
       className="relative flex items-center justify-center w-full overflow-hidden"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Left fade gradient */}
       <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-[#0a0a0a] via-[#0a0a0a]/80 to-transparent z-[1] pointer-events-none" />

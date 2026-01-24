@@ -531,11 +531,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                 </div>
               )}
               {/* Recent Chats - Below Example Prompts */}
-              {!chatStarted && (
-                <ClientOnly>
-                  {() => <RecentChats maxItems={10} />}
-                </ClientOnly>
-              )}
+              {!chatStarted && <ClientOnly>{() => <RecentChats maxItems={10} />}</ClientOnly>}
             </div>
           )}
 

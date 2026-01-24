@@ -21,6 +21,7 @@ export const RecentChats: React.FC<RecentChatsProps> = ({ maxItems = 10 }) => {
 
     try {
       const allChats = await getAll(db);
+
       // Filter chats with urlId and description, sort by timestamp descending
       const filteredChats = allChats
         .filter((item) => item.urlId && item.description)
