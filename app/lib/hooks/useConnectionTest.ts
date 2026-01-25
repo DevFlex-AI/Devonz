@@ -5,9 +5,16 @@ interface UseConnectionTestOptions {
   testEndpoint: string;
   serviceName: string;
   getUserIdentifier?: (data: any) => string;
+  /** Optional function to get the current auth token */
+  getToken?: () => string | null;
 }
 
-export function useConnectionTest({ testEndpoint, serviceName, getUserIdentifier }: UseConnectionTestOptions) {
+export function useConnectionTest({
+  testEndpoint,
+  serviceName,
+  getUserIdentifier,
+  getToken,
+}: UseConnectionTestOptions) {
   const [testResult, setTestResult] = useState<ConnectionTestResult | null>(null);
 
   const testConnection = useCallback(async () => {
@@ -17,11 +24,20 @@ export function useConnectionTest({ testEndpoint, serviceName, getUserIdentifier
     });
 
     try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      // Add Authorization header if token is available
+      const token = getToken?.();
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(testEndpoint, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
       });
 
       if (response.ok) {
@@ -48,7 +64,7 @@ export function useConnectionTest({ testEndpoint, serviceName, getUserIdentifier
         timestamp: Date.now(),
       });
     }
-  }, [testEndpoint, serviceName, getUserIdentifier]);
+  }, [testEndpoint, serviceName, getUserIdentifier, getToken]);
 
   const clearTestResult = useCallback(() => {
     setTestResult(null);

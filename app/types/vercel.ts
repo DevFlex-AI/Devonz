@@ -63,3 +63,31 @@ export interface VercelProjectInfo {
   url: string;
   chatId: string;
 }
+
+export interface VercelDomain {
+  name: string;
+  verified: boolean;
+  gitBranch?: string | null;
+  redirect?: string | null;
+  redirectStatusCode?: number | null;
+  createdAt?: number;
+  updatedAt?: number;
+}
+
+export interface VercelDomainsResponse {
+  domains: VercelDomain[];
+}
+
+export interface VercelDomainAddResponse {
+  success: boolean;
+  domain?: VercelDomain;
+  error?: string;
+  details?: unknown;
+}
+
+export interface VercelDomainRemoveResponse {
+  success: boolean;
+  removed?: string;
+  error?: string;
+  details?: unknown;
+}

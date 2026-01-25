@@ -53,6 +53,7 @@ export default function VercelTab() {
     serviceName: 'Vercel',
     getUserIdentifier: (data: VercelUserResponse) =>
       data.username || data.user?.username || data.email || data.user?.email || 'Vercel User',
+    getToken: () => vercelConnection.get().token || null,
   });
 
   // Memoize project actions to prevent unnecessary re-renders

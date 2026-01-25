@@ -133,6 +133,112 @@ class VercelApiClient {
       };
     }
   }
+
+  /**
+   * List domains for a project
+   */
+  async listDomains(
+    projectId: string,
+    token: string,
+  ): Promise<{
+    success: boolean;
+    domains?: Array<{ name: string; verified: boolean }>;
+    error?: string;
+  }> {
+    try {
+      const response = await fetch(`/api/vercel-domains?projectId=${encodeURIComponent(projectId)}`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: data.error || 'Failed to list domains' };
+      }
+
+      return { success: true, domains: data.domains || [] };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to list domains' };
+    }
+  }
+
+  /**
+   * Add a domain to a project
+   */
+  async addDomain(
+    projectId: string,
+    domain: string,
+    token: string,
+  ): Promise<{
+    success: boolean;
+    domain?: { name: string; verified: boolean };
+    error?: string;
+  }> {
+    try {
+      const response = await fetch('/api/vercel-domains', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          projectId,
+          action: 'add',
+          domain,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: data.error || 'Failed to add domain' };
+      }
+
+      return { success: true, domain: data.domain };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to add domain' };
+    }
+  }
+
+  /**
+   * Remove a domain from a project
+   */
+  async removeDomain(
+    projectId: string,
+    domain: string,
+    token: string,
+  ): Promise<{
+    success: boolean;
+    error?: string;
+  }> {
+    try {
+      const response = await fetch('/api/vercel-domains', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          projectId,
+          action: 'remove',
+          domain,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: data.error || 'Failed to remove domain' };
+      }
+
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to remove domain' };
+    }
+  }
 }
 
 // Export singleton instance
