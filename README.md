@@ -2,6 +2,8 @@
 
 Devonz was originally buildt on from the amazing repository [bolt.diy](https://bolt.diy/), which you can check out for more information about the original project. As for why i decided to create Devonz is simple the current project bolt.diy seems to have been inactive for a long time (atleast in the time when thinking about ai), i wanted to continue the development of this amazing project, but also i wanted to make it more specilised for speed with less files
 
+![v2](https://github.com/user-attachments/assets/e4c3067d-2539-4b5e-abab-d129d90b51dc)
+
 ## Table of Contents
 
 ## Setup

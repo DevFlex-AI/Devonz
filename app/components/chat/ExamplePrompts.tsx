@@ -1,5 +1,9 @@
 import React, { useState, useCallback } from 'react';
 
+interface ExamplePromptsProps {
+  sendMessage?: (event: React.UIEvent, messageInput?: string) => void;
+}
+
 const ALL_PROMPTS = [
   { text: 'AI Landing Page Builder', icon: 'i-ph:globe-duotone', color: 'text-cyan-400' },
   { text: 'AI Customer Support Chatbot Platform', icon: 'i-ph:globe-duotone', color: 'text-cyan-400' },
@@ -26,69 +30,55 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
-export function ExamplePrompts(sendMessage?: { (event: React.UIEvent, messageInput?: string): void | undefined }) {
-  const [prompts, setPrompts] = useState(() => shuffleArray(ALL_PROMPTS).slice(0, 4));
+export function ExamplePrompts({ sendMessage }: ExamplePromptsProps) {
+  const [prompts, setPrompts] = useState(() => shuffleArray(ALL_PROMPTS).slice(0, 3));
 
   const refreshPrompts = useCallback(() => {
-    setPrompts(shuffleArray(ALL_PROMPTS).slice(0, 4));
+    setPrompts(shuffleArray(ALL_PROMPTS).slice(0, 3));
   }, []);
 
-  return (
-    <div id="examples" className="relative flex flex-col gap-4 w-full max-w-3xl mx-auto mt-6">
-      {/* Try different ideas button - now at the top */}
-      <div className="flex justify-center">
-        <button
-          onClick={refreshPrompts}
-          className="flex items-center gap-2 px-4 py-2 text-sm text-[#8badd4] hover:text-white transition-all duration-200
-            border border-[#3d5a7f]/50 hover:border-[#4d6a8f] rounded-full
-            hover:shadow-[0_0_12px_rgba(61,90,127,0.25)]"
-          style={{ backgroundColor: 'rgba(30, 58, 95, 0.15)' }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(30, 58, 95, 0.3)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(30, 58, 95, 0.15)';
-          }}
-        >
-          <div className="i-ph:arrows-clockwise text-base" />
-          <span>Try different ideas</span>
-        </button>
-      </div>
+  const buttonStyle = {
+    backgroundColor: '#1a1a1a',
+    color: '#9ca3af',
+    border: '1px solid #333333',
+  };
 
-      {/* Prompt buttons */}
-      <div
-        className="flex flex-wrap justify-center gap-2"
-        style={{
-          animation: '.25s ease-out 0s 1 _fade-and-move-in_g2ptj_1 forwards',
-        }}
+  const hoverIn = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.backgroundColor = '#2a2a2a';
+    e.currentTarget.style.color = '#ffffff';
+  };
+
+  const hoverOut = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.backgroundColor = '#1a1a1a';
+    e.currentTarget.style.color = '#9ca3af';
+  };
+
+  return (
+    <div className="flex items-center gap-2 w-full max-w-3xl mx-auto px-3 py-2">
+      {prompts.map((prompt, index) => (
+        <button
+          key={`${prompt.text}-${index}`}
+          onClick={(event) => sendMessage?.(event, prompt.text)}
+          className="flex items-center gap-1.5 px-2.5 py-1 text-xs transition-colors whitespace-nowrap rounded"
+          style={buttonStyle}
+          onMouseEnter={hoverIn}
+          onMouseLeave={hoverOut}
+        >
+          <div className={`${prompt.icon} ${prompt.color} text-sm flex-shrink-0`} />
+          <span>{prompt.text}</span>
+        </button>
+      ))}
+
+      <button
+        onClick={refreshPrompts}
+        className="ml-auto flex-shrink-0 p-1.5 transition-colors rounded"
+        style={buttonStyle}
+        onMouseEnter={hoverIn}
+        onMouseLeave={hoverOut}
+        title="Try different ideas"
       >
-        {prompts.map((prompt, index: number) => {
-          return (
-            <button
-              key={`${prompt.text}-${index}`}
-              onClick={(event) => {
-                sendMessage?.(event, prompt.text);
-              }}
-              className="group flex items-center gap-2 rounded-full px-4 py-2 text-sm transition-all duration-200
-                border border-[#3d5a7f]/40 
-                text-white/80 hover:text-white
-                hover:border-[#4d6a8f] hover:shadow-[0_0_16px_rgba(61,90,127,0.25)]"
-              style={{
-                backgroundColor: 'rgba(30, 58, 95, 0.2)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(30, 58, 95, 0.35)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(30, 58, 95, 0.2)';
-              }}
-            >
-              <div className={`${prompt.icon} ${prompt.color} text-base`} />
-              <span>{prompt.text}</span>
-            </button>
-          );
-        })}
-      </div>
+        <div className="i-ph:arrows-clockwise text-sm" />
+      </button>
     </div>
   );
 }

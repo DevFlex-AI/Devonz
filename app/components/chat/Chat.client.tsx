@@ -2,7 +2,7 @@ import { useStore } from '@nanostores/react';
 import type { Message } from 'ai';
 import { useChat } from '@ai-sdk/react';
 import { useAnimate } from 'framer-motion';
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState, startTransition } from 'react';
 import { toast } from 'react-toastify';
 import { useMessageParser, usePromptEnhancer, useShortcuts } from '~/lib/hooks';
 import { description, useChatHistory } from '~/lib/persistence';
@@ -388,14 +388,17 @@ export const ChatImpl = memo(
         return;
       }
 
+      // Animate the intro elements out before showing chat
       await Promise.all([
         animate('#examples', { opacity: 0, display: 'none' }, { duration: 0.1 }),
         animate('#intro', { opacity: 0, flex: 1 }, { duration: 0.2, ease: cubicEasingFn }),
       ]);
 
-      chatStore.setKey('started', true);
-
-      setChatStarted(true);
+      // Batch both state updates together in a single transition
+      startTransition(() => {
+        setChatStarted(true);
+        chatStore.setKey('started', true);
+      });
     };
 
     // Helper function to create message parts array from text and images
@@ -472,7 +475,8 @@ export const ChatImpl = memo(
         finalMessageContent = messageContent + elementInfo;
       }
 
-      runAnimation();
+      // Await the animation to complete before proceeding
+      await runAnimation();
 
       if (!chatStarted) {
         setFakeLoading(true);
@@ -644,7 +648,25 @@ export const ChatImpl = memo(
     /**
      * Register auto-fix callback on mount
      * This allows the terminal error detector to automatically send errors to chat
+     * Use refs to avoid re-running effect when model/provider/append change
      */
+    const modelRef = useRef(model);
+    const providerRef = useRef(provider);
+    const appendRef = useRef(append);
+
+    // Keep refs up to date
+    useEffect(() => {
+      modelRef.current = model;
+    }, [model]);
+
+    useEffect(() => {
+      providerRef.current = provider;
+    }, [provider]);
+
+    useEffect(() => {
+      appendRef.current = append;
+    }, [append]);
+
     useEffect(() => {
       // Create a function that sends messages for auto-fix
       const autoFixSendMessage = (message: string) => {
@@ -653,12 +675,12 @@ export const ChatImpl = memo(
         resetPreviewErrorHandler();
 
         // Build the message in same format as ChatAlert's handleAskBolt
-        const messageText = `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${message}`;
+        const messageText = `[Model: ${modelRef.current}]\n\n[Provider: ${providerRef.current.name}]\n\n${message}`;
 
         // Use append to send the message
         runAnimation();
 
-        append({
+        appendRef.current({
           role: 'user',
           content: messageText,
         });
@@ -672,7 +694,7 @@ export const ChatImpl = memo(
       return () => {
         unregisterAutoFixCallback();
       };
-    }, [model, provider, append]);
+    }, []); // Empty deps - only run on mount/unmount
 
     useEffect(() => {
       const storedApiKeys = Cookies.get('apiKeys');

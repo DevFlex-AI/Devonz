@@ -395,6 +395,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                     {() => {
                       return chatStarted ? (
                         <Messages
+                          key="messages-component"
                           className="flex flex-col w-full flex-1 max-w-chat pb-4 mx-auto z-1"
                           messages={messages}
                           isStreaming={isStreaming}
@@ -518,22 +519,23 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                       <RightIconPanel />
                     </div>
                   )}
+
+                  {/* Example Prompts - Below Framework Icons */}
+                  {!chatStarted && (
+                    <div className="flex flex-col items-center gap-4 mt-4 max-w-chat mx-auto w-full">
+                      <ExamplePrompts
+                        sendMessage={(event, messageInput) => {
+                          if (isStreaming) {
+                            handleStop?.();
+                            return;
+                          }
+                          handleSendMessage?.(event, messageInput);
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
               </StickToBottom>
-              {/* Example Prompts - Below ChatBox */}
-              {!chatStarted && (
-                <div className="flex flex-col items-center gap-4 px-4 mt-4 max-w-xl mx-auto">
-                  {ExamplePrompts((event, messageInput) => {
-                    if (isStreaming) {
-                      handleStop?.();
-
-                      return;
-                    }
-
-                    handleSendMessage?.(event, messageInput);
-                  })}
-                </div>
-              )}
               {/* Recent Chats - Below Example Prompts */}
               {!chatStarted && <ClientOnly>{() => <RecentChats maxItems={10} />}</ClientOnly>}
             </div>
