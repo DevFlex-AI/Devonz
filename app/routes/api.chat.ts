@@ -1,5 +1,6 @@
 import { type ActionFunctionArgs } from '@remix-run/node';
 import { createDataStream, generateId } from 'ai';
+import { z } from 'zod';
 import { MAX_RESPONSE_SEGMENTS, MAX_TOKENS, type FileMap } from '~/lib/.server/llm/constants';
 import { CONTINUE_PROMPT } from '~/lib/common/prompts/prompts';
 import { streamText, type Messages, type StreamingOptions } from '~/lib/.server/llm/stream-text';
@@ -15,7 +16,6 @@ import type { DesignScheme } from '~/types/design-scheme';
 import { MCPService } from '~/lib/services/mcpService';
 import { StreamRecoveryManager } from '~/lib/.server/llm/stream-recovery';
 import {
-  getAgentToolSet,
   getAgentToolSetWithoutExecute,
   shouldUseAgentMode,
   getAgentSystemPrompt,
@@ -32,6 +32,46 @@ export async function action(args: ActionFunctionArgs) {
 }
 
 const logger = createScopedLogger('api.chat');
+
+// Zod schema for chat request validation
+const messageSchema = z.object({
+  id: z.string().optional(),
+  role: z.enum(['user', 'assistant', 'system']),
+  content: z.string(),
+});
+
+const designSchemeSchema = z
+  .object({
+    palette: z.record(z.string()),
+    features: z.array(z.string()),
+    font: z.array(z.string()),
+  })
+  .optional();
+
+const supabaseConnectionSchema = z
+  .object({
+    isConnected: z.boolean(),
+    hasSelectedProject: z.boolean(),
+    credentials: z
+      .object({
+        anonKey: z.string().optional(),
+        supabaseUrl: z.string().optional(),
+      })
+      .optional(),
+  })
+  .optional();
+
+const chatRequestSchema = z.object({
+  messages: z.array(messageSchema).min(1, 'At least one message is required'),
+  files: z.any().optional(),
+  promptId: z.string().optional(),
+  contextOptimization: z.boolean().default(false),
+  chatMode: z.enum(['discuss', 'build']).default('build'),
+  designScheme: designSchemeSchema,
+  supabase: supabaseConnectionSchema,
+  maxLLMSteps: z.number().int().positive().default(5),
+  agentMode: z.boolean().optional(),
+});
 
 function parseCookies(cookieHeader: string): Record<string, string> {
   const cookies: Record<string, string> = {};
@@ -60,8 +100,40 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
     },
   });
 
+  // Parse and validate request body
+  let rawBody: unknown;
+
+  try {
+    rawBody = await request.json();
+  } catch {
+    return new Response(JSON.stringify({ error: 'Invalid JSON in request body' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  const parsed = chatRequestSchema.safeParse(rawBody);
+
+  if (!parsed.success) {
+    logger.warn('Chat request validation failed:', parsed.error.issues);
+
+    return new Response(
+      JSON.stringify({
+        error: 'Invalid request',
+        details: parsed.error.issues.map((issue) => ({
+          path: issue.path.join('.'),
+          message: issue.message,
+        })),
+      }),
+      {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      },
+    );
+  }
+
   const { messages, files, promptId, contextOptimization, supabase, chatMode, designScheme, maxLLMSteps, agentMode } =
-    await request.json<{
+    parsed.data as {
       messages: Messages;
       files: any;
       promptId?: string;
@@ -78,7 +150,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
       };
       maxLLMSteps: number;
       agentMode?: boolean;
-    }>();
+    };
 
   // Determine if agent mode should be active for this request
   const useAgentMode = shouldUseAgentMode({ agentMode });
@@ -234,6 +306,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
 
         if (useAgentMode) {
           logger.info('🤖 Agent mode enabled - merging agent tools');
+
           const agentTools = getAgentToolSetWithoutExecute();
           const agentToolNames = Object.keys(agentTools);
           const mcpToolNames = Object.keys(mcpService.toolsWithoutExecute);

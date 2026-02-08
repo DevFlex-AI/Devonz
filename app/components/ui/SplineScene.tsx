@@ -51,13 +51,11 @@ export function SplineScene({ scene, className, style, fallback }: SplineScenePr
 
   if (!sceneUrl) {
     return (
-      (
-        fallback || (
-          <div className={className} style={style}>
-            <div className="flex items-center justify-center h-full">
-              <div className="animate-pulse text-gray-400">Loading 3D scene...</div>
-            </
-      )div>
+      fallback || (
+        <div className={className} style={style}>
+          <div className="flex items-center justify-center h-full">
+            <div className="animate-pulse text-gray-400">Loading 3D scene...</div>
+          </div>
         </div>
       )
     );

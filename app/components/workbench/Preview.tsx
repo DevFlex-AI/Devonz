@@ -77,7 +77,6 @@ export function requestPreviewScreenshot(
     // Set up timeout fallback
     const timeoutId = setTimeout(() => {
       screenshotCallbacks.delete(requestId);
-      console.log('[Preview] Screenshot request timed out, using fallback');
       resolve(generateFallbackScreenshot(options.width || 320, options.height || 200));
     }, timeout);
 
@@ -103,7 +102,6 @@ export function requestPreviewScreenshot(
     } else {
       clearTimeout(timeoutId);
       screenshotCallbacks.delete(requestId);
-      console.log('[Preview] No iframe available for screenshot');
       resolve(generateFallbackScreenshot(options.width || 320, options.height || 200));
     }
   });
@@ -288,7 +286,6 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
           iframeRef.current.src = url.toString();
         }
       });
-      console.log('[Preview] Hard reload triggered for config changes');
     }
   }, [iframeUrl]);
 
@@ -308,7 +305,6 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
 
       if (type === 'hard-refresh') {
         // Config file changes need a full cache-busting reload
-        console.log('[Preview] Received hard-refresh message, reloading...');
         hardReloadPreview();
       } else if (type === 'file-change' || type === 'refresh-preview') {
         // Regular file changes can use simple reload
@@ -848,15 +844,11 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
           setIsInspectorPanelVisible(true);
         });
       } else if (event.data.type === 'INSPECTOR_BULK_APPLIED') {
-        console.log('[Preview] Bulk style applied:', event.data);
         setBulkAffectedCount(event.data.count);
       } else if (event.data.type === 'INSPECTOR_BULK_REVERTED') {
-        console.log('[Preview] Bulk revert complete:', event.data);
         setBulkAffectedCount(undefined);
       } else if (event.data.type === 'PREVIEW_CONSOLE_ERROR') {
         // Handle console errors captured from preview iframe (module import errors, etc.)
-        console.log('[Preview] Console error captured:', event.data.message?.slice(0, 100));
-
         // Route to preview error handler's auto-fix system
         getPreviewErrorHandler().handlePreviewMessage({
           type: 'PREVIEW_UNCAUGHT_EXCEPTION', // Use existing type for compatibility
@@ -869,8 +861,6 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
         });
       } else if (event.data.type === 'PREVIEW_VITE_ERROR') {
         // Handle Vite error overlay detection (ES module errors, HMR failures, etc.)
-        console.log('[Preview] Vite error overlay detected:', event.data.message?.slice(0, 100));
-
         // Route to preview error handler's auto-fix system
         getPreviewErrorHandler().handlePreviewMessage({
           type: 'PREVIEW_UNCAUGHT_EXCEPTION', // Use existing type for compatibility
@@ -921,10 +911,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
 
   // Handler for style changes from InspectorPanel
   const handleStyleChange = useCallback((property: string, value: string) => {
-    console.log('[Preview] handleStyleChange:', property, value, 'iframe:', iframeRef.current);
-
     if (iframeRef.current?.contentWindow) {
-      console.log('[Preview] Sending INSPECTOR_EDIT_STYLE to iframe');
       iframeRef.current.contentWindow.postMessage(
         {
           type: 'INSPECTOR_EDIT_STYLE',
@@ -985,8 +972,6 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
 
   // Handler for bulk style changes
   const handleBulkStyleChange = useCallback((selector: string, property: string, value: string) => {
-    console.log('[Preview] handleBulkStyleChange:', selector, property, value);
-
     // Accumulate the change for CSS injection
     setAccumulatedBulkChanges((prev) => {
       // Check if we already have a change for this selector+property combo
@@ -1019,8 +1004,6 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
 
   // Handler for bulk revert
   const handleBulkRevert = useCallback((selector: string) => {
-    console.log('[Preview] handleBulkRevert:', selector);
-
     // Remove accumulated changes for this selector
     setAccumulatedBulkChanges((prev) => prev.filter((c) => c.selector !== selector));
 
@@ -1137,7 +1120,6 @@ Remove this element completely from the JSX/HTML.`;
   // Handler for applying bulk CSS changes directly
   const handleApplyBulkCSS = useCallback(() => {
     if (accumulatedBulkChanges.length === 0) {
-      console.log('[Preview] No bulk changes to apply');
       return;
     }
 
@@ -1163,8 +1145,6 @@ Remove this element completely from the JSX/HTML.`;
       .join('\n\n');
 
     const fullCSS = `/* Bulk Style Changes - Applied via Inspector */\n${cssRules}`;
-
-    console.log('[Preview] Generated bulk CSS:', fullCSS);
 
     // Create a message for the AI to apply the CSS
     const message = `Please add the following CSS rules to the project's main stylesheet (or create a new style block if needed):

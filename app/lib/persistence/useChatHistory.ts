@@ -344,12 +344,14 @@ export function useChatHistory() {
 
 function navigateChat(nextId: string) {
   /**
-   * FIXME: Using the intended navigate function causes a rerender for <Chat /> that breaks the app.
+   * Updates the URL to the new chat ID without triggering a full Remix re-render.
    *
-   * `navigate(`/chat/${nextId}`, { replace: true });`
+   * We use window.history.replaceState instead of Remix's navigate() because
+   * navigate() causes a re-render of <Chat /> that breaks the app's state.
+   * This approach updates the URL silently while preserving component state.
    */
   const url = new URL(window.location.href);
   url.pathname = `/chat/${nextId}`;
 
-  window.history.replaceState({}, '', url);
+  window.history.replaceState({ idx: window.history.state?.idx ?? 0 }, '', url);
 }

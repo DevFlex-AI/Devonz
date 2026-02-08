@@ -213,6 +213,14 @@ function CodeBlock({ className, code, language = 'shell', maxLines }: CodeBlockP
   // Ensure language is supported, fallback to plaintext
   const lang = highlighterOptions.langs.includes(language as any) ? language : 'shell';
 
+  /*
+   * SECURITY NOTE: dangerouslySetInnerHTML usage is safe here because:
+   * 1. Shiki's codeToHtml() escapes all HTML entities in the code content (< becomes &lt;, etc.)
+   * 2. Shiki only produces safe HTML structure: <pre>, <code>, and <span> elements for styling
+   * 3. The code content comes from LLM-generated artifacts shown for user review, not arbitrary user input
+   * 4. DOMPurify is NOT used because it would strip the legitimate <span> elements Shiki needs for highlighting
+   * Risk: LOW - Shiki is a trusted, well-maintained library designed for safe code rendering
+   */
   return (
     <div
       className={classNames('text-xs overflow-x-auto', className)}

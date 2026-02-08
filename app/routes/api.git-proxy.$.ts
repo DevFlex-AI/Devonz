@@ -85,8 +85,6 @@ async function handleProxyRequest(request: Request, path: string | undefined) {
     const url = new URL(request.url);
     const targetURL = `https://${domain}/${remainingPath}${url.search}`;
 
-    console.log('Target URL:', targetURL);
-
     // Filter and prepare headers
     const headers = new Headers();
 
@@ -104,8 +102,6 @@ async function handleProxyRequest(request: Request, path: string | undefined) {
     if (!headers.has('user-agent') || !headers.get('user-agent')?.startsWith('git/')) {
       headers.set('User-Agent', 'git/@isomorphic-git/cors-proxy');
     }
-
-    console.log('Request headers:', Object.fromEntries(headers.entries()));
 
     // Prepare fetch options
     const fetchOptions: RequestInit = {
@@ -127,8 +123,6 @@ async function handleProxyRequest(request: Request, path: string | undefined) {
 
     // Forward the request to the target URL
     const response = await fetch(targetURL, fetchOptions);
-
-    console.log('Response status:', response.status);
 
     // Create response headers
     const responseHeaders = new Headers();
@@ -155,8 +149,6 @@ async function handleProxyRequest(request: Request, path: string | undefined) {
     if (response.redirected) {
       responseHeaders.set('x-redirected-url', response.url);
     }
-
-    console.log('Response headers:', Object.fromEntries(responseHeaders.entries()));
 
     // Return the response with the target's body stream piped directly
     return new Response(response.body, {

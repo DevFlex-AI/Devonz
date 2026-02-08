@@ -292,8 +292,6 @@ export const StagedChangesPanel = memo(() => {
 
     for (const cmd of commands) {
       try {
-        console.log(`Executing ${cmd.type} command: ${cmd.command}`);
-
         if (cmd.type === 'start') {
           /*
            * Start commands (like 'npm run dev') are long-running processes
@@ -338,17 +336,14 @@ export const StagedChangesPanel = memo(() => {
     try {
       // Get rejected changes BEFORE applying (since applyRejectedChanges removes them)
       const rejectedChanges = getRejectedChanges();
-      console.log('[DEBUG] Rejected changes to revert:', rejectedChanges);
 
       const wc = await webcontainer;
       const result = await applyRejectedChanges(wc);
-      console.log('[DEBUG] applyRejectedChanges result:', result);
 
       // Also update the filesStore for each successfully reverted file
       for (const filePath of result.reverted) {
         // Find the change in our pre-fetched list
         const change = rejectedChanges.find((c) => c.filePath === filePath);
-        console.log('[DEBUG] Processing reverted file:', filePath, 'change:', change);
 
         /*
          * Convert relative path (from staging store) to absolute path (for filesStore)
@@ -356,16 +351,9 @@ export const StagedChangesPanel = memo(() => {
          * FilesStore uses paths like "/home/project/src/components/Hero.tsx"
          */
         const absolutePath = filePath.startsWith(WORK_DIR) ? filePath : `${WORK_DIR}/${filePath}`;
-        console.log('[DEBUG] Using absolutePath for filesStore:', absolutePath);
 
         if (change && change.type === 'modify' && change.originalContent !== null) {
           // Update filesStore with original content
-          console.log(
-            '[DEBUG] Updating filesStore for modify:',
-            absolutePath,
-            'original:',
-            change.originalContent.substring(0, 100),
-          );
           workbenchStore.files.setKey(absolutePath, {
             type: 'file',
             content: change.originalContent,
@@ -373,7 +361,6 @@ export const StagedChangesPanel = memo(() => {
           });
         } else if (change && change.type === 'delete' && change.originalContent !== null) {
           // File was deleted, restore it to filesStore
-          console.log('[DEBUG] Updating filesStore for delete:', absolutePath);
           workbenchStore.files.setKey(absolutePath, {
             type: 'file',
             content: change.originalContent,
@@ -381,7 +368,6 @@ export const StagedChangesPanel = memo(() => {
           });
         } else if (change && change.type === 'create') {
           // File was created, remove from filesStore
-          console.log('[DEBUG] Updating filesStore for create (remove):', absolutePath);
           workbenchStore.files.setKey(absolutePath, undefined);
         }
       }
@@ -409,7 +395,6 @@ export const StagedChangesPanel = memo(() => {
         // Take a snapshot after changes are applied to persist the new file state
         try {
           await takeDelayedSnapshot(150); // 150ms delay for WebContainer sync
-          console.log('[StagedChangesPanel] Snapshot taken after accepting single change');
         } catch (snapshotError) {
           console.error('[StagedChangesPanel] Failed to take snapshot after single accept:', snapshotError);
         }
@@ -548,7 +533,6 @@ export const StagedChangesPanel = memo(() => {
       // This ensures the files are saved even when staging mode delays writes
       try {
         await takeDelayedSnapshot(150); // 150ms delay for WebContainer sync
-        console.log('[StagedChangesPanel] Snapshot taken after accepting changes');
       } catch (snapshotError) {
         console.error('[StagedChangesPanel] Failed to take snapshot after accept:', snapshotError);
         // Don't show toast for snapshot errors - files are still applied

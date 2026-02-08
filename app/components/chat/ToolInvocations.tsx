@@ -2,6 +2,7 @@ import type { ToolInvocationUIPart } from '@ai-sdk/ui-utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import { memo, useMemo, useState, useEffect } from 'react';
 import { createHighlighter, type BundledLanguage, type BundledTheme, type HighlighterGeneric } from 'shiki';
+import DOMPurify from 'dompurify';
 import { classNames } from '~/utils/classNames';
 import {
   TOOL_EXECUTION_APPROVAL,
@@ -14,6 +15,22 @@ import { logger } from '~/utils/logger';
 import { themeStore, type Theme } from '~/lib/stores/theme';
 import { useStore } from '@nanostores/react';
 import type { ToolCallAnnotation } from '~/types/context';
+
+/**
+ * DOMPurify configuration for sanitizing Shiki syntax-highlighted HTML output.
+ * Restricts output to only the HTML elements and attributes that Shiki produces.
+ * This provides defense-in-depth against XSS even though Shiki escapes code content.
+ *
+ * SECURITY NOTE: Tool invocation data (args and results) comes from LLM-generated
+ * content and MCP server responses, which could be controlled by malicious actors.
+ * Sanitization is critical here.
+ */
+const SHIKI_PURIFY_CONFIG: DOMPurify.Config = {
+  ALLOWED_TAGS: ['pre', 'code', 'span'],
+  ALLOWED_ATTR: ['class', 'style', 'tabindex'],
+  ALLOW_DATA_ATTR: false,
+  ALLOW_ARIA_ATTR: false,
+};
 
 const highlighterOptions = {
   langs: ['json'],
@@ -53,14 +70,24 @@ function JsonCodeBlock({ className, code, theme }: JsonCodeBlockProps) {
     logger.error('Failed to parse JSON', { error: e });
   }
 
+  // Generate syntax-highlighted HTML from Shiki
+  const rawHtml = jsonHighlighter.codeToHtml(formattedCode, {
+    lang: 'json',
+    theme: theme === 'dark' ? 'dark-plus' : 'light-plus',
+  });
+
+  /*
+   * SECURITY: Sanitize HTML output to prevent XSS attacks.
+   * Tool invocation data (args/results) comes from LLM and MCP servers,
+   * which could contain malicious content if a user connects to an untrusted MCP server.
+   */
+  const sanitizedHtml = DOMPurify.sanitize(rawHtml, SHIKI_PURIFY_CONFIG);
+
   return (
     <div
       className={classNames('text-xs rounded-md overflow-hidden mcp-tool-invocation-code', className)}
       dangerouslySetInnerHTML={{
-        __html: jsonHighlighter.codeToHtml(formattedCode, {
-          lang: 'json',
-          theme: theme === 'dark' ? 'dark-plus' : 'light-plus',
-        }),
+        __html: sanitizedHtml,
       }}
       style={{
         padding: '0',

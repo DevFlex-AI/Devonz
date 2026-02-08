@@ -98,7 +98,41 @@ export function createSecurityHeaders() {
       "style-src 'self' 'unsafe-inline'", // Allow inline styles
       "img-src 'self' data: https: blob:", // Allow images from same origin, data URLs, and HTTPS
       "font-src 'self' data:", // Allow fonts from same origin and data URLs
-      "connect-src 'self' https://api.github.com https://api.netlify.com", // Allow connections to GitHub and Netlify APIs
+      [
+        "connect-src 'self'",
+
+        // Git providers
+        'https://api.github.com',
+        'https://models.github.ai',
+        'https://gitlab.com',
+
+        // Deployment platforms
+        'https://api.netlify.com',
+        'https://api.vercel.com',
+        'https://*.supabase.co',
+        'https://api.supabase.com',
+
+        // LLM providers - Major
+        'https://api.openai.com',
+        'https://api.anthropic.com',
+        'https://generativelanguage.googleapis.com',
+
+        // LLM providers - Other
+        'https://api.groq.com',
+        'https://api.mistral.ai',
+        'https://api.cohere.com',
+        'https://api.deepseek.com',
+        'https://api.perplexity.ai',
+        'https://api.x.ai',
+        'https://api.together.xyz',
+        'https://api.hyperbolic.xyz',
+        'https://api.moonshot.ai',
+        'https://openrouter.ai',
+        'https://api-inference.huggingface.co',
+
+        // WebSocket support for real-time features
+        'wss://*.supabase.co',
+      ].join(' '),
       "frame-src 'none'", // Prevent iframe embedding
       "object-src 'none'", // Prevent object embedding
       "base-uri 'self'",

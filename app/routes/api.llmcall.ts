@@ -2,6 +2,7 @@ import { type ActionFunctionArgs } from '@remix-run/node';
 import { streamText } from '~/lib/.server/llm/stream-text';
 import type { IProviderSetting, ProviderInfo } from '~/types/model';
 import { generateText } from 'ai';
+import { z } from 'zod';
 import { PROVIDER_LIST } from '~/utils/constants';
 import { MAX_TOKENS, PROVIDER_COMPLETION_LIMITS, isReasoningModel } from '~/lib/.server/llm/constants';
 import { LLMManager } from '~/lib/modules/llm/manager';
@@ -13,6 +14,25 @@ export async function action(args: ActionFunctionArgs) {
   return llmCallAction(args);
 }
 
+const logger = createScopedLogger('api.llmcall');
+
+// Zod schema for LLM call request validation
+const providerSchema = z.object({
+  name: z.string().min(1, 'Provider name is required'),
+  staticModels: z.array(z.any()).optional(),
+  getApiKeyLink: z.string().optional(),
+  labelForGetApiKey: z.string().optional(),
+  icon: z.string().optional(),
+});
+
+const llmCallRequestSchema = z.object({
+  system: z.string().optional().default(''),
+  message: z.string().min(1, 'Message is required'),
+  model: z.string().min(1, 'Model is required'),
+  provider: providerSchema,
+  streamOutput: z.boolean().optional().default(false),
+});
+
 async function getModelList(options: {
   apiKeys?: Record<string, string>;
   providerSettings?: Record<string, IProviderSetting>;
@@ -21,8 +41,6 @@ async function getModelList(options: {
   const llmManager = LLMManager.getInstance(import.meta.env);
   return llmManager.updateModelList(options);
 }
-
-const logger = createScopedLogger('api.llmcall');
 
 function getCompletionTokenLimit(modelDetails: ModelInfo): number {
   // 1. If model specifies completion tokens, use that
@@ -65,30 +83,45 @@ function validateTokenLimits(modelDetails: ModelInfo, requestedTokens: number): 
 }
 
 async function llmCallAction({ context, request }: ActionFunctionArgs) {
-  const { system, message, model, provider, streamOutput } = await request.json<{
+  // Parse and validate request body
+  let rawBody: unknown;
+
+  try {
+    rawBody = await request.json();
+  } catch {
+    return new Response(JSON.stringify({ error: 'Invalid JSON in request body' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  const parsed = llmCallRequestSchema.safeParse(rawBody);
+
+  if (!parsed.success) {
+    logger.warn('LLM call request validation failed:', parsed.error.issues);
+
+    return new Response(
+      JSON.stringify({
+        error: 'Invalid request',
+        details: parsed.error.issues.map((issue) => ({
+          path: issue.path.join('.'),
+          message: issue.message,
+        })),
+      }),
+      {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      },
+    );
+  }
+
+  const { system, message, model, provider, streamOutput } = parsed.data as {
     system: string;
     message: string;
     model: string;
     provider: ProviderInfo;
     streamOutput?: boolean;
-  }>();
-
-  const { name: providerName } = provider;
-
-  // validate 'model' and 'provider' fields
-  if (!model || typeof model !== 'string') {
-    throw new Response('Invalid or missing model', {
-      status: 400,
-      statusText: 'Bad Request',
-    });
-  }
-
-  if (!providerName || typeof providerName !== 'string') {
-    throw new Response('Invalid or missing provider', {
-      status: 400,
-      statusText: 'Bad Request',
-    });
-  }
+  };
 
   const cookieHeader = request.headers.get('Cookie');
   const apiKeys = getApiKeysFromCookie(cookieHeader);

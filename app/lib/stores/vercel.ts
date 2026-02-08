@@ -17,8 +17,6 @@ if (storedConnection) {
 
     // If we have a stored connection but no user and no token, clear it and use env token
     if (!parsed.user && !parsed.token && envToken) {
-      console.log('Vercel store: Clearing incomplete saved connection, using env token');
-
       if (typeof window !== 'undefined') {
         localStorage.removeItem('vercel_connection');
       }
@@ -64,33 +62,24 @@ export const updateVercelConnection = (updates: Partial<VercelConnection>) => {
 
 // Auto-connect using environment token
 export async function autoConnectVercel() {
-  console.log('autoConnectVercel called, envToken exists:', !!envToken);
-
   if (!envToken) {
     console.error('No Vercel token found in environment');
     return { success: false, error: 'No Vercel token found in environment' };
   }
 
   try {
-    console.log('Setting isConnecting to true');
     isConnecting.set(true);
 
     // Test the connection via proxy (bypasses CORS)
-    console.log('Making API call to Vercel via proxy');
-
     const result = await vercelApi.testConnection(envToken);
-
-    console.log('Vercel API response:', result.success);
 
     if (!result.success || !result.data) {
       throw new Error(result.error || 'Vercel API error');
     }
 
     const userData = result.data as any;
-    console.log('Vercel API response userData:', userData);
 
     // Update connection
-    console.log('Updating Vercel connection');
     updateVercelConnection({
       user: userData.user || userData,
       token: envToken,
@@ -102,10 +91,7 @@ export async function autoConnectVercel() {
     });
 
     // Fetch stats
-    console.log('Fetching Vercel stats');
     await fetchVercelStats(envToken);
-
-    console.log('Vercel auto-connection successful');
 
     return { success: true };
   } catch (error) {
@@ -120,7 +106,6 @@ export async function autoConnectVercel() {
       error: error instanceof Error ? error.message : 'Unknown error',
     };
   } finally {
-    console.log('Setting isConnecting to false');
     isConnecting.set(false);
   }
 }

@@ -438,17 +438,6 @@ export function stageChange(
   const state = stagingStore.get();
   const { settings } = state;
 
-  // Debug: Log what's being staged
-  console.log('[STAGING DEBUG] stageChange called:', {
-    filePath: change.filePath,
-    type: change.type,
-    originalContentLength: change.originalContent?.length ?? 0,
-    newContentLength: change.newContent?.length ?? 0,
-    originalContentPreview: change.originalContent?.substring(0, 200) ?? 'null',
-    newContentPreview: change.newContent?.substring(0, 200) ?? 'null',
-    contentMatches: change.originalContent === change.newContent,
-  });
-
   // Check if staging is enabled
   if (!settings.isEnabled) {
     logger.debug(`Staging disabled, skipping: ${change.filePath}`);
