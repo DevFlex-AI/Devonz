@@ -1,26 +1,6 @@
 import React from 'react';
 import { Button } from '~/components/ui/Button';
 import { Card, CardContent, CardHeader } from '~/components/ui/Card';
-import {
-  Cpu,
-  Server,
-  Settings,
-  ExternalLink,
-  Package,
-  Code,
-  Database,
-  CheckCircle,
-  AlertCircle,
-  Activity,
-  Cable,
-  ArrowLeft,
-  Download,
-  Shield,
-  Globe,
-  Terminal,
-  Monitor,
-  Wifi,
-} from 'lucide-react';
 
 // Setup Guide Component
 function SetupGuide({ onBack }: { onBack: () => void }) {
@@ -35,7 +15,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
           className="bg-transparent hover:bg-transparent text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary transition-all duration-200 p-2"
           aria-label="Back to Dashboard"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <div className="i-ph:arrow-left w-4 h-4" />
         </Button>
         <div>
           <h2 className="text-xl font-semibold text-bolt-elements-textPrimary">Local Provider Setup Guide</h2>
@@ -50,7 +30,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
         <CardContent className="p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
-              <Shield className="w-5 h-5 text-blue-500" />
+              <div className="i-ph:shield w-5 h-5 text-blue-500" />
             </div>
             <div>
               <h3 className="text-lg font-semibold text-bolt-elements-textPrimary">System Requirements</h3>
@@ -60,21 +40,21 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
           <div className="grid md:grid-cols-3 gap-4 text-sm">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <Cpu className="w-4 h-4 text-green-500" />
+                <div className="i-ph:cpu w-4 h-4 text-green-500" />
                 <span className="font-medium text-bolt-elements-textPrimary">CPU</span>
               </div>
               <p className="text-bolt-elements-textSecondary">8+ cores, modern architecture</p>
             </div>
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <Database className="w-4 h-4 text-blue-500" />
+                <div className="i-ph:database w-4 h-4 text-blue-500" />
                 <span className="font-medium text-bolt-elements-textPrimary">RAM</span>
               </div>
               <p className="text-bolt-elements-textSecondary">16GB minimum, 32GB+ recommended</p>
             </div>
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <Monitor className="w-4 h-4 text-purple-500" />
+                <div className="i-ph:monitor w-4 h-4 text-purple-500" />
                 <span className="font-medium text-bolt-elements-textPrimary">GPU</span>
               </div>
               <p className="text-bolt-elements-textSecondary">NVIDIA RTX 30xx+ or AMD RX 6000+</p>
@@ -88,7 +68,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
         <CardHeader className="pb-6">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/20 flex items-center justify-center ring-1 ring-purple-500/30">
-              <Server className="w-6 h-6 text-purple-500" />
+              <div className="i-ph:server w-6 h-6 text-purple-500" />
             </div>
             <div className="flex-1">
               <h3 className="text-xl font-semibold text-bolt-elements-textPrimary">Ollama Setup</h3>
@@ -105,14 +85,14 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
           {/* Installation Options */}
           <div className="space-y-4">
             <h4 className="font-medium text-bolt-elements-textPrimary flex items-center gap-2">
-              <Download className="w-4 h-4" />
+              <div className="i-ph:download w-4 h-4" />
               1. Choose Installation Method
             </h4>
 
             {/* Desktop App - New and Recommended */}
             <div className="p-4 rounded-lg bg-green-500/5 border border-green-500/20">
               <div className="flex items-center gap-2 mb-3">
-                <Monitor className="w-5 h-5 text-green-500" />
+                <div className="i-ph:monitor w-5 h-5 text-green-500" />
                 <h5 className="font-medium text-green-500">🆕 Desktop App (Recommended)</h5>
               </div>
               <p className="text-sm text-bolt-elements-textSecondary mb-3">
@@ -121,7 +101,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="p-3 rounded-lg bg-bolt-elements-background-depth-3">
                   <div className="flex items-center gap-2 mb-2">
-                    <Monitor className="w-4 h-4 text-bolt-elements-textPrimary" />
+                    <div className="i-ph:monitor w-4 h-4 text-bolt-elements-textPrimary" />
                     <strong className="text-bolt-elements-textPrimary">macOS</strong>
                   </div>
                   <Button
@@ -136,15 +116,15 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
                       rel="noopener noreferrer"
                       className="flex items-center justify-center gap-2"
                     >
-                      <Download className="w-4 h-4 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300 flex-shrink-0" />
+                      <div className="i-ph:download w-4 h-4 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300 flex-shrink-0" />
                       <span className="flex-1 text-center font-medium">Download Desktop App</span>
-                      <ExternalLink className="w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300 flex-shrink-0" />
+                      <div className="i-ph:arrow-square-out w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300 flex-shrink-0" />
                     </a>
                   </Button>
                 </div>
                 <div className="p-3 rounded-lg bg-bolt-elements-background-depth-3">
                   <div className="flex items-center gap-2 mb-2">
-                    <Monitor className="w-4 h-4 text-bolt-elements-textPrimary" />
+                    <div className="i-ph:monitor w-4 h-4 text-bolt-elements-textPrimary" />
                     <strong className="text-bolt-elements-textPrimary">Windows</strong>
                   </div>
                   <Button
@@ -159,16 +139,16 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
                       rel="noopener noreferrer"
                       className="flex items-center justify-center gap-2"
                     >
-                      <Download className="w-4 h-4 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300 flex-shrink-0" />
+                      <div className="i-ph:download w-4 h-4 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300 flex-shrink-0" />
                       <span className="flex-1 text-center font-medium">Download Desktop App</span>
-                      <ExternalLink className="w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300 flex-shrink-0" />
+                      <div className="i-ph:arrow-square-out w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300 flex-shrink-0" />
                     </a>
                   </Button>
                 </div>
               </div>
               <div className="mt-3 p-3 rounded-lg bg-blue-500/5 border border-blue-500/20">
                 <div className="flex items-center gap-2 mb-1">
-                  <Globe className="w-4 h-4 text-blue-500" />
+                  <div className="i-ph:globe w-4 h-4 text-blue-500" />
                   <span className="font-medium text-blue-500 text-sm">Built-in Web Interface</span>
                 </div>
                 <p className="text-xs text-bolt-elements-textSecondary">
@@ -181,13 +161,13 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
             {/* CLI Installation */}
             <div className="p-4 rounded-lg bg-bolt-elements-background-depth-3">
               <div className="flex items-center gap-2 mb-3">
-                <Terminal className="w-5 h-5 text-bolt-elements-textPrimary" />
+                <div className="i-ph:terminal w-5 h-5 text-bolt-elements-textPrimary" />
                 <h5 className="font-medium text-bolt-elements-textPrimary">Command Line (Advanced)</h5>
               </div>
               <div className="grid md:grid-cols-3 gap-4">
                 <div className="p-3 rounded-lg bg-bolt-elements-background-depth-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <Monitor className="w-4 h-4 text-bolt-elements-textPrimary" />
+                    <div className="i-ph:monitor w-4 h-4 text-bolt-elements-textPrimary" />
                     <strong className="text-bolt-elements-textPrimary">Windows</strong>
                   </div>
                   <div className="text-xs bg-bolt-elements-background-depth-4 p-2 rounded font-mono text-bolt-elements-textPrimary">
@@ -196,7 +176,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
                 </div>
                 <div className="p-3 rounded-lg bg-bolt-elements-background-depth-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <Monitor className="w-4 h-4 text-bolt-elements-textPrimary" />
+                    <div className="i-ph:monitor w-4 h-4 text-bolt-elements-textPrimary" />
                     <strong className="text-bolt-elements-textPrimary">macOS</strong>
                   </div>
                   <div className="text-xs bg-bolt-elements-background-depth-4 p-2 rounded font-mono text-bolt-elements-textPrimary">
@@ -205,7 +185,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
                 </div>
                 <div className="p-3 rounded-lg bg-bolt-elements-background-depth-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <Terminal className="w-4 h-4 text-bolt-elements-textPrimary" />
+                    <div className="i-ph:terminal w-4 h-4 text-bolt-elements-textPrimary" />
                     <strong className="text-bolt-elements-textPrimary">Linux</strong>
                   </div>
                   <div className="text-xs bg-bolt-elements-background-depth-4 p-2 rounded font-mono text-bolt-elements-textPrimary">
@@ -219,13 +199,13 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
           {/* Latest Model Recommendations */}
           <div className="space-y-4">
             <h4 className="font-medium text-bolt-elements-textPrimary flex items-center gap-2">
-              <Package className="w-4 h-4" />
+              <div className="i-ph:package w-4 h-4" />
               2. Download Latest Models
             </h4>
             <div className="grid md:grid-cols-2 gap-4">
               <div className="p-4 rounded-lg bg-bolt-elements-background-depth-3">
                 <h5 className="font-medium text-bolt-elements-textPrimary mb-3 flex items-center gap-2">
-                  <Code className="w-4 h-4 text-green-500" />
+                  <div className="i-ph:code w-4 h-4 text-green-500" />
                   Code & Development
                 </h5>
                 <div className="space-y-2 text-xs bg-bolt-elements-background-depth-4 p-3 rounded font-mono text-bolt-elements-textPrimary">
@@ -238,7 +218,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
               </div>
               <div className="p-4 rounded-lg bg-bolt-elements-background-depth-3">
                 <h5 className="font-medium text-bolt-elements-textPrimary mb-3 flex items-center gap-2">
-                  <Terminal className="w-4 h-4 text-blue-500" />
+                  <div className="i-ph:terminal w-4 h-4 text-blue-500" />
                   General Purpose & Chat
                 </h5>
                 <div className="space-y-2 text-xs bg-bolt-elements-background-depth-4 p-3 rounded font-mono text-bolt-elements-textPrimary">
@@ -253,7 +233,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
             <div className="grid md:grid-cols-2 gap-4">
               <div className="p-4 rounded-lg bg-purple-500/5 border border-purple-500/20">
                 <div className="flex items-center gap-2 mb-2">
-                  <Activity className="w-4 h-4 text-purple-500" />
+                  <div className="i-ph:activity w-4 h-4 text-purple-500" />
                   <span className="font-medium text-purple-500">Performance Optimized</span>
                 </div>
                 <ul className="text-xs text-bolt-elements-textSecondary space-y-1">
@@ -265,7 +245,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
               </div>
               <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
                 <div className="flex items-center gap-2 mb-2">
-                  <AlertCircle className="w-4 h-4 text-yellow-500" />
+                  <div className="i-ph:warning-circle w-4 h-4 text-yellow-500" />
                   <span className="font-medium text-yellow-500">Pro Tips</span>
                 </div>
                 <ul className="text-xs text-bolt-elements-textSecondary space-y-1">
@@ -281,7 +261,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
           {/* Desktop App Features */}
           <div className="space-y-4">
             <h4 className="font-medium text-bolt-elements-textPrimary flex items-center gap-2">
-              <Monitor className="w-4 h-4" />
+              <div className="i-ph:monitor w-4 h-4" />
               3. Desktop App Features
             </h4>
             <div className="p-4 rounded-lg bg-blue-500/5 border border-blue-500/20">
@@ -311,7 +291,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
           {/* Troubleshooting */}
           <div className="space-y-4">
             <h4 className="font-medium text-bolt-elements-textPrimary flex items-center gap-2">
-              <Settings className="w-4 h-4" />
+              <div className="i-ph:gear w-4 h-4" />
               4. Troubleshooting & Commands
             </h4>
             <div className="grid md:grid-cols-2 gap-4">
@@ -351,7 +331,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
         <CardHeader className="pb-6">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/20 flex items-center justify-center ring-1 ring-blue-500/30">
-              <Monitor className="w-6 h-6 text-blue-500" />
+              <div className="i-ph:monitor w-6 h-6 text-blue-500" />
             </div>
             <div className="flex-1">
               <h3 className="text-xl font-semibold text-bolt-elements-textPrimary">LM Studio Setup</h3>
@@ -365,7 +345,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
           {/* Installation */}
           <div className="space-y-4">
             <h4 className="font-medium text-bolt-elements-textPrimary flex items-center gap-2">
-              <Download className="w-4 h-4" />
+              <div className="i-ph:download w-4 h-4" />
               1. Download & Install
             </h4>
             <div className="p-4 rounded-lg bg-bolt-elements-background-depth-3">
@@ -384,9 +364,9 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2"
                 >
-                  <Download className="w-4 h-4 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300 flex-shrink-0" />
+                  <div className="i-ph:download w-4 h-4 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300 flex-shrink-0" />
                   <span className="flex-1 text-center font-medium">Download LM Studio</span>
-                  <ExternalLink className="w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300 flex-shrink-0" />
+                  <div className="i-ph:arrow-square-out w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300 flex-shrink-0" />
                 </a>
               </Button>
             </div>
@@ -395,7 +375,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
           {/* Configuration */}
           <div className="space-y-4">
             <h4 className="font-medium text-bolt-elements-textPrimary flex items-center gap-2">
-              <Settings className="w-4 h-4" />
+              <div className="i-ph:gear w-4 h-4" />
               2. Configure Local Server
             </h4>
             <div className="space-y-3">
@@ -412,7 +392,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
 
               <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20">
                 <div className="flex items-center gap-2 mb-2">
-                  <AlertCircle className="w-4 h-4 text-red-500" />
+                  <div className="i-ph:warning-circle w-4 h-4 text-red-500" />
                   <span className="font-medium text-red-500">Critical: Enable CORS</span>
                 </div>
                 <div className="space-y-2">
@@ -435,7 +415,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
           {/* Advantages */}
           <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
             <div className="flex items-center gap-2 mb-2">
-              <CheckCircle className="w-4 h-4 text-blue-500" />
+              <div className="i-ph:check-circle w-4 h-4 text-blue-500" />
               <span className="font-medium text-blue-500">LM Studio Advantages</span>
             </div>
             <ul className="text-xs text-bolt-elements-textSecondary space-y-1 list-disc list-inside">
@@ -454,7 +434,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
         <CardHeader className="pb-6">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500/20 to-green-600/20 flex items-center justify-center ring-1 ring-green-500/30">
-              <Globe className="w-6 h-6 text-green-500" />
+              <div className="i-ph:globe w-6 h-6 text-green-500" />
             </div>
             <div className="flex-1">
               <h3 className="text-xl font-semibold text-bolt-elements-textPrimary">LocalAI Setup</h3>
@@ -468,7 +448,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
           {/* Installation */}
           <div className="space-y-4">
             <h4 className="font-medium text-bolt-elements-textPrimary flex items-center gap-2">
-              <Download className="w-4 h-4" />
+              <div className="i-ph:download w-4 h-4" />
               Installation Options
             </h4>
             <div className="grid md:grid-cols-2 gap-4">
@@ -492,7 +472,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
           {/* Configuration */}
           <div className="space-y-4">
             <h4 className="font-medium text-bolt-elements-textPrimary flex items-center gap-2">
-              <Settings className="w-4 h-4" />
+              <div className="i-ph:gear w-4 h-4" />
               Configuration
             </h4>
             <div className="p-4 rounded-lg bg-bolt-elements-background-depth-3">
@@ -513,7 +493,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
           {/* Advantages */}
           <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
             <div className="flex items-center gap-2 mb-2">
-              <CheckCircle className="w-4 h-4 text-green-500" />
+              <div className="i-ph:check-circle w-4 h-4 text-green-500" />
               <span className="font-medium text-green-500">LocalAI Advantages</span>
             </div>
             <ul className="text-xs text-bolt-elements-textSecondary space-y-1 list-disc list-inside">
@@ -532,7 +512,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
         <CardHeader className="pb-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
-              <Activity className="w-5 h-5 text-purple-500" />
+              <div className="i-ph:activity w-5 h-5 text-purple-500" />
             </div>
             <div>
               <h3 className="text-lg font-semibold text-bolt-elements-textPrimary">Performance Optimization</h3>
@@ -546,19 +526,19 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
               <h4 className="font-medium text-bolt-elements-textPrimary">Hardware Optimizations</h4>
               <ul className="text-sm text-bolt-elements-textSecondary space-y-2">
                 <li className="flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                  <div className="i-ph:check-circle w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
                   <span>Use NVIDIA GPU with CUDA for 5-10x speedup</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                  <div className="i-ph:check-circle w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
                   <span>Increase RAM for larger context windows</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                  <div className="i-ph:check-circle w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
                   <span>Use SSD storage for faster model loading</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                  <div className="i-ph:check-circle w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
                   <span>Close other applications to free up RAM</span>
                 </li>
               </ul>
@@ -567,19 +547,19 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
               <h4 className="font-medium text-bolt-elements-textPrimary">Software Optimizations</h4>
               <ul className="text-sm text-bolt-elements-textSecondary space-y-2">
                 <li className="flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                  <div className="i-ph:check-circle w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
                   <span>Use smaller models for faster responses</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                  <div className="i-ph:check-circle w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
                   <span>Enable quantization (4-bit, 8-bit models)</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                  <div className="i-ph:check-circle w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
                   <span>Reduce context length for chat applications</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                  <div className="i-ph:check-circle w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
                   <span>Use streaming responses for better UX</span>
                 </li>
               </ul>
@@ -593,7 +573,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
         <CardHeader className="pb-6">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/20 flex items-center justify-center ring-1 ring-orange-500/30">
-              <Wifi className="w-6 h-6 text-orange-500" />
+              <div className="i-ph:wifi-high w-6 h-6 text-orange-500" />
             </div>
             <div>
               <h3 className="text-xl font-semibold text-bolt-elements-textPrimary">Alternative Options</h3>
@@ -610,7 +590,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
               <div className="space-y-3">
                 <div className="p-3 rounded-lg bg-bolt-elements-background-depth-3">
                   <div className="flex items-center gap-2 mb-1">
-                    <Package className="w-4 h-4 text-blue-500" />
+                    <div className="i-ph:package w-4 h-4 text-blue-500" />
                     <span className="font-medium text-bolt-elements-textPrimary">Jan.ai</span>
                   </div>
                   <p className="text-xs text-bolt-elements-textSecondary">
@@ -619,7 +599,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
                 </div>
                 <div className="p-3 rounded-lg bg-bolt-elements-background-depth-3">
                   <div className="flex items-center gap-2 mb-1">
-                    <Terminal className="w-4 h-4 text-green-500" />
+                    <div className="i-ph:terminal w-4 h-4 text-green-500" />
                     <span className="font-medium text-bolt-elements-textPrimary">Oobabooga</span>
                   </div>
                   <p className="text-xs text-bolt-elements-textSecondary">
@@ -628,7 +608,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
                 </div>
                 <div className="p-3 rounded-lg bg-bolt-elements-background-depth-3">
                   <div className="flex items-center gap-2 mb-1">
-                    <Cable className="w-4 h-4 text-purple-500" />
+                    <div className="i-ph:plugs-connected w-4 h-4 text-purple-500" />
                     <span className="font-medium text-bolt-elements-textPrimary">KoboldAI</span>
                   </div>
                   <p className="text-xs text-bolt-elements-textSecondary">Focus on creative writing and storytelling</p>
@@ -640,21 +620,21 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
               <div className="space-y-3">
                 <div className="p-3 rounded-lg bg-bolt-elements-background-depth-3">
                   <div className="flex items-center gap-2 mb-1">
-                    <Globe className="w-4 h-4 text-orange-500" />
+                    <div className="i-ph:globe w-4 h-4 text-orange-500" />
                     <span className="font-medium text-bolt-elements-textPrimary">OpenRouter</span>
                   </div>
                   <p className="text-xs text-bolt-elements-textSecondary">Access to 100+ models through unified API</p>
                 </div>
                 <div className="p-3 rounded-lg bg-bolt-elements-background-depth-3">
                   <div className="flex items-center gap-2 mb-1">
-                    <Server className="w-4 h-4 text-red-500" />
+                    <div className="i-ph:server w-4 h-4 text-red-500" />
                     <span className="font-medium text-bolt-elements-textPrimary">Together AI</span>
                   </div>
                   <p className="text-xs text-bolt-elements-textSecondary">Fast inference with open-source models</p>
                 </div>
                 <div className="p-3 rounded-lg bg-bolt-elements-background-depth-3">
                   <div className="flex items-center gap-2 mb-1">
-                    <Activity className="w-4 h-4 text-pink-500" />
+                    <div className="i-ph:activity w-4 h-4 text-pink-500" />
                     <span className="font-medium text-bolt-elements-textPrimary">Groq</span>
                   </div>
                   <p className="text-xs text-bolt-elements-textSecondary">Ultra-fast LPU inference for Llama models</p>
