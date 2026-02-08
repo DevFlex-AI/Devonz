@@ -1,7 +1,6 @@
 import React from 'react';
 import { Switch } from '~/components/ui/Switch';
 import { Card, CardContent } from '~/components/ui/Card';
-import { Link, Server, Monitor, Globe } from 'lucide-react';
 import { classNames } from '~/utils/classNames';
 import type { IProviderConfig } from '~/types/model';
 import { PROVIDER_DESCRIPTIONS } from './types';
@@ -24,20 +23,20 @@ function ProviderCard({
   onStartEditing,
   onStopEditing,
 }: ProviderCardProps) {
-  const getIcon = (providerName: string) => {
+  const getIconClass = (providerName: string) => {
     switch (providerName) {
       case 'Ollama':
-        return Server;
+        return 'i-ph:server';
       case 'LMStudio':
-        return Monitor;
+        return 'i-ph:monitor';
       case 'OpenAILike':
-        return Globe;
+        return 'i-ph:globe';
       default:
-        return Server;
+        return 'i-ph:server';
     }
   };
 
-  const Icon = getIcon(provider.name);
+  const iconClass = getIconClass(provider.name);
 
   return (
     <Card
@@ -57,8 +56,8 @@ function ProviderCard({
                 boxShadow: provider.settings.enabled ? '0 0 0 1px rgba(139, 92, 246, 0.3)' : 'none',
               }}
             >
-              <Icon
-                className="w-5 h-5 transition-all duration-300"
+              <div
+                className={classNames(iconClass, 'w-5 h-5 transition-all duration-300')}
                 style={{ color: provider.settings.enabled ? '#a855f7' : '#6b7280' }}
               />
             </div>
@@ -111,7 +110,7 @@ function ProviderCard({
                       }}
                     >
                       <div className="flex items-center gap-3 text-gray-400 group-hover:text-white">
-                        <Link className="w-4 h-4 group-hover:text-purple-500 transition-colors" />
+                        <div className="i-ph:link w-4 h-4 group-hover:text-purple-500 transition-colors" />
                         <span className="font-mono">{provider.settings.baseUrl || 'Click to set base URL'}</span>
                       </div>
                     </button>
