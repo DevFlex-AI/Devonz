@@ -1,5 +1,3 @@
-import React from 'react';
-import { Loader2, AlertCircle, CheckCircle, Info, Github } from 'lucide-react';
 import { classNames } from '~/utils/classNames';
 
 interface LoadingStateProps {
@@ -28,7 +26,7 @@ export function LoadingState({ message = 'Loading...', size = 'md', className = 
         className,
       )}
     >
-      <Loader2 className={classNames('animate-spin mb-2', sizeClasses[size])} />
+      <div className={classNames('i-ph:spinner animate-spin mb-2', sizeClasses[size])} />
       <p className={classNames('text-bolt-elements-textSecondary', textSizeClasses[size])}>{message}</p>
     </div>
   );
@@ -65,7 +63,7 @@ export function ErrorState({
 
   return (
     <div className={classNames('flex flex-col items-center justify-center py-8 text-center', className)}>
-      <AlertCircle className={classNames('text-red-500 mb-2', sizeClasses[size])} />
+      <div className={classNames('i-ph:warning-circle text-red-500 mb-2', sizeClasses[size])} />
       <h3 className={classNames('font-medium text-bolt-elements-textPrimary mb-1', textSizeClasses[size])}>{title}</h3>
       <p className={classNames('text-bolt-elements-textSecondary mb-4', textSizeClasses[size])}>{message}</p>
       {onRetry && (
@@ -111,7 +109,7 @@ export function SuccessState({
 
   return (
     <div className={classNames('flex flex-col items-center justify-center py-8 text-center', className)}>
-      <CheckCircle className={classNames('text-green-500 mb-2', sizeClasses[size])} />
+      <div className={classNames('i-ph:check-circle text-green-500 mb-2', sizeClasses[size])} />
       <h3 className={classNames('font-medium text-bolt-elements-textPrimary mb-1', textSizeClasses[size])}>{title}</h3>
       <p className={classNames('text-bolt-elements-textSecondary mb-4', textSizeClasses[size])}>{message}</p>
       {onAction && (
@@ -134,7 +132,7 @@ interface GitHubConnectionRequiredProps {
 export function GitHubConnectionRequired({ onConnect, className = '' }: GitHubConnectionRequiredProps) {
   return (
     <div className={classNames('flex flex-col items-center justify-center py-12 text-center', className)}>
-      <Github className="w-12 h-12 text-bolt-elements-textTertiary mb-4" />
+      <div className="i-ph:github-logo size-12 text-bolt-elements-textTertiary mb-4" />
       <h3 className="text-lg font-medium text-bolt-elements-textPrimary mb-2">GitHub Connection Required</h3>
       <p className="text-sm text-bolt-elements-textSecondary mb-6 max-w-md">
         Please connect your GitHub account to access this feature. You'll be able to browse repositories, push code, and
@@ -145,7 +143,7 @@ export function GitHubConnectionRequired({ onConnect, className = '' }: GitHubCo
           onClick={onConnect}
           className="px-6 py-3 bg-bolt-elements-item-contentAccent text-white rounded-lg hover:bg-bolt-elements-item-contentAccent/90 transition-colors flex items-center gap-2"
         >
-          <Github className="w-4 h-4" />
+          <div className="i-ph:github-logo size-4" />
           Connect GitHub
         </button>
       )}
@@ -156,7 +154,7 @@ export function GitHubConnectionRequired({ onConnect, className = '' }: GitHubCo
 interface InformationStateProps {
   title: string;
   message: string;
-  icon?: React.ComponentType<{ className?: string }>;
+  iconClass?: string;
   onAction?: () => void;
   actionLabel?: string;
   size?: 'sm' | 'md' | 'lg';
@@ -166,16 +164,16 @@ interface InformationStateProps {
 export function InformationState({
   title,
   message,
-  icon = Info,
+  iconClass = 'i-ph:info',
   onAction,
   actionLabel = 'Got it',
   size = 'md',
   className = '',
 }: InformationStateProps) {
   const sizeClasses = {
-    sm: 'w-4 h-4',
-    md: 'w-6 h-6',
-    lg: 'w-8 h-8',
+    sm: 'size-4',
+    md: 'size-6',
+    lg: 'size-8',
   };
 
   const textSizeClasses = {
@@ -186,7 +184,7 @@ export function InformationState({
 
   return (
     <div className={classNames('flex flex-col items-center justify-center py-8 text-center', className)}>
-      {React.createElement(icon, { className: classNames('text-blue-500 mb-2', sizeClasses[size]) })}
+      <div className={classNames(iconClass, 'text-blue-500 mb-2', sizeClasses[size])} />
       <h3 className={classNames('font-medium text-bolt-elements-textPrimary mb-1', textSizeClasses[size])}>{title}</h3>
       <p className={classNames('text-bolt-elements-textSecondary mb-4', textSizeClasses[size])}>{message}</p>
       {onAction && (
@@ -229,13 +227,13 @@ export function ConnectionTestIndicator({ status, message, timestamp, className 
   const getStatusIcon = () => {
     switch (status) {
       case 'success':
-        return <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />;
+        return <div className="i-ph:check-circle size-5 text-green-600 dark:text-green-400" />;
       case 'error':
-        return <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />;
+        return <div className="i-ph:warning-circle size-5 text-red-600 dark:text-red-400" />;
       case 'testing':
-        return <Loader2 className="w-5 h-5 animate-spin text-blue-600 dark:text-blue-400" />;
+        return <div className="i-ph:spinner size-5 animate-spin text-blue-600 dark:text-blue-400" />;
       default:
-        return <Info className="w-5 h-5 text-gray-600 dark:text-gray-400" />;
+        return <div className="i-ph:info size-5 text-gray-600 dark:text-gray-400" />;
     }
   };
 
