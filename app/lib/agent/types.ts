@@ -284,6 +284,9 @@ export type AgentStatus =
  * Tool call record
  */
 export interface ToolCallRecord {
+  /** Unique ID for this tool call */
+  id?: string;
+
   /** Tool name */
   name: string;
 
@@ -342,6 +345,12 @@ export interface AgentExecutionState {
 
   /** Commands executed during this session */
   commandsExecuted: string[];
+
+  /** Session end time */
+  sessionEndTime?: number;
+
+  /** Pending approval request */
+  pendingApproval?: ApprovalRequest;
 }
 
 /**
@@ -399,22 +408,25 @@ export interface AgentTaskResult {
  */
 export interface ApprovalRequest {
   /** Unique ID for this approval request */
-  id: string;
+  id?: string;
 
   /** Type of action requiring approval */
-  type: 'file_create' | 'file_modify' | 'command';
+  type?: 'file_create' | 'file_modify' | 'command';
+
+  /** Reason for approval */
+  reason?: string;
 
   /** Description of the action */
-  description: string;
+  description?: string;
 
   /** Tool name */
-  toolName: string;
+  toolName?: string;
 
   /** Tool parameters */
-  params: Record<string, unknown>;
+  params?: Record<string, unknown>;
 
   /** Timestamp when approval was requested */
-  timestamp: number;
+  timestamp?: number;
 }
 
 /**

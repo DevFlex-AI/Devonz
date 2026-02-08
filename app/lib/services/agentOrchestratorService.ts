@@ -30,6 +30,7 @@ function createInitialState(): AgentExecutionState {
     filesCreated: [],
     filesModified: [],
     commandsExecuted: [],
+    sessionStartTime: null,
   };
 }
 
@@ -190,9 +191,9 @@ export class AgentOrchestrator {
       return false;
     }
 
-    this.state.status = 'awaiting_approval';
+    this.state.status = 'waiting_for_approval';
     this.state.pendingApproval = request;
-    this.notifyStatusChange('awaiting_approval');
+    this.notifyStatusChange('waiting_for_approval');
 
     try {
       const approved = await this.options.onApprovalNeeded(request);
