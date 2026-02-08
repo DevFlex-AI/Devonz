@@ -10,7 +10,6 @@ import { LoadingOverlay } from '~/components/ui/LoadingOverlay';
 import { classNames } from '~/utils/classNames';
 import { Button } from '~/components/ui/Button';
 import type { IChatMetadata } from '~/lib/persistence/db';
-import { X, Github, GitBranch } from 'lucide-react';
 
 // Import the new repository selector components
 import { GitHubRepositorySelector } from '~/components/@settings/tabs/github/components/GitHubRepositorySelector';
@@ -185,8 +184,8 @@ ${escapeBoltTags(file.content)}
       >
         Clone a repo
         <div className="flex items-center gap-1 ml-2">
-          <Github className="w-4 h-4" />
-          <GitBranch className="w-4 h-4" />
+          <div className="i-ph:github-logo size-4" />
+          <div className="i-ph:git-branch size-4" />
         </div>
       </Button>
 
@@ -204,7 +203,7 @@ ${escapeBoltTags(file.content)}
                   onClick={() => setIsDialogOpen(false)}
                   className="p-2 rounded-lg bg-transparent hover:bg-[#2a2a2a] text-gray-400 hover:text-white transition-all duration-200 hover:scale-105 active:scale-95"
                 >
-                  <X className="w-5 h-5 transition-transform duration-200 hover:rotate-90" />
+                  <div className="i-ph:x size-5 transition-transform duration-200 hover:rotate-90" />
                 </button>
               </div>
 
@@ -216,7 +215,7 @@ ${escapeBoltTags(file.content)}
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center group-hover:bg-purple-500/30 transition-colors">
-                      <Github className="w-6 h-6 text-purple-400" />
+                      <div className="i-ph:github-logo size-6 text-purple-400" />
                     </div>
                     <div>
                       <div className="font-medium text-white">GitHub</div>
@@ -232,7 +231,7 @@ ${escapeBoltTags(file.content)}
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center group-hover:bg-orange-500/30 transition-colors">
-                      <GitBranch className="w-6 h-6 text-orange-400" />
+                      <div className="i-ph:git-branch size-6 text-orange-400" />
                     </div>
                     <div>
                       <div className="font-medium text-white">GitLab</div>
@@ -253,7 +252,7 @@ ${escapeBoltTags(file.content)}
             <div className="p-6 border-b border-bolt-elements-borderColor dark:border-bolt-elements-borderColor flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center">
-                  <Github className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                  <div className="i-ph:github-logo size-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary">
@@ -271,7 +270,7 @@ ${escapeBoltTags(file.content)}
                 }}
                 className="p-2 rounded-lg bg-transparent hover:bg-bolt-elements-background-depth-1 dark:hover:bg-bolt-elements-background-depth-1 text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary dark:hover:text-bolt-elements-textPrimary transition-all duration-200 hover:scale-105 active:scale-95"
               >
-                <X className="w-5 h-5 transition-transform duration-200 hover:rotate-90" />
+                <div className="i-ph:x size-5 transition-transform duration-200 hover:rotate-90" />
               </button>
             </div>
 
@@ -289,7 +288,7 @@ ${escapeBoltTags(file.content)}
             <div className="p-6 border-b border-bolt-elements-borderColor dark:border-bolt-elements-borderColor flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-orange-500/10 dark:bg-orange-500/20 flex items-center justify-center">
-                  <GitBranch className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                  <div className="i-ph:git-branch size-6 text-orange-600 dark:text-orange-400" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary">
@@ -307,7 +306,7 @@ ${escapeBoltTags(file.content)}
                 }}
                 className="p-2 rounded-lg bg-transparent hover:bg-bolt-elements-background-depth-1 dark:hover:bg-bolt-elements-background-depth-1 text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary dark:hover:text-bolt-elements-textPrimary transition-all duration-200 hover:scale-105 active:scale-95"
               >
-                <X className="w-5 h-5 transition-transform duration-200 hover:rotate-90" />
+                <div className="i-ph:x size-5 transition-transform duration-200 hover:rotate-90" />
               </button>
             </div>
 
