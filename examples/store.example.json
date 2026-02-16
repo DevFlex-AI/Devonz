@@ -1,0 +1,116 @@
+{
+  "ios": {
+    "bundleId": "com.example.app",
+    "version": "1.0.0",
+    "buildNumber": "1",
+    "releaseType": "testflight-internal",
+    "releaseNotes": "Initial release with core features",
+    "exportCompliance": {
+      "usesEncryption": false,
+      "isExempt": true
+    },
+    "reviewInformation": {
+      "contactFirstName": "John",
+      "contactLastName": "Doe",
+      "contactEmail": "john@example.com",
+      "contactPhone": "+1234567890",
+      "demoUser": "",
+      "demoPassword": "",
+      "notes": ""
+    },
+    "appInformation": {
+      "subtitle": "My Awesome App",
+      "promotionalText": "Check out our new app with amazing features!",
+      "description": "This is an amazing app that helps you be more productive. With intuitive design and powerful features, you can accomplish your tasks faster than ever before.\n\nKey features:\n- Feature 1 description\n- Feature 2 description\n- Feature 3 description",
+      "keywords": [
+        "productivity",
+        "utility",
+        "app",
+        "tools"
+      ],
+      "privacyPolicyUrl": "https://example.com/privacy",
+      "supportUrl": "https://example.com/support",
+      "marketingUrl": "https://example.com"
+    },
+    "screenshots": {
+      "iphone67": [
+        "assets/screenshots/ios/iphone-1.png",
+        "assets/screenshots/ios/iphone-2.png",
+        "assets/screenshots/ios/iphone-3.png",
+        "assets/screenshots/ios/iphone-4.png",
+        "assets/screenshots/ios/iphone-5.png"
+      ],
+      "iphone55": [
+        "assets/screenshots/ios/iphone-5.5-1.png",
+        "assets/screenshots/ios/iphone-5.5-2.png",
+        "assets/screenshots/ios/iphone-5.5-3.png"
+      ],
+      "ipad129": [
+        "assets/screenshots/ios/ipad-1.png",
+        "assets/screenshots/ios/ipad-2.png",
+        "assets/screenshots/ios/ipad-3.png",
+        "assets/screenshots/ios/ipad-4.png"
+      ]
+    },
+    "appIcon": "assets/icons/ios/icon.png",
+    "ageRating": "4+",
+    "signInRequired": false
+  },
+  "android": {
+    "packageName": "com.example.app",
+    "versionName": "1.0.0",
+    "versionCode": 1,
+    "track": "internal",
+    "userFraction": 0.1,
+    "changelogs": {
+      "en-US": "Initial release with core features:\n\n- Feature 1\n- Feature 2\n- Feature 3"
+    },
+    "listing": {
+      "title": "My Awesome App",
+      "shortDescription": "An amazing productivity app to help you accomplish more",
+      "fullDescription": "This is an amazing app that helps you be more productive. With intuitive design and powerful features, you can accomplish your tasks faster than ever before.\n\nKey features:\n\n• Feature 1 - Description of feature 1\n• Feature 2 - Description of feature 2\n• Feature 3 - Description of feature 3\n• Feature 4 - Description of feature 4\n\nDownload now and start being more productive today!",
+      "privacyPolicyUrl": "https://example.com/privacy",
+      "videoUrl": ""
+    },
+    "graphics": {
+      "icon": "assets/icons/android/icon.png",
+      "featureGraphic": "assets/screenshots/android/feature.png",
+      "promoGraphic": "assets/screenshots/android/promo.png"
+    },
+    "screenshots": {
+      "phone": [
+        "assets/screenshots/android/phone-1.png",
+        "assets/screenshots/android/phone-2.png",
+        "assets/screenshots/android/phone-3.png",
+        "assets/screenshots/android/phone-4.png"
+      ],
+      "sevenInch": [
+        "assets/screenshots/android/7in-1.png",
+        "assets/screenshots/android/7in-2.png"
+      ],
+      "tenInch": [
+        "assets/screenshots/android/10in-1.png",
+        "assets/screenshots/android/10in-2.png"
+      ]
+    },
+    "contentRating": {
+      "category": "GENERAL",
+      "alcoholTobacco": "NONE",
+      "drugs": "NONE",
+      "gambling": "NONE"
+    },
+    "dataSafety": {
+      "collectsData": true,
+      "sharedData": [],
+      "collectedData": [
+        {
+          "type": "Location",
+          "purpose": [
+            "App functionality"
+          ],
+          "optional": true
+        }
+      ]
+    }
+  }
+}

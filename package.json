@@ -21,7 +21,9 @@
     "typecheck": "tsc",
     "preview": "pnpm run build && pnpm run start",
     "prepare": "husky",
-    "clean": "node scripts/clean.js"
+    "clean": "node scripts/clean.js",
+    "publish:validate": "tsx scripts/publish-validate.ts",
+    "publish:validate:help": "tsx scripts/publish-validate.ts help"
   },
   "engines": {
     "node": ">=18.18.0"
@@ -160,6 +162,7 @@
     "pnpm": "^9.14.4",
     "prettier": "^3.5.3",
     "rimraf": "^4.4.1",
+    "tsx": "^4.19.0",
     "sass-embedded": "^1.81.0",
     "typescript": "^5.7.2",
     "unified": "^11.0.5",
