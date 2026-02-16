@@ -1,0 +1,295 @@
+name: Mobile Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        required: true
+        type: choice
+        options:
+          - ios
+          - android
+          - both
+        description: 'Platform to publish'
+      dry_run:
+        required: true
+        type: boolean
+        default: true
+        description: 'Dry run mode (no real submission)'
+      validate_only:
+        required: false
+        type: boolean
+        default: false
+        description: 'Validate metadata only (no build)'
+
+jobs:
+  validate:
+    name: Validate Metadata
+    runs-on: ubuntu-latest
+    if: github.event.inputs.validate_only == 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate store.json
+        run: |
+          curl -X POST ${{ secrets.API_URL }}/api/publish/validate \
+            -H "Content-Type: application/json" \
+            -d '{
+              "type": "metadata",
+              "data": $(cat examples/store.example.json)
+            }'
+        env:
+          API_URL: ${{ secrets.API_URL }}
+
+      - name: Run preflight checks
+        run: |
+          curl -X POST ${{ secrets.API_URL }}/api/publish/validate \
+            -H "Content-Type: application/json" \
+            -d '{
+              "type": "preflight",
+              "data": $(cat examples/store.example.json),
+              "dryRun": true
+            }'
+        env:
+          API_URL: ${{ secrets.API_URL }}
+
+  submit:
+    name: Submit to Store
+    runs-on: ubuntu-latest
+    if: github.event.inputs.validate_only != 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check secrets
+        run: |
+          echo "Checking required secrets..."
+          if [ "${{ github.event.inputs.platform }}" == "ios" ] || [ "${{ github.event.inputs.platform }}" == "both" ]; then
+            if [ -z "${{ secrets.ASC_ISSUER_ID }}" ] || [ -z "${{ secrets.ASC_KEY_ID }}" ] || [ -z "${{ secrets.ASC_PRIVATE_KEY_B64 }}" ]; then
+              echo "Error: iOS secrets not configured"
+              exit 1
+            fi
+            echo "iOS secrets: OK"
+          fi
+
+          if [ "${{ github.event.inputs.platform }}" == "android" ] || [ "${{ github.event.inputs.platform }}" == "both" ]; then
+            if [ -z "${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_B64 }}" ]; then
+              echo "Error: Android secrets not configured"
+              exit 1
+            fi
+            echo "Android secrets: OK"
+          fi
+
+      - name: Submit iOS
+        if: github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'both'
+        run: |
+          curl -X POST ${{ secrets.API_URL }}/api/publish/start \
+            -H "Content-Type: application/json" \
+            -d '{
+              "type": "ios",
+              "platform": "ios",
+              "data": {
+                "bundleId": "com.example.app",
+                "version": "1.0.0",
+                "buildNumber": "1",
+                "releaseType": "testflight-internal",
+                "releaseNotes": "Automated release from GitHub Actions",
+                "buildPath": "",
+                "metadata": $(cat examples/store.example.json),
+                "skipMetadata": false,
+                "skipScreenshots": false
+              },
+              "options": {
+                "dryRun": ${{ github.event.inputs.dry_run }}
+              }
+            }'
+        env:
+          API_URL: ${{ secrets.API_URL }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_PRIVATE_KEY_B64: ${{ secrets.ASC_PRIVATE_KEY_B64 }}
+          ASC_TEAM_ID: ${{ secrets.ASC_TEAM_ID }}
+
+      - name: Submit Android
+        if: github.event.inputs.platform == 'android' || github.event.inputs.platform == 'both'
+        run: |
+          curl -X POST ${{ secrets.API_URL }}/api/publish/start \
+            -H "Content-Type: application/json" \
+            -d '{
+              "type": "android",
+              "platform": "android",
+              "data": {
+                "packageName": "com.example.app",
+                "versionName": "1.0.0",
+                "versionCode": 1,
+                "track": "internal",
+                "userFraction": 0.1,
+                "changelogs": {
+                  "en-US": "Automated release from GitHub Actions"
+                },
+                "buildPath": "",
+                "metadata": $(cat examples/store.example.json),
+                "skipMetadata": false,
+                "skipScreenshots": false
+              },
+              "options": {
+                "dryRun": ${{ github.event.inputs.dry_run }}
+              }
+            }'
+        env:
+          API_URL: ${{ secrets.API_URL }}
+          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_B64: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_B64 }}
+          PLAY_DEFAULT_TRACK: internal
+
+  build-flutter-android:
+    name: Build Flutter Android (AAB)
+    runs-on: ubuntu-latest
+    if: github.event.inputs.validate_only != 'true' && (github.event.inputs.platform == 'android' || github.event.inputs.platform == 'both')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.16.0'
+          channel: 'stable'
+          cache: true
+          cache-key: 'flutter-${{ runner.os }}-3.16.0'
+
+      - name: Install dependencies
+        run: |
+          cd packages/mobile-flutter || cd apps/mobile-flutter || cd mobile-flutter
+          flutter pub get
+
+      - name: Build AAB
+        run: |
+          cd packages/mobile-flutter || cd apps/mobile-flutter || cd mobile-flutter
+          flutter build appbundle --release
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-android-aab
+          path: **/build/app/outputs/bundle/release/app-release.aab
+          retention-days: 30
+
+  build-flutter-ios:
+    name: Build Flutter iOS (IPA)
+    runs-on: macos-14
+    if: github.event.inputs.validate_only != 'true' && (github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'both')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.16.0'
+          channel: 'stable'
+          cache: true
+          cache-key: 'flutter-${{ runner.os }}-3.16.0'
+
+      - name: Install dependencies
+        run: |
+          cd packages/mobile-flutter || cd apps/mobile-flutter || cd mobile-flutter
+          flutter pub get
+
+      - name: Build IPA
+        run: |
+          cd packages/mobile-flutter || cd apps/mobile-flutter || cd mobile-flutter
+          flutter build ipa --release
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-ios-ipa
+          path: **/build/ios/archive/*.ipa
+          retention-days: 30
+
+  build-expo-android:
+    name: Build Expo Android (AAB)
+    runs-on: ubuntu-latest
+    if: github.event.inputs.validate_only != 'true' && (github.event.inputs.platform == 'android' || github.event.inputs.platform == 'both')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Setup EAS
+        run: npm install -g eas-cli
+
+      - name: Install dependencies
+        run: |
+          cd packages/mobile-rn || cd apps/mobile-rn || cd mobile-rn
+          npm install
+
+      - name: Build AAB
+        run: |
+          cd packages/mobile-rn || cd apps/mobile-rn || cd mobile-rn
+          eas build --platform android --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: expo-android-aab
+          path: *.aab
+          retention-days: 30
+
+  build-expo-ios:
+    name: Build Expo iOS (IPA)
+    runs-on: macos-14
+    if: github.event.inputs.validate_only != 'true' && (github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'both')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Setup EAS
+        run: npm install -g eas-cli
+
+      - name: Install dependencies
+        run: |
+          cd packages/mobile-rn || cd apps/mobile-rn || cd mobile-rn
+          npm install
+
+      - name: Build IPA
+        run: |
+          cd packages/mobile-rn || cd apps/mobile-rn || cd mobile-rn
+          eas build --platform ios --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: expo-ios-ipa
+          path: *.ipa
+          retention-days: 30
