@@ -689,8 +689,14 @@ export default function NetlifyConnection() {
                                         }
 
                                         setIsActionLoading(true);
-                                        await action.action(site.id);
-                                        setIsActionLoading(false);
+
+                                        try {
+                                          await action.action(site.id);
+                                        } catch {
+                                          toast.error(`Failed to ${action.name.toLowerCase()}`);
+                                        } finally {
+                                          setIsActionLoading(false);
+                                        }
                                       }}
                                       disabled={isActionLoading}
                                       className="flex items-center gap-1 text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary"

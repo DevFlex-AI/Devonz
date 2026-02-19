@@ -549,6 +549,9 @@ export const StagedChangesPanel = memo(() => {
 
         // Don't show toast for snapshot errors - files are still applied
       }
+    } catch (error) {
+      logger.error('Failed to accept all changes:', error);
+      toast.error('Failed to apply changes');
     } finally {
       setIsApplying(false);
     }
@@ -598,6 +601,9 @@ export const StagedChangesPanel = memo(() => {
          */
         toast.warning('Files reverted. Note: First response cannot be rewound from chat history.');
       }
+    } catch (error) {
+      logger.error('Failed to reject all changes:', error);
+      toast.error('Failed to revert changes');
     } finally {
       setIsApplying(false);
     }

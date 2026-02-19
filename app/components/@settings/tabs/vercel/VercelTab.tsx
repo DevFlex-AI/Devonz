@@ -272,8 +272,14 @@ export default function VercelTab() {
     }
 
     setIsProjectActionLoading(true);
-    await action.action(projectId);
-    setIsProjectActionLoading(false);
+
+    try {
+      await action.action(projectId);
+    } catch {
+      toast.error(`Failed to ${action.name.toLowerCase()}`);
+    } finally {
+      setIsProjectActionLoading(false);
+    }
   }, []);
 
   const renderProjects = useCallback(() => {
