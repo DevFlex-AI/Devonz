@@ -55,14 +55,19 @@ const fuzzyMatch = (query: string, text: string): { score: number; matches: bool
   };
 };
 
+const escapeHtml = (text: string): string =>
+  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
 const highlightText = (text: string, query: string): string => {
+  const escaped = escapeHtml(text);
+
   if (!query) {
-    return text;
+    return escaped;
   }
 
   const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
 
-  return text.replace(regex, '<mark class="bg-[#3d5a7f]/40 text-current rounded px-0.5">$1</mark>');
+  return escaped.replace(regex, '<mark class="bg-[#3d5a7f]/40 text-current rounded px-0.5">$1</mark>');
 };
 
 const formatContextSize = (tokens: number): string => {
