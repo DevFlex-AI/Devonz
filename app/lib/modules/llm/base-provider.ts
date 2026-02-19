@@ -21,26 +21,6 @@ export abstract class BaseProvider implements ProviderInfo {
   icon?: string;
 
   /**
-   * Convert Cloudflare Env bindings to a plain Record<string, string>.
-   * Useful because provider methods expect Record<string, string> but
-   * Cloudflare Workers pass an Env interface.
-   */
-  protected convertEnvToRecord(env?: Env): Record<string, string> {
-    if (!env) {
-      return {};
-    }
-
-    return Object.entries(env).reduce(
-      (acc, [key, value]) => {
-        acc[key] = String(value);
-
-        return acc;
-      },
-      {} as Record<string, string>,
-    );
-  }
-
-  /**
    * Rewrite localhost / 127.0.0.1 URLs to host.docker.internal when
    * running inside Docker. Only applies on the server side.
    */

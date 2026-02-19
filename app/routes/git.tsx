@@ -10,6 +10,13 @@ export const meta: MetaFunction = () => {
   return [
     { title: 'Devonz' },
     { name: 'description', content: 'Talk with Devonz, an AI-powered development assistant' },
+    { property: 'og:title', content: 'Devonz' },
+    { property: 'og:description', content: 'Talk with Devonz, an AI-powered development assistant' },
+    { property: 'og:type', content: 'website' },
+    { property: 'og:image', content: '/logo-dark-styled.png' },
+    { name: 'twitter:card', content: 'summary' },
+    { name: 'twitter:title', content: 'Devonz' },
+    { name: 'twitter:description', content: 'Talk with Devonz, an AI-powered development assistant' },
   ];
 };
 
