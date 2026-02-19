@@ -65,17 +65,18 @@ export function ChatModeSelector({ chatMode, setChatMode, planMode, setPlanMode 
           sideOffset={8}
           side="top"
           align="start"
-          className="bg-bolt-elements-background-depth-2 rounded-lg shadow-xl z-workbench border border-bolt-elements-borderColor overflow-hidden min-w-[200px]"
+          className="rounded-lg z-workbench border border-[#1e293b] overflow-hidden min-w-[200px]"
+          style={{ backgroundColor: '#0f1219', boxShadow: '0 8px 32px rgba(0,0,0,0.6)' }}
         >
-          <div className="p-1">
+          <div className="p-1" style={{ backgroundColor: '#0f1219' }}>
             {modes.map((mode) => (
               <button
                 key={mode.id}
                 className={classNames(
-                  'w-full flex items-center gap-3 px-3 py-2 rounded-md text-left transition-colors',
+                  'w-full flex items-center gap-3 px-3 py-2 rounded-md text-left transition-colors border-none',
                   activeMode === mode.id
                     ? 'bg-bolt-elements-item-backgroundAccent text-bolt-elements-item-contentAccent'
-                    : 'text-bolt-elements-textSecondary hover:bg-bolt-elements-item-backgroundDefault hover:text-bolt-elements-textPrimary',
+                    : 'bg-transparent text-[#9ca3af] hover:bg-[#1a1f2e] hover:text-white',
                 )}
                 onClick={() => handleSelect(mode.id)}
               >
@@ -88,7 +89,7 @@ export function ChatModeSelector({ chatMode, setChatMode, planMode, setPlanMode 
               </button>
             ))}
           </div>
-          <Popover.Arrow className="fill-bolt-elements-background-depth-2" />
+          <Popover.Arrow className="fill-[#0f1219]" />
         </Popover.Content>
       </Popover.Portal>
     </Popover.Root>
