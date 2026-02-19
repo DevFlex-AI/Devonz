@@ -529,6 +529,7 @@ export function GitLabDeploymentDialog({ isOpen, onClose, projectName, files }: 
                   <div className="relative">
                     {user.avatar_url && user.avatar_url !== 'null' && user.avatar_url !== '' ? (
                       <img
+                        loading="lazy"
                         src={user.avatar_url}
                         alt={user.username}
                         className="w-10 h-10 rounded-full object-cover"

@@ -819,6 +819,7 @@ export default function VercelTab() {
               <div className="space-y-4">
                 <div className="flex items-center gap-4 p-4 bg-bolt-elements-background-depth-1 dark:bg-bolt-elements-background-depth-1 rounded-lg">
                   <img
+                    loading="lazy"
                     src={`https://vercel.com/api/www/avatar?u=${connection.user?.username}`}
                     referrerPolicy="no-referrer"
                     crossOrigin="anonymous"

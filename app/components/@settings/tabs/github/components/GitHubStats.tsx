@@ -244,6 +244,7 @@ function GitHubStatsContent({
                       className="flex items-center gap-3 p-3 rounded-lg bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-2 border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor hover:border-bolt-elements-borderColorActive dark:hover:border-bolt-elements-borderColorActive transition-all duration-200"
                     >
                       <img
+                        loading="lazy"
                         src={org.avatar_url}
                         alt={org.login}
                         className="w-8 h-8 rounded-full border border-bolt-elements-borderColor"

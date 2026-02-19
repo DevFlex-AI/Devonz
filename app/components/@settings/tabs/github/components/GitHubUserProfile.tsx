@@ -12,6 +12,7 @@ export function GitHubUserProfile({ user, className = '' }: GitHubUserProfilePro
       className={`flex items-center gap-4 p-4 bg-bolt-elements-background-depth-1 dark:bg-bolt-elements-background-depth-1 rounded-lg ${className}`}
     >
       <img
+        loading="lazy"
         src={user.avatar_url}
         alt={user.login}
         className="w-12 h-12 rounded-full border-2 border-bolt-elements-item-contentAccent dark:border-bolt-elements-item-contentAccent"

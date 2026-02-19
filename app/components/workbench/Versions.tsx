@@ -36,7 +36,7 @@ const VersionCard = memo(({ version, onRestore, onRevert }: VersionCardProps) =>
         }}
       >
         {version.thumbnail ? (
-          <img src={version.thumbnail} alt="Version preview" className="w-full h-full object-cover" />
+          <img loading="lazy" src={version.thumbnail} alt="Version preview" className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-bolt-elements-textTertiary">
             <div className="i-ph:image text-2xl" />

@@ -237,6 +237,7 @@ export default function VercelConnection() {
               <pre className="hidden">{JSON.stringify(connection.user, null, 2)}</pre>
 
               <img
+                loading="lazy"
                 src={`https://vercel.com/api/www/avatar?u=${connection.user?.username || connection.user?.user?.username}`}
                 referrerPolicy="no-referrer"
                 crossOrigin="anonymous"

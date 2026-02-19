@@ -110,6 +110,7 @@ export function SupabaseConnection() {
               <div className="space-y-4">
                 <DialogTitle>
                   <img
+                    loading="lazy"
                     className="w-5 h-5"
                     height="24"
                     width="24"
@@ -185,6 +186,7 @@ export function SupabaseConnection() {
                 <div className="flex items-center justify-between mb-2">
                   <DialogTitle>
                     <img
+                      loading="lazy"
                       className="w-5 h-5"
                       height="24"
                       width="24"

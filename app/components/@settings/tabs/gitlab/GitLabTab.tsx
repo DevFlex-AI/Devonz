@@ -211,6 +211,7 @@ export default function GitLabTab() {
               connection.user.avatar_url !== 'null' &&
               connection.user.avatar_url !== '' ? (
                 <img
+                  loading="lazy"
                   src={connection.user.avatar_url}
                   alt={connection.user.username}
                   className="w-full h-full rounded-full object-cover"
