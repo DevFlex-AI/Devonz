@@ -1,7 +1,7 @@
 import React, { memo, useCallback } from 'react';
 import { useStore } from '@nanostores/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { planStore, planProgress, approvePlan, rejectPlan, type PlanTask } from '~/lib/stores/plan';
+import { planStore, planProgress, approvePlan, rejectPlan, modifyPlan, type PlanTask } from '~/lib/stores/plan';
 import { classNames } from '~/utils/classNames';
 import { Button } from '~/components/ui/Button';
 import { Progress } from '~/components/ui/Progress';
@@ -28,35 +28,29 @@ interface PlanApprovalAlertProps {
 
   /** Optional callback when plan is rejected */
   onReject?: () => void;
-
-  /** Optional callback to send a message to continue execution */
-  postMessage?: (message: string) => void;
 }
 
 /**
- * PlanApprovalAlert component - shows in the chat area when a plan is pending approval
+ * PlanApprovalAlert component - shows in the chat area when a plan is pending approval.
+ * Buttons delegate to planActionAtom via store functions; Chat.client.tsx handles the rest.
  */
-export const PlanApprovalAlert = memo(({ onApprove, onReject, postMessage }: PlanApprovalAlertProps) => {
+export const PlanApprovalAlert = memo(({ onApprove, onReject }: PlanApprovalAlertProps) => {
   const state = useStore(planStore);
   const progress = useStore(planProgress);
 
   const handleApprove = useCallback(() => {
-    approvePlan();
+    approvePlan(); // fires planActionAtom('approve') → Chat.client.tsx sends execute message
     onApprove?.();
-
-    // Send a message to continue execution
-    postMessage?.('Plan approved. Please proceed with the implementation.');
-  }, [onApprove, postMessage]);
+  }, [onApprove]);
 
   const handleReject = useCallback(() => {
-    rejectPlan();
+    rejectPlan(); // fires planActionAtom('reject') → Chat.client.tsx shows cancel toast
     onReject?.();
   }, [onReject]);
 
   const handleModify = useCallback(() => {
-    // For now, just reject and ask user to clarify
-    postMessage?.('I would like to modify the plan. Please adjust the following tasks before proceeding...');
-  }, [postMessage]);
+    modifyPlan(); // fires planActionAtom('modify') → Chat.client.tsx opens PLAN.md in editor
+  }, []);
 
   // Don't show if no plan or already approved
   if (!state.isActive || state.tasks.length === 0 || state.approvedByUser) {

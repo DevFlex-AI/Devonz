@@ -470,11 +470,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                     )}
                     {llmErrorAlert && <LlmErrorAlert alert={llmErrorAlert} clearAlert={() => clearLlmErrorAlert?.()} />}
                     {/* Plan Approval Alert - shows when a plan is pending approval */}
-                    <PlanApprovalAlert
-                      postMessage={(message) => {
-                        sendMessage?.(undefined, message);
-                      }}
-                    />
+                    <PlanApprovalAlert />
                   </div>
                   {progressAnnotations && <ProgressCompilation data={progressAnnotations} />}
 

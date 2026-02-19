@@ -141,7 +141,16 @@ export function useChatHistory() {
           toast.error('Failed to load chat: ' + error.message); // More specific error
         });
     } else {
-      // Handle case where there is no mixedId (e.g., new chat)
+      /*
+       * Home page (no mixedId) — reset global atoms so stale values from a
+       * previous chat don't leak into a fresh session.  Without this,
+       * chatId retains the old value after navigating back to "/", which
+       * breaks the wasNewChat detection in Chat.client.tsx and causes
+       * plan-mode carry-over to fail for new chats.
+       */
+      chatId.set(undefined);
+      description.set(undefined);
+      chatMetadata.set(undefined);
       setReady(true);
     }
   }, [mixedId, db, navigate, searchParams]); // Added db, navigate, searchParams dependencies
