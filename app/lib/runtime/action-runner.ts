@@ -202,6 +202,16 @@ export class ActionRunner {
       })
       .catch((error) => {
         logger.error('Action execution promise failed:', error);
+
+        // Surface the error to the user so they know what went wrong
+        const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+
+        this.onAlert?.({
+          type: 'error',
+          title: 'Action Failed',
+          description: errorMessage,
+          content: error instanceof ActionCommandError ? error.output : undefined,
+        });
       });
 
     await this.#currentExecutionPromise;
@@ -228,10 +238,19 @@ export class ActionRunner {
           try {
             await this.handleSupabaseAction(action as SupabaseAction);
           } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Supabase action failed';
+
             // Update action status
             this.#updateAction(actionId, {
               status: 'failed',
-              error: error instanceof Error ? error.message : 'Supabase action failed',
+              error: errorMessage,
+            });
+
+            // Alert the user about the Supabase failure
+            this.onAlert?.({
+              type: 'error',
+              title: 'Supabase Action Failed',
+              description: errorMessage,
             });
 
             // Return early without re-throwing
@@ -256,18 +275,15 @@ export class ActionRunner {
                 return;
               }
 
-              this.#updateAction(actionId, { status: 'failed', error: 'Action failed' });
+              this.#updateAction(actionId, { status: 'failed', error: err.message || 'Action failed' });
               logger.error(`[${action.type}]:Action failed\n\n`, err);
 
-              if (!(err instanceof ActionCommandError)) {
-                return;
-              }
-
+              // Always alert the user, not just for ActionCommandError
               this.onAlert?.({
                 type: 'error',
                 title: 'Dev Server Failed',
-                description: err.header,
-                content: err.output,
+                description: err instanceof ActionCommandError ? err.header : err.message,
+                content: err instanceof ActionCommandError ? err.output : undefined,
               });
             });
 
@@ -299,18 +315,16 @@ export class ActionRunner {
         return;
       }
 
-      this.#updateAction(actionId, { status: 'failed', error: 'Action failed' });
+      const errorMessage = error instanceof Error ? error.message : 'Action failed';
+      this.#updateAction(actionId, { status: 'failed', error: errorMessage });
       logger.error(`[${action.type}]:Action failed\n\n`, error);
 
-      if (!(error instanceof ActionCommandError)) {
-        return;
-      }
-
+      // Always alert the user with the actual error message
       this.onAlert?.({
         type: 'error',
-        title: 'Dev Server Failed',
-        description: error.header,
-        content: error.output,
+        title: `${action.type.charAt(0).toUpperCase() + action.type.slice(1)} Action Failed`,
+        description: error instanceof ActionCommandError ? error.header : errorMessage,
+        content: error instanceof ActionCommandError ? error.output : undefined,
       });
 
       // re-throw the error to be caught in the promise chain
@@ -566,6 +580,7 @@ export class ActionRunner {
         logger.debug('Created folder', folder);
       } catch (error) {
         logger.error('Failed to create folder\n\n', error);
+        throw error; // Propagate so the file write doesn't proceed against missing directory
       }
     }
 
@@ -625,10 +640,18 @@ export class ActionRunner {
           }
         } catch (installError) {
           logger.error('Failed to auto-install after package.json update:', installError);
+
+          // Warn the user so they know to manually run npm install
+          this.onAlert?.({
+            type: 'warning',
+            title: 'Dependency Install Failed',
+            description: 'Auto npm install failed after package.json update. You may need to run npm install manually.',
+          });
         }
       }
     } catch (error) {
       logger.error('Failed to write file\n\n', error);
+      throw error; // Propagate so the action is marked as failed, not silently completed
     }
   }
 
@@ -671,8 +694,12 @@ export class ActionRunner {
 
         return merged;
       }
-    } catch {
-      // File doesn't exist yet or parse error — just use new content as-is
+    } catch (error) {
+      // File doesn't exist yet — use new content as-is
+      // But warn if it's a parse error (not a file-not-found)
+      if (error instanceof SyntaxError) {
+        logger.warn('Failed to parse existing package.json during merge — using new content as-is:', error.message);
+      }
     }
 
     return newContent;
@@ -790,7 +817,7 @@ export class ActionRunner {
 
     const exitCode = await buildProcess.exit;
     await outputPromise.catch(() => {
-      // Ignore output piping errors; we still have whatever was captured
+      logger.warn('Build output stream interrupted — output may be incomplete');
     });
 
     let buildDir = '';
@@ -1241,6 +1268,7 @@ export class ActionRunner {
       logger.info(`[Plan] Created plan with ${tasks.length} tasks`);
     } catch (error) {
       logger.error('[Plan] Failed to parse plan action:', error);
+      throw error; // Propagate so the action is marked as failed
     }
   }
 
@@ -1261,7 +1289,8 @@ export class ActionRunner {
 
       logger.info(`[TaskUpdate] Updated task ${taskId} to status: ${taskStatus}`);
     } catch (error) {
-      logger.error('[TaskUpdate] Failed to update task:', error);
+      logger.error(`[TaskUpdate] Failed to update task ${taskId} to ${taskStatus}:`, error);
+      throw error; // Propagate so the action is marked as failed
     }
   }
 }
