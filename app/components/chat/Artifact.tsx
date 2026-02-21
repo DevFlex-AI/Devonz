@@ -240,8 +240,8 @@ function CodeBlock({ className, code, language = 'shell', maxLines }: CodeBlockP
 }
 
 // Keep backward compatibility
-function ShellCodeBlock({ classsName, code }: { classsName?: string; code: string }) {
-  return <CodeBlock className={classsName} code={code} language="shell" />;
+function ShellCodeBlock({ className, code }: { className?: string; code: string }) {
+  return <CodeBlock className={className} code={code} language="shell" />;
 }
 
 interface ActionListProps {
@@ -419,7 +419,7 @@ const ActionList = memo(({ actions }: ActionListProps) => {
                       {type === 'file' && fileContent ? (
                         <CodeBlock code={fileContent} language={syntaxLanguage} maxLines={25} className="opacity-90" />
                       ) : (
-                        <ShellCodeBlock classsName="opacity-80" code={content || ''} />
+                        <ShellCodeBlock className="opacity-80" code={content || ''} />
                       )}
                     </div>
                   </motion.div>
