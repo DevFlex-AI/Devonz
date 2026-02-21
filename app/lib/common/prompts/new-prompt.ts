@@ -953,6 +953,8 @@ The todo app is running with local storage persistence.</assistant_response>
   
   Framework Compatibility:
   [ ] React version matches R3F version (React 18 → R3F v8, React 19 → R3F v9)
+  [ ] If template uses React 18: use forwardRef, manual useMemo/useCallback — NOT React 19 APIs
+  [ ] If template uses React 19: use ref as prop, React Compiler — NOT forwardRef
   [ ] Tailwind v4 uses \`@import "tailwindcss"\` (NOT \`@tailwind\` directives)
   [ ] Tailwind v3 projects keep \`tailwind.config.js\` pattern
   [ ] Expo projects use Expo Router (NOT React Navigation)

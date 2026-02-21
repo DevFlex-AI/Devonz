@@ -150,16 +150,17 @@ const starterTemplateSelectionPrompt = (
 ) => `You pick the best starter template for a user's project. Respond ONLY with the XML selection — no explanation.
 
 Decision rules (in priority order):
-1. Trivial tasks (scripts, algorithms, simple logic) → blank
-2. Specific site type (portfolio, landing page, dashboard, SaaS, e-commerce) → matching showcase template
+1. Trivial tasks (scripts, algorithms, CLI tools, simple logic, API-only) → blank
+2. Specific site type (portfolio, landing page, dashboard, SaaS, e-commerce) → matching showcase template if available, otherwise Vite Shadcn
 3. React project needing UI components → Vite Shadcn (preferred) or NextJS Shadcn (if SSR/fullstack needed)
-4. Vue project → Vue
-5. Svelte project → Sveltekit
-6. Angular project → Angular
-7. Presentation/slides → Slidev
-8. Mobile app → Expo App
-9. Static site/blog → Basic Astro
-10. Any other web project → Vite Shadcn as default
+4. Game, canvas, 3D, or animation-heavy project → Vite React (lighter, no UI library overhead)
+5. Vue project → Vue
+6. Svelte project → Sveltekit
+7. Angular project → Angular
+8. Presentation/slides → Slidev
+9. Mobile app (iOS, Android, React Native) → Expo App
+10. Static site/blog/documentation → Basic Astro
+11. Any other web project → Vite Shadcn as default
 
 Starter templates:
 <template><name>blank</name><description>Empty starter for simple scripts</description><tags>basic, script</tags></template>
@@ -907,7 +908,7 @@ If you need to make changes to functionality, create new files instead of modify
 - ${depCount} pre-configured dependencies exist. NEVER rewrite package.json from scratch.
 - Only ADD new dependencies — keep ALL existing ones.
 - If you import a new npm package in code, add it to package.json dependencies FIRST.
-${resolvedName.toLowerCase().includes('shadcn') ? `- Shadcn/ui template: Radix UI primitives and peer deps are MANDATORY.\n` : ''}${isTailwindV3 ? `- Tailwind CSS v3 syntax: \`@tailwind base; @tailwind components; @tailwind utilities;\` — NOT \`@import "tailwindcss";\`.\n` : ''}${isReact18 ? `- React 18 project: Use forwardRef, manual useMemo/useCallback. Do NOT use React 19 APIs (useActionState, use(), ref-as-prop).\n` : ''}${isReact19 ? `- React 19 project: Use ref as prop (no forwardRef), useActionState, use() hook. React Compiler handles memoization.\n` : ''}`;
+${resolvedName.toLowerCase().includes('shadcn') ? `- Shadcn/ui template: All Radix UI peer deps are pre-installed. Do NOT re-add them to package.json.\n` : ''}${isTailwindV3 ? `- Tailwind CSS v3 syntax: \`@tailwind base; @tailwind components; @tailwind utilities;\` — NOT \`@import "tailwindcss";\`.\n` : ''}${isReact18 ? `- React 18 project: Use forwardRef, manual useMemo/useCallback. Do NOT use React 19 APIs (useActionState, use(), ref-as-prop).\n` : ''}${isReact19 ? `- React 19 project: Use ref as prop (no forwardRef), useActionState, use() hook. React Compiler handles memoization.\n` : ''}`;
     } catch {
       // Failed to parse package.json, skip dep preservation instructions
     }
