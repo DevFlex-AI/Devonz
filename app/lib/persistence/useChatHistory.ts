@@ -269,9 +269,13 @@ export function useChatHistory() {
       }
     });
 
-    // Create dirs first, then files
-    await Promise.all(dirPromises);
-    await Promise.all(filePromises);
+    // Create dirs first, then files — catch errors to prevent unhandled rejections
+    try {
+      await Promise.all(dirPromises);
+      await Promise.all(filePromises);
+    } catch (error) {
+      logger.error('Failed to write snapshot files to runtime filesystem:', error);
+    }
 
     /*
      * Auto-rebuild: After restoring files from snapshot, detect package.json
@@ -487,22 +491,33 @@ export function useChatHistory() {
         return;
       }
 
-      const chat = await getMessages(db, id);
-      const chatData = {
-        messages: chat.messages,
-        description: chat.description,
-        exportDate: new Date().toISOString(),
-      };
+      try {
+        const chat = await getMessages(db, id);
 
-      const blob = new Blob([JSON.stringify(chatData, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `chat-${new Date().toISOString()}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+        if (!chat) {
+          toast.error('Chat not found');
+          return;
+        }
+
+        const chatData = {
+          messages: chat.messages,
+          description: chat.description,
+          exportDate: new Date().toISOString(),
+        };
+
+        const blob = new Blob([JSON.stringify(chatData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `chat-${new Date().toISOString()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } catch (error) {
+        toast.error('Failed to export chat');
+        logger.error('Failed to export chat:', error);
+      }
     },
   };
 }
