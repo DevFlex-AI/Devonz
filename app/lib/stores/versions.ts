@@ -27,6 +27,7 @@ class VersionsStore {
 
   private _db: IDBDatabase | undefined;
   private _chatId: string | undefined;
+  private _pendingMeta: { totalTokens?: number; chatSummary?: string } | null = null;
 
   /**
    * Set the database context for version persistence.
@@ -138,6 +139,13 @@ class VersionsStore {
       isLatest: true,
     };
 
+    // Apply any pending metadata queued before the version was created
+    if (this._pendingMeta) {
+      newVersion.totalTokens = this._pendingMeta.totalTokens;
+      newVersion.chatSummary = this._pendingMeta.chatSummary;
+      this._pendingMeta = null;
+    }
+
     this.versions.setKey(id, newVersion);
     this.currentVersionId.set(id);
 
@@ -239,6 +247,14 @@ class VersionsStore {
       this.versions.setKey(versionId, { ...version, ...meta });
       this._persistToDB();
     }
+  }
+
+  /**
+   * Queue metadata to be applied to the next version created.
+   * Used when annotations arrive before the version is created (timing gap).
+   */
+  setPendingMeta(meta: { totalTokens?: number; chatSummary?: string }) {
+    this._pendingMeta = meta;
   }
 
   /**

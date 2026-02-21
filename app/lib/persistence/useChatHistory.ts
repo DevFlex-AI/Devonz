@@ -433,7 +433,17 @@ export function useChatHistory() {
           const usageAnnotation = filteredAnnotations.find((annotation) => annotation.type === 'usage');
           const usage = usageAnnotation?.value as { totalTokens?: number } | undefined;
 
-          // Update the latest version with metadata from annotations
+          /*
+           * Queue metadata for the version that will be created shortly.
+           * Version creation is debounced ~500ms after artifact close,
+           * so we store the meta as "pending" and it gets applied in createVersion().
+           */
+          versionsStore.setPendingMeta({
+            totalTokens: usage?.totalTokens,
+            chatSummary,
+          });
+
+          // Also try updating if the version already exists (e.g. page reload)
           const latestVersion = versionsStore.getLatestVersion();
 
           if (latestVersion && latestVersion.messageId === lastMessage.id) {
