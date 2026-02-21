@@ -1,4 +1,7 @@
 import type { ShowcaseTemplate } from '~/types/showcase-template';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('ShowcaseTemplates');
 
 let _cachedTemplates: ShowcaseTemplate[] | null = null;
 
@@ -11,7 +14,7 @@ export async function loadShowcaseTemplates(): Promise<ShowcaseTemplate[]> {
     const response = await fetch('/templates.json');
 
     if (!response.ok) {
-      console.error('Failed to load templates.json:', response.status);
+      logger.error('Failed to load templates.json:', response.status);
       return [];
     }
 
@@ -20,7 +23,7 @@ export async function loadShowcaseTemplates(): Promise<ShowcaseTemplate[]> {
 
     return data;
   } catch (error) {
-    console.error('Error loading showcase templates:', error);
+    logger.error('Error loading showcase templates:', error);
     return [];
   }
 }

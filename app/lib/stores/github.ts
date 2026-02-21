@@ -19,7 +19,7 @@ if (storedConnection) {
   try {
     initialConnection = JSON.parse(storedConnection);
   } catch {
-    console.warn('Failed to parse stored GitHub connection, using defaults');
+    logger.warn('Failed to parse stored GitHub connection, using defaults');
     localStorage.removeItem('github_connection');
   }
 }
