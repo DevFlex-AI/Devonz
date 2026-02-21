@@ -506,9 +506,6 @@ export class TerminalErrorDetector {
     // Clean buffer of ANSI escape codes for pattern matching
     const cleanBuffer = this.#stripAnsi(this.#buffer);
 
-    // Check ignore patterns first - note: we continue anyway to check for real errors
-    IGNORE_PATTERNS.some((pattern) => pattern.test(cleanBuffer));
-
     const newErrors: DetectedError[] = [];
 
     for (const pattern of ERROR_PATTERNS) {
@@ -516,6 +513,12 @@ export class TerminalErrorDetector {
 
       if (match) {
         const errorMessage = match[1] || match[0];
+
+        // Skip errors that match an ignore pattern (deprecation warnings, peer dep warnings, etc.)
+        if (IGNORE_PATTERNS.some((ip) => ip.test(errorMessage))) {
+          continue;
+        }
+
         const details = pattern.extractDetails ? pattern.extractDetails(match, cleanBuffer) : match[0];
 
         const errorHash = hashError(errorMessage + pattern.title);

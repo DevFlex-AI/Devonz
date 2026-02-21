@@ -850,7 +850,7 @@ export class ActionRunner {
 
       // Step 2: Recursively scan source files for imports
       const missingPackages = new Set<string>();
-      const sourceExtensions = ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.mts'];
+      const sourceExtensions = ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.mts', '.svelte', '.vue', '.astro'];
 
       /*
        * Regex patterns for extracting npm package imports:
@@ -933,6 +933,10 @@ export class ActionRunner {
       await scanDirectory('components');
       await scanDirectory('lib');
       await scanDirectory('utils');
+      await scanDirectory('routes');
+      await scanDirectory('views');
+      await scanDirectory('layouts');
+      await scanDirectory('stores');
 
       // Also scan root-level source files (e.g. vite.config.ts, tailwind.config.ts)
       try {

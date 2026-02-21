@@ -425,20 +425,6 @@ function isReactFamily(templateName: string): boolean {
   return REACT_TEMPLATE_KEYWORDS.some((kw) => lower.includes(kw));
 }
 
-/**
- * Frameworks that use JSX but are NOT React (Solid, Qwik).
- * These get only universal packages injected  — no React-specific deps.
- */
-const JSX_NON_REACT_KEYWORDS = ['solid', 'qwik'];
-
-/**
- * Returns true when `templateName` is a JSX framework that is NOT React.
- */
-function isJsxNonReact(templateName: string): boolean {
-  const lower = templateName.toLowerCase();
-  return JSX_NON_REACT_KEYWORDS.some((kw) => lower.includes(kw));
-}
-
 export async function getTemplates(templateName: string, title?: string) {
   /*
    * ——— Step 1: Resolve template by name (exact → fuzzy → showcase) ———
@@ -540,12 +526,17 @@ export async function getTemplates(templateName: string, title?: string) {
    * - Shadcn templates: inject peer deps + React common + universal packages
    * - Other React-family templates: inject React common + universal packages
    * - JSX non-React (Solid, Qwik): inject universal packages only
+   * - All other frameworks (Vue, Svelte, Astro, Angular, etc.): inject universal packages
    */
   if (resolvedName.toLowerCase().includes('shadcn')) {
     injectShadcnPeerDeps(files);
   } else if (isReactFamily(resolvedName)) {
     injectCommonPackages(files);
-  } else if (isJsxNonReact(resolvedName)) {
+  } else {
+    /*
+     * All non-React templates (Vue, Svelte, Astro, Angular, Solid, Qwik, etc.)
+     * get framework-agnostic universal packages (date-fns, axios, zod)
+     */
     injectUniversalPackages(files);
   }
 
