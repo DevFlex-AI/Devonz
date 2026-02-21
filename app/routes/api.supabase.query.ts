@@ -20,6 +20,7 @@ async function supabaseQueryAction({ request }: ActionFunctionArgs) {
 
       const response = await fetch(`https://api.supabase.com/v1/projects/${projectId}/database/query`, {
         method: 'POST',
+        signal: AbortSignal.timeout(30_000),
         headers: {
           Authorization: authHeader,
           'Content-Type': 'application/json',

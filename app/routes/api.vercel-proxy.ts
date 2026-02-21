@@ -96,6 +96,7 @@ async function vercelProxyAction({ request, context }: ActionFunctionArgs) {
 
     const fetchOptions: RequestInit = {
       method,
+      signal: AbortSignal.timeout(30_000),
       headers: {
         Authorization: `Bearer ${vercelToken}`,
         'User-Agent': 'devonz-app',

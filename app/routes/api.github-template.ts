@@ -124,6 +124,7 @@ async function fetchRepoContentsZip(repo: string, githubToken?: string) {
   const baseUrl = 'https://api.github.com';
 
   const releaseResponse = await fetch(`${baseUrl}/repos/${repo}/releases/latest`, {
+    signal: AbortSignal.timeout(15_000),
     headers: {
       Accept: 'application/vnd.github.v3+json',
       'User-Agent': 'devonz-app',
@@ -139,6 +140,7 @@ async function fetchRepoContentsZip(repo: string, githubToken?: string) {
   const zipballUrl = releaseData.zipball_url;
 
   const zipResponse = await fetch(zipballUrl, {
+    signal: AbortSignal.timeout(60_000),
     headers: {
       ...(githubToken ? { Authorization: `Bearer ${githubToken}` } : {}),
     },
