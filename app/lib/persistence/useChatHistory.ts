@@ -471,21 +471,34 @@ export function useChatHistory() {
         logger.error(error);
       }
     },
-    importChat: async (description: string, messages: Message[], metadata?: IChatMetadata) => {
+    importChat: async (
+      description: string,
+      messages: Message[],
+      metadata?: IChatMetadata,
+      options?: { skipRedirect?: boolean },
+    ): Promise<string | undefined> => {
       if (!db) {
-        return;
+        return undefined;
       }
 
       try {
         const newId = await createChatFromMessages(db, description, messages, metadata);
-        window.location.href = `/chat/${newId}`;
+
+        if (!options?.skipRedirect) {
+          window.location.href = `/chat/${newId}`;
+        }
+
         toast.success('Chat imported successfully');
+
+        return newId;
       } catch (error) {
         if (error instanceof Error) {
           toast.error('Failed to import chat: ' + error.message);
         } else {
           toast.error('Failed to import chat');
         }
+
+        return undefined;
       }
     },
     exportChat: async (id = urlId) => {

@@ -356,18 +356,20 @@ export class DevonzShell {
 
     const state = this.executionState.get();
 
-    if (state?.active && state.abort) {
-      state.abort();
-    }
+    if (state?.active) {
+      if (state.abort) {
+        state.abort();
+      }
 
-    /* Interrupt the current execution with Ctrl+C */
-    this.#process.write('\x03');
+      /* Interrupt the running command with Ctrl+C only if something is active */
+      this.#process.write('\x03');
 
-    /* Wait briefly for prompt to settle */
-    await new Promise((resolve) => setTimeout(resolve, 100));
+      /* Wait briefly for prompt to settle */
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
-    if (state && state.executionPrms) {
-      await state.executionPrms;
+      if (state.executionPrms) {
+        await state.executionPrms;
+      }
     }
 
     /* Generate unique marker ID for this command */

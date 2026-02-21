@@ -647,6 +647,23 @@ export class ActionRunner {
       contentToWrite = contentToWrite.replace(/<\/?devonzArtifact[^>]*>/g, '').replace(/<\/?devonzAction[^>]*>/g, '');
 
       /*
+       * Fast-path: If the file already exists with identical content
+       * (e.g., preloaded by server-side git clone), skip the write.
+       * This avoids redundant I/O for imported/cloned projects.
+       */
+      try {
+        const existing = await runtime.fs.readFile(relativePath, 'utf-8');
+
+        if (existing === contentToWrite) {
+          logger.debug(`File unchanged, skipping write: ${relativePath}`);
+
+          return;
+        }
+      } catch {
+        /* File doesn't exist yet — proceed with write. */
+      }
+
+      /*
        * Safety net: When package.json is being overwritten, merge dependencies
        * from the existing file to prevent the LLM from accidentally dropping
        * critical deps (e.g. @radix-ui packages in shadcn templates).
