@@ -378,20 +378,11 @@ export class LocalRuntime implements RuntimeProvider {
      */
     const cleaned = output.replace(/\x1b\[[0-9;]*m/g, '');
 
-    // DEBUG: Log all stdout chunks so we can see what output flows through
-    if (cleaned.trim().length > 0) {
-      logger.debug(`[detectPorts] chunk (${cleaned.length} chars): ${cleaned.slice(0, 200).replace(/\n/g, '\\n')}`);
-    }
-
     for (const pattern of PORT_PATTERNS) {
       const match = cleaned.match(pattern);
 
       if (match?.[1]) {
         const port = parseInt(match[1], 10);
-
-        logger.debug(
-          `[detectPorts] Pattern matched port ${port}, already detected: ${this.#detectedPorts.has(port)}, listeners: ${this.#portListeners.length}`,
-        );
 
         if (port > 0 && port < 65536 && !this.#detectedPorts.has(port)) {
           this.#detectedPorts.add(port);
@@ -399,7 +390,7 @@ export class LocalRuntime implements RuntimeProvider {
           const event: PortEvent = {
             port,
             type: 'open',
-            url: `http://127.0.0.1:${port}`,
+            url: `http://localhost:${port}`,
           };
 
           logger.info(`Detected port open: ${port}`);
