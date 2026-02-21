@@ -1036,15 +1036,9 @@ export async function enterPreviewMode(rt: {
       /* Convert absolute path to relative path: "/home/project/src/file.ts" -> "src/file.ts" */
       const relativePath = change.filePath.replace(/^\/home\/project\/?/, '');
 
-      logger.info(`[PREVIEW DEBUG] Processing change: ${relativePath}`);
-      logger.info(`[PREVIEW DEBUG] Change type: ${change.type}`);
-      logger.info(`[PREVIEW DEBUG] Has newContent: ${!!change.newContent}`);
-      logger.info(`[PREVIEW DEBUG] newContent length: ${change.newContent?.length ?? 0}`);
-
-      if (change.newContent) {
-        const preview = change.newContent.substring(0, 200).replace(/\n/g, '\\n');
-        logger.info(`[PREVIEW DEBUG] newContent preview: ${preview}...`);
-      }
+      logger.debug(
+        `Preview: processing ${change.type} change: ${relativePath} (${change.newContent?.length ?? 0} bytes)`,
+      );
 
       if (isConfigFile(relativePath)) {
         requiresHardRefresh = true;
@@ -1067,16 +1061,15 @@ export async function enterPreviewMode(rt: {
           }
         }
 
-        logger.info(`[PREVIEW DEBUG] Writing file: ${relativePath}`);
         await rt.fs.writeFile(relativePath, change.newContent);
-        logger.info(`[PREVIEW DEBUG] Successfully wrote file: ${relativePath}`);
+        logger.debug(`Preview: wrote file: ${relativePath}`);
       }
 
       applied.push(change.filePath);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       failed.push({ path: change.filePath, error: errorMessage });
-      logger.error(`[PREVIEW DEBUG] Failed to apply ${change.filePath}: ${errorMessage}`, error);
+      logger.error(`Preview: failed to apply ${change.filePath}: ${errorMessage}`, error);
     }
   }
 

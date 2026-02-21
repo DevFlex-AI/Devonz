@@ -394,6 +394,26 @@ async function searchCode(params: SearchCodeParams): Promise<ToolExecutionResult
     const results: SearchMatch[] = [];
     let totalMatches = 0;
 
+    // Validate include/exclude regex patterns early — fall back to null if invalid
+    let validatedIncludePattern: RegExp | null = null;
+    let validatedExcludePattern: RegExp | null = null;
+
+    if (includePattern) {
+      try {
+        validatedIncludePattern = new RegExp(includePattern);
+      } catch {
+        logger.warn(`Invalid includePattern regex: "${includePattern}", ignoring`);
+      }
+    }
+
+    if (excludePattern) {
+      try {
+        validatedExcludePattern = new RegExp(excludePattern);
+      } catch {
+        logger.warn(`Invalid excludePattern regex: "${excludePattern}", ignoring`);
+      }
+    }
+
     // File extensions to search
     const codeExtensions = ['.ts', '.tsx', '.js', '.jsx', '.json', '.css', '.html', '.md', '.yaml', '.yml'];
 
@@ -418,7 +438,7 @@ async function searchCode(params: SearchCodeParams): Promise<ToolExecutionResult
           // Skip excluded directories
           if (!skipDirs.includes(item.name) && !item.name.startsWith('.')) {
             // Check exclude pattern
-            if (excludePattern && new RegExp(excludePattern).test(fullPath)) {
+            if (validatedExcludePattern && validatedExcludePattern.test(fullPath)) {
               continue;
             }
 
@@ -452,11 +472,11 @@ async function searchCode(params: SearchCodeParams): Promise<ToolExecutionResult
           }
 
           // Check include/exclude patterns
-          if (includePattern && !new RegExp(includePattern).test(fullPath)) {
+          if (validatedIncludePattern && !validatedIncludePattern.test(fullPath)) {
             continue;
           }
 
-          if (excludePattern && new RegExp(excludePattern).test(fullPath)) {
+          if (validatedExcludePattern && validatedExcludePattern.test(fullPath)) {
             continue;
           }
 
