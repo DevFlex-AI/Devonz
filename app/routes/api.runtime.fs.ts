@@ -158,7 +158,14 @@ async function fsLoader({ request }: LoaderFunctionArgs) {
  */
 
 async function fsAction({ request }: ActionFunctionArgs) {
-  const body = await request.json();
+  let body: any;
+
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: 'Invalid JSON in request body' }, { status: 400 });
+  }
+
   const { projectId, op } = body;
 
   if (!projectId || !isValidProjectId(projectId)) {
