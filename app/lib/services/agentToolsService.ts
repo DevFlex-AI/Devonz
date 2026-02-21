@@ -347,8 +347,8 @@ async function getErrors(params: GetErrorsParams): Promise<ToolExecutionResult<G
     if (autoFixState.currentError) {
       const err = autoFixState.currentError;
 
-      // Filter by source if specified
-      if (!source || err.source === source) {
+      // Filter by source if specified ('all' or undefined returns everything)
+      if (!source || source === 'all' || err.source === source) {
         errors.push({
           source: err.source,
           type: err.type,
@@ -882,8 +882,8 @@ export const agentToolDefinitions: Record<string, AgentToolDefinition> = {
       properties: {
         source: {
           type: 'string',
-          enum: ['terminal', 'preview', 'build'],
-          description: 'Filter errors by source (optional, returns all if not specified)',
+          enum: ['terminal', 'preview', 'build', 'all'],
+          description: 'Filter errors by source. Use "all" or omit to return errors from all sources.',
         },
       },
       required: [],
