@@ -126,6 +126,7 @@ async function handleProxyRequest(request: Request, path: string | undefined) {
       method: request.method,
       headers,
       redirect: 'follow',
+      signal: AbortSignal.timeout(60_000), // 60 s timeout for git operations
     };
 
     // Add body for non-GET/HEAD requests

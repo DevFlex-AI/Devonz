@@ -21,6 +21,7 @@ async function fetchRepoContentsCloudflare(repo: string, githubToken?: string) {
   const baseUrl = 'https://api.github.com';
 
   const repoResponse = await fetch(`${baseUrl}/repos/${repo}`, {
+    signal: AbortSignal.timeout(30_000),
     headers: {
       Accept: 'application/vnd.github.v3+json',
       'User-Agent': 'devonz-app',
@@ -36,6 +37,7 @@ async function fetchRepoContentsCloudflare(repo: string, githubToken?: string) {
   const defaultBranch = repoData.default_branch;
 
   const treeResponse = await fetch(`${baseUrl}/repos/${repo}/git/trees/${defaultBranch}?recursive=1`, {
+    signal: AbortSignal.timeout(30_000),
     headers: {
       Accept: 'application/vnd.github.v3+json',
       'User-Agent': 'devonz-app',
@@ -80,6 +82,7 @@ async function fetchRepoContentsCloudflare(repo: string, githubToken?: string) {
     const batchPromises = batch.map(async (file: { path: string; sha: string }) => {
       try {
         const contentResponse = await fetch(`${baseUrl}/repos/${repo}/contents/${file.path}`, {
+          signal: AbortSignal.timeout(15_000),
           headers: {
             Accept: 'application/vnd.github.v3+json',
             'User-Agent': 'devonz-app',

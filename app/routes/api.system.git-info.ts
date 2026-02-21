@@ -110,6 +110,7 @@ async function gitInfoSystemLoader({ request, context }: LoaderFunctionArgs & { 
     try {
       if (action === 'getUser') {
         const response = await fetch('https://api.github.com/user', {
+          signal: AbortSignal.timeout(15_000),
           headers: {
             Accept: 'application/vnd.github.v3+json',
             Authorization: `Bearer ${token}`,
@@ -136,6 +137,7 @@ async function gitInfoSystemLoader({ request, context }: LoaderFunctionArgs & { 
 
       if (action === 'getRepos') {
         const reposResponse = await fetch('https://api.github.com/user/repos?per_page=100&sort=updated', {
+          signal: AbortSignal.timeout(15_000),
           headers: {
             Accept: 'application/vnd.github.v3+json',
             Authorization: `Bearer ${token}`,
@@ -151,6 +153,7 @@ async function gitInfoSystemLoader({ request, context }: LoaderFunctionArgs & { 
 
         // Get user's gists
         const gistsResponse = await fetch('https://api.github.com/gists', {
+          signal: AbortSignal.timeout(15_000),
           headers: {
             Accept: 'application/vnd.github.v3+json',
             Authorization: `Bearer ${token}`,
@@ -219,6 +222,7 @@ async function gitInfoSystemLoader({ request, context }: LoaderFunctionArgs & { 
 
       if (action === 'getOrgs') {
         const response = await fetch('https://api.github.com/user/orgs', {
+          signal: AbortSignal.timeout(15_000),
           headers: {
             Accept: 'application/vnd.github.v3+json',
             Authorization: `Bearer ${token}`,
@@ -261,6 +265,7 @@ async function gitInfoSystemLoader({ request, context }: LoaderFunctionArgs & { 
         }
 
         const response = await fetch(`https://api.github.com/users/${username}/events?per_page=30`, {
+          signal: AbortSignal.timeout(15_000),
           headers: {
             Accept: 'application/vnd.github.v3+json',
             Authorization: `Bearer ${token}`,

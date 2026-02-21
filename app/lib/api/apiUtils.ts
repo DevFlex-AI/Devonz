@@ -78,15 +78,27 @@ export interface ExternalFetchOptions {
   method?: string;
   body?: unknown;
   headers?: Record<string, string>;
+
+  /** Request timeout in milliseconds (default: 30 000) */
+  timeoutMs?: number;
 }
 
 /**
  * Fetch an external API with standard auth and user-agent headers.
  * Returns the raw Response so callers can handle status codes as needed.
+ * Includes a default 30 s timeout to prevent hanging requests.
  */
-export async function externalFetch({ url, token, method = 'GET', body, headers = {} }: ExternalFetchOptions) {
+export async function externalFetch({
+  url,
+  token,
+  method = 'GET',
+  body,
+  headers = {},
+  timeoutMs = 30_000,
+}: ExternalFetchOptions) {
   return fetch(url, {
     method,
+    signal: AbortSignal.timeout(timeoutMs),
     headers: {
       Authorization: `Bearer ${token}`,
       'User-Agent': 'devonz-app',

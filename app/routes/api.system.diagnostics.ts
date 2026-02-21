@@ -60,6 +60,7 @@ async function diagnosticsLoader({ request, context }: LoaderFunctionArgs & { co
   try {
     const githubResponse = await fetch('https://api.github.com/zen', {
       method: 'GET',
+      signal: AbortSignal.timeout(10_000),
       headers: {
         Accept: 'application/vnd.github.v3+json',
       },
@@ -83,6 +84,7 @@ async function diagnosticsLoader({ request, context }: LoaderFunctionArgs & { co
   try {
     const netlifyResponse = await fetch('https://api.netlify.com/api/v1/', {
       method: 'GET',
+      signal: AbortSignal.timeout(10_000),
     });
 
     netlifyApiStatus = {
