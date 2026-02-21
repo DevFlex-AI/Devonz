@@ -138,6 +138,20 @@ export const SUPPRESSION_PATTERNS: Array<{
     reason: 'Next.js 15+ async storage issue in WebContainer — page may still render',
     categories: ['preview'],
   },
+
+  // Tailwind CSS config TypeScript import (non-critical in WebContainer)
+  {
+    pattern: /import type.*from ['"]tailwindcss['"]/i,
+    reason: 'Tailwind config TS import logged to console — page renders correctly',
+    categories: ['preview', 'terminal'],
+  },
+
+  // Extra attribute hydration warnings (common when WebContainer adds attributes)
+  {
+    pattern: /extra attributes from the server/i,
+    reason: 'WebContainer may add extra attributes — page renders correctly',
+    categories: ['preview'],
+  },
 ];
 
 /**

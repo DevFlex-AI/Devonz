@@ -53,18 +53,42 @@ const CONDITIONAL_BLOCKLIST: Record<string, { onlyRemoveIfMissing: string }> = {
  * server component lifecycle. Turbopack mode also fails because
  * `turbo.createProject` needs native bindings (WebContainer only has WASM).
  *
- * Next.js 14.2.x is the last stable major version that works reliably.
+ * Next.js 14.0.x/14.1.x lack proper SWC WASM fallback — they try to load
+ * native SWC binaries which aren't available in WebContainer.
+ * Next.js 14.2+ automatically falls back to @next/swc-wasm-nodejs.
+ *
+ * Version 14.2.28 is the target: last patch of the 14.2.x series.
  */
 const WEBCONTAINER_NEXT_VERSION = '14.2.28';
 const WEBCONTAINER_REACT_VERSION = '^18.3.1';
 
 /**
- * Parse a semver-like version string to extract the major version.
+ * When React is capped to 18.x, @react-three/fiber must stay at 8.x.
+ * Version 9.x uses React 19's reconciler internals and crashes with:
+ * "TypeError: Cannot read properties of undefined (reading 'S')"
+ */
+const WEBCONTAINER_R3F_VERSION = '^8.17.10';
+
+/**
+ * The minimum Next.js 14.x minor version with SWC WASM fallback support.
+ * Versions below this (14.0.x, 14.1.x) fail in WebContainer with:
+ * "Failed to load SWC binary for linux/x64"
+ */
+const MIN_NEXT14_MINOR_FOR_WASM = 2;
+
+/**
+ * Parse a semver-like version string to extract major and minor versions.
  * Handles formats like "14.2.28", "^15.0.0", "~16.1.6", "latest", "*".
  */
+function parseVersion(version: string): { major: number; minor: number } | null {
+  const match = version.replace(/^[\^~>=<]+/, '').match(/^(\d+)(?:\.(\d+))?/);
+  return match ? { major: parseInt(match[1], 10), minor: match[2] ? parseInt(match[2], 10) : 0 } : null;
+}
+
+/** Convenience: extract just the major version number. */
 function parseMajorVersion(version: string): number | null {
-  const match = version.replace(/^[\^~>=<]+/, '').match(/^(\d+)/);
-  return match ? parseInt(match[1], 10) : null;
+  const v = parseVersion(version);
+  return v ? v.major : null;
 }
 
 interface CleanupResult {
@@ -137,30 +161,29 @@ export function cleanPackageJsonForWebContainer(packageJsonContent: string, proj
     }
 
     /*
-     * Cap Next.js version to 14.x for WebContainer compatibility.
-     * Next.js 15+ causes "workUnitAsyncStorage" InvariantError (HTTP 500)
-     * and Turbopack requires native bindings not available in WebContainer.
+     * Pin Next.js to 14.2.28 for WebContainer compatibility:
+     * - Next.js 15+: causes "workUnitAsyncStorage" InvariantError (HTTP 500)
+     *   and Turbopack requires native bindings not available in WebContainer.
+     * - Next.js 14.0.x/14.1.x: tries to load native SWC binaries which aren't
+     *   available in WebContainer. 14.2+ falls back to @next/swc-wasm-nodejs.
      */
     const deps = pkg.dependencies || {};
     const devDeps = pkg.devDependencies || {};
     let versionCapped = false;
 
-    if (deps.next) {
-      const major = parseMajorVersion(deps.next);
+    for (const depsObj of [deps, devDeps]) {
+      if (depsObj.next) {
+        const ver = parseVersion(depsObj.next);
 
-      if (major !== null && major >= 15) {
-        logger.info(`Capping Next.js from ${deps.next} to ${WEBCONTAINER_NEXT_VERSION} for WebContainer`);
-        deps.next = WEBCONTAINER_NEXT_VERSION;
-        versionCapped = true;
-      }
-    }
+        if (ver !== null) {
+          const needsCap = ver.major >= 15 || (ver.major === 14 && ver.minor < MIN_NEXT14_MINOR_FOR_WASM);
 
-    if (devDeps.next) {
-      const major = parseMajorVersion(devDeps.next);
-
-      if (major !== null && major >= 15) {
-        devDeps.next = WEBCONTAINER_NEXT_VERSION;
-        versionCapped = true;
+          if (needsCap) {
+            logger.info(`Pinning Next.js from ${depsObj.next} to ${WEBCONTAINER_NEXT_VERSION} for WebContainer`);
+            depsObj.next = WEBCONTAINER_NEXT_VERSION;
+            versionCapped = true;
+          }
+        }
       }
     }
 
@@ -196,6 +219,26 @@ export function cleanPackageJsonForWebContainer(packageJsonContent: string, proj
 
           if (trdMajor !== null && trdMajor >= 19) {
             depsObj['@types/react-dom'] = WEBCONTAINER_REACT_VERSION;
+          }
+        }
+
+        /*
+         * Cap @react-three/fiber to 8.x when React is pinned to 18.
+         * Version 9.x uses React 19 reconciler internals and crashes with:
+         * "TypeError: Cannot read properties of undefined (reading 'S')"
+         *
+         * Also cap 'latest' / '*' since those resolve to 9.x at install time.
+         */
+        if (depsObj['@react-three/fiber']) {
+          const r3fMajor = parseMajorVersion(depsObj['@react-three/fiber']);
+          const needsR3fCap = r3fMajor === null || r3fMajor >= 9;
+
+          if (needsR3fCap) {
+            logger.info(
+              `Capping @react-three/fiber from ${depsObj['@react-three/fiber']} to ${WEBCONTAINER_R3F_VERSION} (React 18)`,
+            );
+            depsObj['@react-three/fiber'] = WEBCONTAINER_R3F_VERSION;
+            removedDeps.push('@react-three/fiber capped to 8.x (React 18 compat)');
           }
         }
       }

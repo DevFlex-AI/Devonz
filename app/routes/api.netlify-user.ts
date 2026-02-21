@@ -1,40 +1,25 @@
 import { json, type LoaderFunctionArgs, type ActionFunctionArgs } from '@remix-run/node';
-import { getApiKeysFromCookie } from '~/lib/api/cookies';
+import { ApiError, resolveToken, unauthorizedResponse, externalFetch, handleApiError } from '~/lib/api/apiUtils';
 import { withSecurity } from '~/lib/security';
-import { createScopedLogger } from '~/utils/logger';
 
-const logger = createScopedLogger('NetlifyUser');
+const NETLIFY_TOKEN_KEYS = ['VITE_NETLIFY_ACCESS_TOKEN'];
 
 async function netlifyUserLoader({ request, context }: LoaderFunctionArgs) {
-  try {
-    // Get API keys from cookies (server-side only)
-    const cookieHeader = request.headers.get('Cookie');
-    const apiKeys = getApiKeysFromCookie(cookieHeader);
+  return handleApiError('NetlifyUser', async () => {
+    const token = resolveToken(request, context, ...NETLIFY_TOKEN_KEYS);
 
-    // Try to get Netlify token from various sources
-    const netlifyToken =
-      apiKeys.VITE_NETLIFY_ACCESS_TOKEN ||
-      context?.cloudflare?.env?.VITE_NETLIFY_ACCESS_TOKEN ||
-      process.env.VITE_NETLIFY_ACCESS_TOKEN;
-
-    if (!netlifyToken) {
-      return json({ error: 'Netlify token not found' }, { status: 401 });
+    if (!token) {
+      return unauthorizedResponse('Netlify');
     }
 
-    // Make server-side request to Netlify API
-    const response = await fetch('https://api.netlify.com/api/v1/user', {
-      headers: {
-        Authorization: `Bearer ${netlifyToken}`,
-        'User-Agent': 'devonz-app',
-      },
-    });
+    const response = await externalFetch({ url: 'https://api.netlify.com/api/v1/user', token });
 
     if (!response.ok) {
       if (response.status === 401) {
         return json({ error: 'Invalid Netlify token' }, { status: 401 });
       }
 
-      throw new Error(`Netlify API error: ${response.status}`);
+      throw new ApiError(`Netlify API error: ${response.status}`, response.status);
     }
 
     const userData = (await response.json()) as {
@@ -52,16 +37,7 @@ async function netlifyUserLoader({ request, context }: LoaderFunctionArgs) {
       avatar_url: userData.avatar_url,
       full_name: userData.full_name,
     });
-  } catch (error) {
-    logger.error('Error fetching Netlify user:', error);
-    return json(
-      {
-        error: 'Failed to fetch Netlify user information',
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 },
-    );
-  }
+  });
 }
 
 export const loader = withSecurity(netlifyUserLoader, {
@@ -70,36 +46,21 @@ export const loader = withSecurity(netlifyUserLoader, {
 });
 
 async function netlifyUserAction({ request, context }: ActionFunctionArgs) {
-  try {
+  return handleApiError('NetlifyUser', async () => {
+    const token = resolveToken(request, context, ...NETLIFY_TOKEN_KEYS);
+
+    if (!token) {
+      return unauthorizedResponse('Netlify');
+    }
+
     const formData = await request.formData();
     const action = formData.get('action');
 
-    // Get API keys from cookies (server-side only)
-    const cookieHeader = request.headers.get('Cookie');
-    const apiKeys = getApiKeysFromCookie(cookieHeader);
-
-    // Try to get Netlify token from various sources
-    const netlifyToken =
-      apiKeys.VITE_NETLIFY_ACCESS_TOKEN ||
-      context?.cloudflare?.env?.VITE_NETLIFY_ACCESS_TOKEN ||
-      process.env.VITE_NETLIFY_ACCESS_TOKEN;
-
-    if (!netlifyToken) {
-      return json({ error: 'Netlify token not found' }, { status: 401 });
-    }
-
     if (action === 'get_sites') {
-      // Fetch user sites
-      const response = await fetch('https://api.netlify.com/api/v1/sites', {
-        headers: {
-          Authorization: `Bearer ${netlifyToken}`,
-          'Content-Type': 'application/json',
-          'User-Agent': 'devonz-app',
-        },
-      });
+      const response = await externalFetch({ url: 'https://api.netlify.com/api/v1/sites', token });
 
       if (!response.ok) {
-        throw new Error(`Netlify API error: ${response.status}`);
+        throw new ApiError(`Netlify API error: ${response.status}`, response.status);
       }
 
       const sites = (await response.json()) as Array<{
@@ -127,16 +88,7 @@ async function netlifyUserAction({ request, context }: ActionFunctionArgs) {
     }
 
     return json({ error: 'Invalid action' }, { status: 400 });
-  } catch (error) {
-    logger.error('Error in Netlify user action:', error);
-    return json(
-      {
-        error: 'Failed to process Netlify request',
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 },
-    );
-  }
+  });
 }
 
 export const action = withSecurity(netlifyUserAction, {

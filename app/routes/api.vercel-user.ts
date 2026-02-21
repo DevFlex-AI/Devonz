@@ -1,49 +1,25 @@
 import { json, type LoaderFunctionArgs, type ActionFunctionArgs } from '@remix-run/node';
-import { getApiKeysFromCookie } from '~/lib/api/cookies';
+import { ApiError, resolveToken, unauthorizedResponse, externalFetch, handleApiError } from '~/lib/api/apiUtils';
 import { withSecurity } from '~/lib/security';
-import { createScopedLogger } from '~/utils/logger';
 
-const logger = createScopedLogger('VercelUser');
+const VERCEL_TOKEN_KEYS = ['VITE_VERCEL_ACCESS_TOKEN'];
 
 async function vercelUserLoader({ request, context }: LoaderFunctionArgs) {
-  try {
-    // Get API keys from cookies (server-side only)
-    const cookieHeader = request.headers.get('Cookie');
-    const apiKeys = getApiKeysFromCookie(cookieHeader);
+  return handleApiError('VercelUser', async () => {
+    const token = resolveToken(request, context, ...VERCEL_TOKEN_KEYS);
 
-    // Try to get Vercel token from various sources
-    let vercelToken =
-      apiKeys.VITE_VERCEL_ACCESS_TOKEN ||
-      context?.cloudflare?.env?.VITE_VERCEL_ACCESS_TOKEN ||
-      process.env.VITE_VERCEL_ACCESS_TOKEN;
-
-    // Also check for token in request headers (for direct API calls)
-    if (!vercelToken) {
-      const authHeader = request.headers.get('Authorization');
-
-      if (authHeader && authHeader.startsWith('Bearer ')) {
-        vercelToken = authHeader.substring(7);
-      }
+    if (!token) {
+      return unauthorizedResponse('Vercel');
     }
 
-    if (!vercelToken) {
-      return json({ error: 'Vercel token not found' }, { status: 401 });
-    }
-
-    // Make server-side request to Vercel API
-    const response = await fetch('https://api.vercel.com/v2/user', {
-      headers: {
-        Authorization: `Bearer ${vercelToken}`,
-        'User-Agent': 'devonz-app',
-      },
-    });
+    const response = await externalFetch({ url: 'https://api.vercel.com/v2/user', token });
 
     if (!response.ok) {
       if (response.status === 401) {
         return json({ error: 'Invalid Vercel token' }, { status: 401 });
       }
 
-      throw new Error(`Vercel API error: ${response.status}`);
+      throw new ApiError(`Vercel API error: ${response.status}`, response.status);
     }
 
     const userData = (await response.json()) as {
@@ -63,16 +39,7 @@ async function vercelUserLoader({ request, context }: LoaderFunctionArgs) {
       avatar: userData.user.avatar,
       username: userData.user.username,
     });
-  } catch (error) {
-    logger.error('Error fetching Vercel user:', error);
-    return json(
-      {
-        error: 'Failed to fetch Vercel user information',
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 },
-    );
-  }
+  });
 }
 
 export const loader = withSecurity(vercelUserLoader, {
@@ -81,44 +48,21 @@ export const loader = withSecurity(vercelUserLoader, {
 });
 
 async function vercelUserAction({ request, context }: ActionFunctionArgs) {
-  try {
+  return handleApiError('VercelUser', async () => {
+    const token = resolveToken(request, context, ...VERCEL_TOKEN_KEYS);
+
+    if (!token) {
+      return unauthorizedResponse('Vercel');
+    }
+
     const formData = await request.formData();
     const action = formData.get('action');
 
-    // Get API keys from cookies (server-side only)
-    const cookieHeader = request.headers.get('Cookie');
-    const apiKeys = getApiKeysFromCookie(cookieHeader);
-
-    // Try to get Vercel token from various sources
-    let vercelToken =
-      apiKeys.VITE_VERCEL_ACCESS_TOKEN ||
-      context?.cloudflare?.env?.VITE_VERCEL_ACCESS_TOKEN ||
-      process.env.VITE_VERCEL_ACCESS_TOKEN;
-
-    // Also check for token in request headers (for direct API calls)
-    if (!vercelToken) {
-      const authHeader = request.headers.get('Authorization');
-
-      if (authHeader && authHeader.startsWith('Bearer ')) {
-        vercelToken = authHeader.substring(7);
-      }
-    }
-
-    if (!vercelToken) {
-      return json({ error: 'Vercel token not found' }, { status: 401 });
-    }
-
     if (action === 'get_projects') {
-      // Fetch user projects
-      const response = await fetch('https://api.vercel.com/v13/projects', {
-        headers: {
-          Authorization: `Bearer ${vercelToken}`,
-          'User-Agent': 'devonz-app',
-        },
-      });
+      const response = await externalFetch({ url: 'https://api.vercel.com/v13/projects', token });
 
       if (!response.ok) {
-        throw new Error(`Vercel API error: ${response.status}`);
+        throw new ApiError(`Vercel API error: ${response.status}`, response.status);
       }
 
       const data = (await response.json()) as {
@@ -146,16 +90,7 @@ async function vercelUserAction({ request, context }: ActionFunctionArgs) {
     }
 
     return json({ error: 'Invalid action' }, { status: 400 });
-  } catch (error) {
-    logger.error('Error in Vercel user action:', error);
-    return json(
-      {
-        error: 'Failed to process Vercel request',
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 },
-    );
-  }
+  });
 }
 
 export const action = withSecurity(vercelUserAction, {

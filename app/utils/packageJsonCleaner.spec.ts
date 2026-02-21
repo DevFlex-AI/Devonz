@@ -188,6 +188,7 @@ describe('cleanPackageJsonForWebContainer', () => {
 
     const cleaned = JSON.parse(result.content);
     expect(cleaned.dependencies['@react-three/drei']).toBe('latest');
+    expect(cleaned.dependencies['@react-three/fiber']).toBe('^8.17.10');
     expect(cleaned.dependencies.three).toBe('latest');
 
     // Next.js 16 capped to 14 and react 19 → 18
@@ -196,6 +197,86 @@ describe('cleanPackageJsonForWebContainer', () => {
     expect(cleaned.dependencies['react-dom']).toBe('^18.3.1');
     expect(cleaned.dependencies.expo).toBeUndefined();
     expect(cleaned.dependencies['react-native']).toBeUndefined();
+  });
+
+  it('should cap @react-three/fiber 9.x to 8.x when React is pinned to 18', () => {
+    const pkg = JSON.stringify({
+      dependencies: {
+        '@react-three/fiber': '^9.1.0',
+        '@react-three/drei': '^10.0.0',
+        next: '15.5.12',
+        react: '^19',
+        'react-dom': '^19',
+        three: '^0.170.0',
+      },
+    });
+
+    const result = cleanPackageJsonForWebContainer(pkg);
+
+    expect(result.cleaned).toBe(true);
+
+    const cleaned = JSON.parse(result.content);
+    expect(cleaned.dependencies['@react-three/fiber']).toBe('^8.17.10');
+    expect(cleaned.dependencies.react).toBe('^18.3.1');
+    expect(cleaned.dependencies.next).toBe('14.2.28');
+    expect(cleaned.dependencies.three).toBe('^0.170.0');
+    expect(result.removedDeps).toContain('@react-three/fiber capped to 8.x (React 18 compat)');
+  });
+
+  it('should upgrade Next.js 14.0.x to 14.2.28 for SWC WASM', () => {
+    const pkg = JSON.stringify({
+      dependencies: {
+        react: '^18.2.0',
+        'react-dom': '^18.2.0',
+        next: '14.0.0',
+      },
+    });
+
+    const result = cleanPackageJsonForWebContainer(pkg);
+
+    expect(result.cleaned).toBe(true);
+
+    const cleaned = JSON.parse(result.content);
+    expect(cleaned.dependencies.next).toBe('14.2.28');
+
+    // React 18 should stay as-is (not downgraded further)
+    expect(cleaned.dependencies.react).toBe('^18.2.0');
+    expect(result.removedDeps).toContain('next version capped to 14.x (WebContainer compat)');
+  });
+
+  it('should upgrade Next.js 14.1.x to 14.2.28 for SWC WASM', () => {
+    const pkg = JSON.stringify({
+      dependencies: {
+        react: '^18.2.0',
+        'react-dom': '^18.2.0',
+        next: '14.1.4',
+      },
+    });
+
+    const result = cleanPackageJsonForWebContainer(pkg);
+
+    expect(result.cleaned).toBe(true);
+
+    const cleaned = JSON.parse(result.content);
+    expect(cleaned.dependencies.next).toBe('14.2.28');
+    expect(cleaned.dependencies.react).toBe('^18.2.0');
+  });
+
+  it('should NOT upgrade Next.js 14.2.x (already has SWC WASM)', () => {
+    const pkg = JSON.stringify({
+      dependencies: {
+        react: '^18.2.0',
+        'react-dom': '^18.2.0',
+        next: '14.2.0',
+      },
+    });
+
+    const result = cleanPackageJsonForWebContainer(pkg);
+
+    expect(result.cleaned).toBe(false);
+
+    const cleaned = JSON.parse(result.content);
+    expect(cleaned.dependencies.next).toBe('14.2.0');
   });
 });
 

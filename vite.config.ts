@@ -105,8 +105,21 @@ export default defineConfig((config) => {
         '**/cypress/**',
         '**/.{idea,git,cache,output,temp}/**',
         '**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*',
-        '**/tests/preview/**', // Exclude preview tests that require Playwright
+        '**/tests/preview/**',
       ],
+      coverage: {
+        provider: 'v8',
+        reporter: ['text', 'text-summary', 'html', 'lcov'],
+        reportsDirectory: './coverage',
+        include: ['app/**/*.{ts,tsx}'],
+        exclude: [
+          'app/**/*.spec.{ts,tsx}',
+          'app/**/*.test.{ts,tsx}',
+          'app/**/types/**',
+          'app/**/*.d.ts',
+          'app/entry.*.{ts,tsx}',
+        ],
+      },
     },
     optimizeDeps: {
       include: [

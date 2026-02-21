@@ -1,15 +1,16 @@
 # ─────────────────────────────────────────────────────────────
-# Build & push Docker image to GitHub Container Registry
-# Triggers on every push to main and on tags (v*)
+# CI: quality gates + Docker build & push to GHCR
 # ─────────────────────────────────────────────────────────────
 
-name: Docker Build & Push
+name: CI
 
 on:
   push:
     branches: [main]
     tags: ['v*']
-  workflow_dispatch: # manual trigger
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
@@ -20,7 +21,40 @@ permissions:
   packages: write
 
 jobs:
+  quality:
+    name: Lint, Typecheck & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
   build-and-push:
+    name: Docker Build & Push
+    needs: quality
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -42,11 +76,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            # latest on every push to main
             type=raw,value=latest,enable={{is_default_branch}}
-            # sha-abc1234 on every push
             type=sha,prefix=sha-
-            # v1.0.0 on tags
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
 

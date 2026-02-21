@@ -1,36 +1,21 @@
 import { json, type LoaderFunctionArgs, type ActionFunctionArgs } from '@remix-run/node';
-import { getApiKeysFromCookie } from '~/lib/api/cookies';
+import { ApiError, resolveToken, unauthorizedResponse, externalFetch, handleApiError } from '~/lib/api/apiUtils';
 import { withSecurity } from '~/lib/security';
-import { createScopedLogger } from '~/utils/logger';
 
-const logger = createScopedLogger('GitHubUser');
+const GITHUB_TOKEN_KEYS = ['GITHUB_API_KEY', 'VITE_GITHUB_ACCESS_TOKEN', 'GITHUB_TOKEN'];
 
 async function githubUserLoader({ request, context }: LoaderFunctionArgs) {
-  try {
-    // Get API keys from cookies (server-side only)
-    const cookieHeader = request.headers.get('Cookie');
-    const apiKeys = getApiKeysFromCookie(cookieHeader);
+  return handleApiError('GitHubUser', async () => {
+    const token = resolveToken(request, context, ...GITHUB_TOKEN_KEYS);
 
-    // Try to get GitHub token from various sources
-    const githubToken =
-      apiKeys.GITHUB_API_KEY ||
-      apiKeys.VITE_GITHUB_ACCESS_TOKEN ||
-      context?.cloudflare?.env?.GITHUB_TOKEN ||
-      context?.cloudflare?.env?.VITE_GITHUB_ACCESS_TOKEN ||
-      process.env.GITHUB_TOKEN ||
-      process.env.VITE_GITHUB_ACCESS_TOKEN;
-
-    if (!githubToken) {
-      return json({ error: 'GitHub token not found' }, { status: 401 });
+    if (!token) {
+      return unauthorizedResponse('GitHub');
     }
 
-    // Make server-side request to GitHub API
-    const response = await fetch('https://api.github.com/user', {
-      headers: {
-        Accept: 'application/vnd.github.v3+json',
-        Authorization: `Bearer ${githubToken}`,
-        'User-Agent': 'devonz-app',
-      },
+    const response = await externalFetch({
+      url: 'https://api.github.com/user',
+      token,
+      headers: { Accept: 'application/vnd.github.v3+json' },
     });
 
     if (!response.ok) {
@@ -38,7 +23,7 @@ async function githubUserLoader({ request, context }: LoaderFunctionArgs) {
         return json({ error: 'Invalid GitHub token' }, { status: 401 });
       }
 
-      throw new Error(`GitHub API error: ${response.status}`);
+      throw new ApiError(`GitHub API error: ${response.status}`, response.status);
     }
 
     const userData = (await response.json()) as {
@@ -56,16 +41,7 @@ async function githubUserLoader({ request, context }: LoaderFunctionArgs) {
       html_url: userData.html_url,
       type: userData.type,
     });
-  } catch (error) {
-    logger.error('Error fetching GitHub user:', error);
-    return json(
-      {
-        error: 'Failed to fetch GitHub user information',
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 },
-    );
-  }
+  });
 }
 
 export const loader = withSecurity(githubUserLoader, {
@@ -74,13 +50,18 @@ export const loader = withSecurity(githubUserLoader, {
 });
 
 async function githubUserAction({ request, context }: ActionFunctionArgs) {
-  try {
+  return handleApiError('GitHubUser', async () => {
+    const token = resolveToken(request, context, ...GITHUB_TOKEN_KEYS);
+
+    if (!token) {
+      return unauthorizedResponse('GitHub');
+    }
+
     let action: string | null = null;
     let repoFullName: string | null = null;
     let searchQuery: string | null = null;
     let perPage: number = 30;
 
-    // Handle both JSON and form data
     const contentType = request.headers.get('Content-Type') || '';
 
     if (contentType.includes('application/json')) {
@@ -97,35 +78,17 @@ async function githubUserAction({ request, context }: ActionFunctionArgs) {
       perPage = parseInt(formData.get('per_page') as string) || 30;
     }
 
-    // Get API keys from cookies (server-side only)
-    const cookieHeader = request.headers.get('Cookie');
-    const apiKeys = getApiKeysFromCookie(cookieHeader);
-
-    // Try to get GitHub token from various sources
-    const githubToken =
-      apiKeys.GITHUB_API_KEY ||
-      apiKeys.VITE_GITHUB_ACCESS_TOKEN ||
-      context?.cloudflare?.env?.GITHUB_TOKEN ||
-      context?.cloudflare?.env?.VITE_GITHUB_ACCESS_TOKEN ||
-      process.env.GITHUB_TOKEN ||
-      process.env.VITE_GITHUB_ACCESS_TOKEN;
-
-    if (!githubToken) {
-      return json({ error: 'GitHub token not found' }, { status: 401 });
-    }
+    const githubHeaders = { Accept: 'application/vnd.github.v3+json' };
 
     if (action === 'get_repos') {
-      // Fetch user repositories
-      const response = await fetch('https://api.github.com/user/repos?sort=updated&per_page=100', {
-        headers: {
-          Accept: 'application/vnd.github.v3+json',
-          Authorization: `Bearer ${githubToken}`,
-          'User-Agent': 'devonz-app',
-        },
+      const response = await externalFetch({
+        url: 'https://api.github.com/user/repos?sort=updated&per_page=100',
+        token,
+        headers: githubHeaders,
       });
 
       if (!response.ok) {
-        throw new Error(`GitHub API error: ${response.status}`);
+        throw new ApiError(`GitHub API error: ${response.status}`, response.status);
       }
 
       const repos = (await response.json()) as Array<{
@@ -164,45 +127,33 @@ async function githubUserAction({ request, context }: ActionFunctionArgs) {
         return json({ error: 'Repository name is required' }, { status: 400 });
       }
 
-      // Fetch repository branches
-      const response = await fetch(`https://api.github.com/repos/${repoFullName}/branches`, {
-        headers: {
-          Accept: 'application/vnd.github.v3+json',
-          Authorization: `Bearer ${githubToken}`,
-          'User-Agent': 'devonz-app',
-        },
+      const response = await externalFetch({
+        url: `https://api.github.com/repos/${repoFullName}/branches`,
+        token,
+        headers: githubHeaders,
       });
 
       if (!response.ok) {
-        throw new Error(`GitHub API error: ${response.status}`);
+        throw new ApiError(`GitHub API error: ${response.status}`, response.status);
       }
 
       const branches = (await response.json()) as Array<{
         name: string;
-        commit: {
-          sha: string;
-          url: string;
-        };
+        commit: { sha: string; url: string };
         protected: boolean;
       }>;
 
       return json({
         branches: branches.map((branch) => ({
           name: branch.name,
-          commit: {
-            sha: branch.commit.sha,
-            url: branch.commit.url,
-          },
+          commit: { sha: branch.commit.sha, url: branch.commit.url },
           protected: branch.protected,
         })),
       });
     }
 
     if (action === 'get_token') {
-      // Return the GitHub token for git authentication
-      return json({
-        token: githubToken,
-      });
+      return json({ token });
     }
 
     if (action === 'search_repos') {
@@ -210,20 +161,14 @@ async function githubUserAction({ request, context }: ActionFunctionArgs) {
         return json({ error: 'Search query is required' }, { status: 400 });
       }
 
-      // Search repositories using GitHub API
-      const response = await fetch(
-        `https://api.github.com/search/repositories?q=${encodeURIComponent(searchQuery)}&per_page=${perPage}&sort=updated`,
-        {
-          headers: {
-            Accept: 'application/vnd.github.v3+json',
-            Authorization: `Bearer ${githubToken}`,
-            'User-Agent': 'devonz-app',
-          },
-        },
-      );
+      const response = await externalFetch({
+        url: `https://api.github.com/search/repositories?q=${encodeURIComponent(searchQuery)}&per_page=${perPage}&sort=updated`,
+        token,
+        headers: githubHeaders,
+      });
 
       if (!response.ok) {
-        throw new Error(`GitHub API error: ${response.status}`);
+        throw new ApiError(`GitHub API error: ${response.status}`, response.status);
       }
 
       const searchData = (await response.json()) as {
@@ -241,10 +186,7 @@ async function githubUserAction({ request, context }: ActionFunctionArgs) {
           stargazers_count: number;
           forks_count: number;
           topics: string[];
-          owner: {
-            login: string;
-            avatar_url: string;
-          };
+          owner: { login: string; avatar_url: string };
         }>;
       };
 
@@ -261,10 +203,7 @@ async function githubUserAction({ request, context }: ActionFunctionArgs) {
           stargazers_count: repo.stargazers_count || 0,
           forks_count: repo.forks_count || 0,
           topics: repo.topics || [],
-          owner: {
-            login: repo.owner.login,
-            avatar_url: repo.owner.avatar_url,
-          },
+          owner: { login: repo.owner.login, avatar_url: repo.owner.avatar_url },
         })),
         total_count: searchData.total_count,
         incomplete_results: searchData.incomplete_results,
@@ -272,16 +211,7 @@ async function githubUserAction({ request, context }: ActionFunctionArgs) {
     }
 
     return json({ error: 'Invalid action' }, { status: 400 });
-  } catch (error) {
-    logger.error('Error in GitHub user action:', error);
-    return json(
-      {
-        error: 'Failed to process GitHub request',
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 },
-    );
-  }
+  });
 }
 
 export const action = withSecurity(githubUserAction, {

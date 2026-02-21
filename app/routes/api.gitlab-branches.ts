@@ -1,15 +1,10 @@
 import { json } from '@remix-run/node';
+import { ApiError, externalFetch, handleApiError } from '~/lib/api/apiUtils';
 import { withSecurity } from '~/lib/security';
-import { createScopedLogger } from '~/utils/logger';
-
-const logger = createScopedLogger('GitLabBranches');
 
 interface GitLabBranch {
   name: string;
-  commit: {
-    id: string;
-    short_id: string;
-  };
+  commit: { id: string; short_id: string };
   protected: boolean;
   default: boolean;
   can_push: boolean;
@@ -23,8 +18,8 @@ interface BranchInfo {
   canPush: boolean;
 }
 
-async function gitlabBranchesLoader({ request }: { request: Request }) {
-  try {
+async function gitlabBranchesHandler({ request }: { request: Request }) {
+  return handleApiError('GitLabBranches', async () => {
     const body = (await request.json()) as { token?: string; gitlabUrl?: string; projectId?: string };
     const { token, gitlabUrl = 'https://gitlab.com', projectId } = body;
 
@@ -36,57 +31,39 @@ async function gitlabBranchesLoader({ request }: { request: Request }) {
       return json({ error: 'Project ID is required' }, { status: 400 });
     }
 
-    // Fetch branches from GitLab API
-    const branchesUrl = `${gitlabUrl}/api/v4/projects/${projectId}/repository/branches?per_page=100`;
-
-    const response = await fetch(branchesUrl, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/json',
-        'User-Agent': 'devonz-app',
-      },
+    const branchesResponse = await externalFetch({
+      url: `${gitlabUrl}/api/v4/projects/${projectId}/repository/branches?per_page=100`,
+      token,
+      headers: { Accept: 'application/json' },
     });
 
-    if (!response.ok) {
-      if (response.status === 401) {
+    if (!branchesResponse.ok) {
+      if (branchesResponse.status === 401) {
         return json({ error: 'Invalid GitLab token' }, { status: 401 });
       }
 
-      if (response.status === 404) {
+      if (branchesResponse.status === 404) {
         return json({ error: 'Project not found or no access' }, { status: 404 });
       }
 
-      const errorText = await response.text().catch(() => 'Unknown error');
-      logger.error('GitLab API error:', response.status, errorText);
-
-      return json(
-        {
-          error: `GitLab API error: ${response.status}`,
-        },
-        { status: response.status },
-      );
+      throw new ApiError(`GitLab API error: ${branchesResponse.status}`, branchesResponse.status);
     }
 
-    const branches: GitLabBranch[] = await response.json();
+    const branches: GitLabBranch[] = await branchesResponse.json();
 
-    // Also fetch project info to get default branch name
-    const projectUrl = `${gitlabUrl}/api/v4/projects/${projectId}`;
-    const projectResponse = await fetch(projectUrl, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/json',
-        'User-Agent': 'devonz-app',
-      },
+    const projectResponse = await externalFetch({
+      url: `${gitlabUrl}/api/v4/projects/${projectId}`,
+      token,
+      headers: { Accept: 'application/json' },
     });
 
-    let defaultBranchName = 'main'; // fallback
+    let defaultBranchName = 'main';
 
     if (projectResponse.ok) {
       const projectInfo = (await projectResponse.json()) as { default_branch?: string };
       defaultBranchName = projectInfo.default_branch || 'main';
     }
 
-    // Transform to our format
     const transformedBranches: BranchInfo[] = branches.map((branch) => ({
       name: branch.name,
       sha: branch.commit.id,
@@ -95,7 +72,6 @@ async function gitlabBranchesLoader({ request }: { request: Request }) {
       canPush: branch.can_push,
     }));
 
-    // Sort branches with default branch first, then alphabetically
     transformedBranches.sort((a, b) => {
       if (a.isDefault) {
         return -1;
@@ -113,34 +89,7 @@ async function gitlabBranchesLoader({ request }: { request: Request }) {
       defaultBranch: defaultBranchName,
       total: transformedBranches.length,
     });
-  } catch (error) {
-    logger.error('Failed to fetch GitLab branches:', error);
-
-    if (error instanceof Error) {
-      if (error.message.includes('fetch')) {
-        return json(
-          {
-            error: 'Failed to connect to GitLab. Please check your network connection.',
-          },
-          { status: 503 },
-        );
-      }
-
-      return json(
-        {
-          error: `Failed to fetch branches: ${error.message}`,
-        },
-        { status: 500 },
-      );
-    }
-
-    return json(
-      {
-        error: 'An unexpected error occurred while fetching branches',
-      },
-      { status: 500 },
-    );
-  }
+  });
 }
 
-export const action = withSecurity(gitlabBranchesLoader);
+export const action = withSecurity(gitlabBranchesHandler);

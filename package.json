@@ -17,6 +17,7 @@
     "setup": "node scripts/setup.mjs",
     "test": "vitest --run",
     "test:watch": "vitest",
+    "test:coverage": "vitest --run --coverage",
     "lint": "eslint --cache --cache-location ./node_modules/.cache/eslint app",
     "lint:fix": "npm run lint -- --fix && prettier app --write",
     "start": "remix-serve ./build/server/index.js",
@@ -151,11 +152,13 @@
     "@types/react-dom": "^18.3.1",
     "@types/react-window": "^1.8.8",
     "@vitejs/plugin-react": "^4.3.4",
+    "@vitest/coverage-v8": "^2.1.9",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.6",
     "fast-glob": "^3.3.2",
     "husky": "9.1.7",
     "jsdom": "^26.0.0",
+    "lint-staged": "^16.2.7",
     "node-fetch": "^3.3.2",
     "pnpm": "^9.14.4",
     "prettier": "^3.5.3",
@@ -167,6 +170,15 @@
     "vite-plugin-optimize-css-modules": "^1.1.0",
     "vite-tsconfig-paths": "^4.3.2",
     "vitest": "^2.1.7"
+  },
+  "lint-staged": {
+    "app/**/*.{ts,tsx}": [
+      "eslint --cache --cache-location ./node_modules/.cache/eslint --fix",
+      "prettier --write"
+    ],
+    "app/**/*.{scss,css}": [
+      "prettier --write"
+    ]
   },
   "resolutions": {
     "@typescript-eslint/utils": "^8.0.0-alpha.30"
