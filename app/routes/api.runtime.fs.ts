@@ -89,8 +89,8 @@ async function fsLoader({ request }: LoaderFunctionArgs) {
          */
         const code = (error as NodeJS.ErrnoException)?.code;
 
-        if (code === 'ENOENT') {
-          logger.debug(`readdir: directory does not exist, returning []: ${filePath}`);
+        if (code === 'ENOENT' || code === 'ENOTDIR') {
+          logger.debug(`readdir: not a directory or does not exist, returning []: ${filePath}`);
           return json([]);
         }
 

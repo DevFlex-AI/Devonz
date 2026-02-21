@@ -7,6 +7,7 @@ import { BaseChat } from '~/components/chat/BaseChat';
 import { Chat } from '~/components/chat/Chat.client';
 import { useGit } from '~/lib/hooks/useGit';
 import { useChatHistory } from '~/lib/persistence';
+import { bootRuntime } from '~/lib/runtime';
 import { createCommandsMessage, detectProjectCommands, escapeDevonzTags } from '~/utils/projectCommands';
 import { cleanPackageJson } from '~/utils/packageJsonCleaner';
 import { LoadingOverlay } from '~/components/ui/LoadingOverlay';
@@ -138,6 +139,25 @@ ${escapeDevonzTags(file.content)}
       }
     }
   };
+
+  /*
+   * Boot the runtime eagerly so isomorphic-git has a filesystem.
+   * On the /git route there is no active chat yet, so Chat's
+   * bootRuntime(chatId) never fires → useGit stays unready.
+   * We use a temporary project ID; importChat() will redirect
+   * to the real chat once the clone is done.
+   */
+  useEffect(() => {
+    const url = searchParams.get('url');
+
+    if (!url || imported) {
+      return;
+    }
+
+    bootRuntime('git-import-temp').catch((error) => {
+      logger.error('Failed to boot runtime for git import:', error);
+    });
+  }, [searchParams, imported]);
 
   useEffect(() => {
     if (!historyReady || !gitReady || imported) {

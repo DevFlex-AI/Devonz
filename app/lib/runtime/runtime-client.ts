@@ -90,10 +90,32 @@ class ClientFileSystem implements RuntimeFileSystem {
 
   async writeFile(path: string, content: string | Uint8Array): Promise<void> {
     const isBinary = content instanceof Uint8Array;
+
+    let encodedContent: string;
+
+    if (isBinary) {
+      /*
+       * Convert Uint8Array to base64 in chunks to avoid
+       * "Maximum call stack size exceeded" when spreading
+       * large arrays into String.fromCharCode().
+       */
+      const chunkSize = 8192;
+      let binary = '';
+
+      for (let i = 0; i < content.length; i += chunkSize) {
+        const slice = content.subarray(i, i + chunkSize);
+        binary += String.fromCharCode(...slice);
+      }
+
+      encodedContent = btoa(binary);
+    } else {
+      encodedContent = content;
+    }
+
     const body = JSON.stringify({
       projectId: this.#projectId,
       path,
-      content: isBinary ? btoa(String.fromCharCode(...content)) : content,
+      content: encodedContent,
       binary: isBinary,
     });
 

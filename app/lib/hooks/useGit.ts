@@ -195,11 +195,20 @@ const getFs = (rt: RuntimeProvider, record: MutableRefObject<Record<string, File
       const encoding = options?.encoding;
       const relativePath = pathUtils.relative(rt.workdir, path);
 
-      if (encoding) {
-        return await rt.fs.readFile(relativePath);
-      }
+      try {
+        if (encoding) {
+          return await rt.fs.readFile(relativePath);
+        }
 
-      return await rt.fs.readFileRaw(relativePath);
+        return await rt.fs.readFileRaw(relativePath);
+      } catch {
+        const err = new Error(`ENOENT: no such file or directory, open '${path}'`) as NodeJS.ErrnoException;
+        err.code = 'ENOENT';
+        err.errno = -2;
+        err.syscall = 'open';
+        err.path = path;
+        throw err;
+      }
     },
     writeFile: async (path: string, data: Uint8Array | string, options: { encoding?: string } = {}) => {
       const relativePath = pathUtils.relative(rt.workdir, path);
@@ -217,20 +226,35 @@ const getFs = (rt: RuntimeProvider, record: MutableRefObject<Record<string, File
     readdir: async (path: string, options?: { withFileTypes?: boolean }) => {
       const relativePath = pathUtils.relative(rt.workdir, path);
 
-      if (options?.withFileTypes) {
-        /* Wrap DirEntry booleans as methods for isomorphic-git compatibility */
+      try {
+        if (options?.withFileTypes) {
+          /* Wrap DirEntry booleans as methods for isomorphic-git compatibility */
+          const entries = await rt.fs.readdir(relativePath);
+
+          return entries.map((entry) => ({
+            name: entry.name,
+            isFile: () => entry.isFile,
+            isDirectory: () => entry.isDirectory,
+          }));
+        }
+
         const entries = await rt.fs.readdir(relativePath);
 
-        return entries.map((entry) => ({
-          name: entry.name,
-          isFile: () => entry.isFile,
-          isDirectory: () => entry.isDirectory,
-        }));
+        return entries.map((entry) => entry.name);
+      } catch {
+        /*
+         * readdir can fail with ENOENT (path doesn't exist) or ENOTDIR
+         * (path is a file). In both cases, isomorphic-git expects a proper
+         * Node.js error. We throw ENOENT which is the safe default —
+         * isomorphic-git handles it gracefully during clone/checkout.
+         */
+        const err = new Error(`ENOENT: no such file or directory, scandir '${path}'`) as NodeJS.ErrnoException;
+        err.code = 'ENOENT';
+        err.errno = -2;
+        err.syscall = 'scandir';
+        err.path = path;
+        throw err;
       }
-
-      const entries = await rt.fs.readdir(relativePath);
-
-      return entries.map((entry) => entry.name);
     },
     rm: async (path: string, options?: { recursive?: boolean; force?: boolean }) => {
       const relativePath = pathUtils.relative(rt.workdir, path);
