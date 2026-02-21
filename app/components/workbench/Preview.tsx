@@ -900,13 +900,21 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
          * Handle console errors captured from preview iframe (module import errors, etc.)
          * Route to preview error handler's auto-fix system
          */
+        let parsedUrl: URL;
+
+        try {
+          parsedUrl = new URL(event.data.url || window.location.href);
+        } catch {
+          parsedUrl = new URL(window.location.href);
+        }
+
         getPreviewErrorHandler().handlePreviewMessage({
           type: 'PREVIEW_UNCAUGHT_EXCEPTION', // Use existing type for compatibility
           message: event.data.message,
           stack: event.data.stack,
-          pathname: new URL(event.data.url || window.location.href).pathname,
-          search: new URL(event.data.url || window.location.href).search,
-          hash: new URL(event.data.url || window.location.href).hash,
+          pathname: parsedUrl.pathname,
+          search: parsedUrl.search,
+          hash: parsedUrl.hash,
           port: selectedWindowSize?.width || 0,
         });
       } else if (event.data.type === 'PREVIEW_VITE_ERROR') {
@@ -914,13 +922,21 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
          * Handle Vite error overlay detection (ES module errors, HMR failures, etc.)
          * Route to preview error handler's auto-fix system
          */
+        let parsedViteUrl: URL;
+
+        try {
+          parsedViteUrl = new URL(event.data.url || window.location.href);
+        } catch {
+          parsedViteUrl = new URL(window.location.href);
+        }
+
         getPreviewErrorHandler().handlePreviewMessage({
           type: 'PREVIEW_UNCAUGHT_EXCEPTION', // Use existing type for compatibility
           message: event.data.fullMessage || event.data.message,
           stack: event.data.stack || '',
-          pathname: new URL(event.data.url || window.location.href).pathname,
-          search: new URL(event.data.url || window.location.href).search,
-          hash: new URL(event.data.url || window.location.href).hash,
+          pathname: parsedViteUrl.pathname,
+          search: parsedViteUrl.search,
+          hash: parsedViteUrl.hash,
           port: selectedWindowSize?.width || 0,
         });
       } else if (event.data.type === 'PREVIEW_SCREENSHOT_RESPONSE') {
