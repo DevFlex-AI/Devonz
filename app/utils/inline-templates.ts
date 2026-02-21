@@ -1,0 +1,1668 @@
+/**
+ * Inline starter template files — embedded directly in the codebase.
+ * Eliminates the need to fetch from GitHub API for starter scaffolding.
+ *
+ * Each template provides the minimum files needed for:
+ *   npm install && npm run dev
+ * to succeed and show a working app skeleton.
+ */
+
+export interface InlineFile {
+  name: string;
+  path: string;
+  content: string;
+}
+
+function f(path: string, content: string): InlineFile {
+  return { name: path.split('/').pop() || path, path, content: content.trimStart() };
+}
+
+/* 1. Vite React */
+const viteReact: InlineFile[] = [
+  f(
+    'package.json',
+    `{
+  "name": "vite-react-app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.6.3",
+    "vite": "^6.0.0"
+  }
+}
+`,
+  ),
+  f(
+    'index.html',
+    `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + React + TS</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+`,
+  ),
+  f(
+    'vite.config.ts',
+    `import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+});
+`,
+  ),
+  f(
+    'tsconfig.json',
+    `{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src"]
+}
+`,
+  ),
+  f(
+    'src/vite-env.d.ts',
+    `/// <reference types="vite/client" />
+`,
+  ),
+  f(
+    'src/main.tsx',
+    `import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import './index.css';
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+);
+`,
+  ),
+  f(
+    'src/App.tsx',
+    `import './App.css';
+
+function App() {
+  return (
+    <div className="app">
+      <h1>Vite + React</h1>
+      <p>Edit src/App.tsx and save to see changes.</p>
+    </div>
+  );
+}
+
+export default App;
+`,
+  ),
+  f(
+    'src/App.css',
+    `.app {
+  text-align: center;
+  padding: 2rem;
+}
+`,
+  ),
+  f(
+    'src/index.css',
+    `:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #213547;
+  background-color: #ffffff;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+`,
+  ),
+];
+
+/* 2. Vite TypeScript */
+const viteTypescript: InlineFile[] = [
+  f(
+    'package.json',
+    `{
+  "name": "vite-ts-app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vite": "^6.0.0"
+  }
+}
+`,
+  ),
+  f(
+    'index.html',
+    `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + TS</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
+`,
+  ),
+  f(
+    'vite.config.ts',
+    `import { defineConfig } from 'vite';
+
+export default defineConfig({});
+`,
+  ),
+  f(
+    'tsconfig.json',
+    `{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "strict": true
+  },
+  "include": ["src"]
+}
+`,
+  ),
+  f(
+    'src/vite-env.d.ts',
+    `/// <reference types="vite/client" />
+`,
+  ),
+  f(
+    'src/main.ts',
+    `import './style.css';
+
+document.querySelector<HTMLDivElement>('#app')!.innerHTML = \`
+  <div>
+    <h1>Vite + TypeScript</h1>
+    <p>Edit src/main.ts and save to see changes.</p>
+  </div>
+\`;
+`,
+  ),
+  f(
+    'src/style.css',
+    `:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  color: #213547;
+  background-color: #ffffff;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  display: flex;
+  place-items: center;
+  justify-content: center;
+}
+`,
+  ),
+];
+
+/* 3. Vanilla Vite */
+const vanillaVite: InlineFile[] = [
+  f(
+    'package.json',
+    `{
+  "name": "vanilla-vite-app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0"
+  }
+}
+`,
+  ),
+  f(
+    'index.html',
+    `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vanilla + Vite</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/main.js"></script>
+  </body>
+</html>
+`,
+  ),
+  f(
+    'main.js',
+    `import './style.css';
+
+document.querySelector('#app').innerHTML = \`
+  <div>
+    <h1>Hello Vite!</h1>
+    <p>Edit main.js and save to see changes.</p>
+  </div>
+\`;
+`,
+  ),
+  f(
+    'style.css',
+    `:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  color: #213547;
+  background-color: #ffffff;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  display: flex;
+  place-items: center;
+  justify-content: center;
+}
+`,
+  ),
+];
+
+/* 4. Vue */
+const vue: InlineFile[] = [
+  f(
+    'package.json',
+    `{
+  "name": "vue-app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "vue": "^3.5.13"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.1",
+    "typescript": "^5.6.3",
+    "vite": "^6.0.0",
+    "vue-tsc": "^2.1.10"
+  }
+}
+`,
+  ),
+  f(
+    'index.html',
+    `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vue + Vite</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
+`,
+  ),
+  f(
+    'vite.config.ts',
+    `import { defineConfig } from 'vite';
+import vue from '@vitejs/plugin-vue';
+
+export default defineConfig({
+  plugins: [vue()],
+});
+`,
+  ),
+  f(
+    'tsconfig.json',
+    `{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "preserve",
+    "strict": true
+  },
+  "include": ["src/**/*.ts", "src/**/*.vue"]
+}
+`,
+  ),
+  f(
+    'src/main.ts',
+    `import { createApp } from 'vue';
+import App from './App.vue';
+import './style.css';
+
+createApp(App).mount('#app');
+`,
+  ),
+  f(
+    'src/App.vue',
+    `<script setup lang="ts">
+import { ref } from 'vue';
+
+const msg = ref('Hello Vue + Vite!');
+</script>
+
+<template>
+  <div class="app">
+    <h1>{{ msg }}</h1>
+    <p>Edit src/App.vue and save to see changes.</p>
+  </div>
+</template>
+
+<style scoped>
+.app {
+  text-align: center;
+  padding: 2rem;
+}
+</style>
+`,
+  ),
+  f(
+    'src/style.css',
+    `:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  color: #213547;
+  background-color: #ffffff;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+`,
+  ),
+  f(
+    'src/vite-env.d.ts',
+    `/// <reference types="vite/client" />
+
+declare module '*.vue' {
+  import type { DefineComponent } from 'vue';
+  const component: DefineComponent<object, object, unknown>;
+  export default component;
+}
+`,
+  ),
+];
+
+/* 5. NextJS Shadcn */
+const nextjsShadcn: InlineFile[] = [
+  f(
+    'package.json',
+    `{
+  "name": "nextjs-shadcn-app",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "^14.2.18",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.5.4",
+    "lucide-react": "^0.460.0",
+    "@radix-ui/react-slot": "^1.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.16",
+    "typescript": "^5.6.3"
+  }
+}
+`,
+  ),
+  f(
+    'next.config.js',
+    `/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+};
+
+module.exports = nextConfig;
+`,
+  ),
+  f(
+    'tsconfig.json',
+    `{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [{ "name": "next" }],
+    "paths": { "@/*": ["./*"] }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"]
+}
+`,
+  ),
+  f(
+    'tailwind.config.ts',
+    `import type { Config } from 'tailwindcss';
+
+const config: Config = {
+  content: [
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+};
+
+export default config;
+`,
+  ),
+  f(
+    'postcss.config.js',
+    `module.exports = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+};
+`,
+  ),
+  f(
+    'components.json',
+    `{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "default",
+  "rsc": true,
+  "tsx": true,
+  "tailwind": {
+    "config": "tailwind.config.ts",
+    "css": "app/globals.css",
+    "baseColor": "neutral",
+    "cssVariables": true
+  },
+  "aliases": {
+    "components": "@/components",
+    "utils": "@/lib/utils"
+  }
+}
+`,
+  ),
+  f(
+    'lib/utils.ts',
+    `import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+`,
+  ),
+  f(
+    'app/layout.tsx',
+    `import type { Metadata } from 'next';
+import './globals.css';
+
+export const metadata: Metadata = {
+  title: 'Next.js App',
+  description: 'Created with Next.js and shadcn/ui',
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <body>{children}</body>
+    </html>
+  );
+}
+`,
+  ),
+  f(
+    'app/page.tsx',
+    `export default function Home() {
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center p-24">
+      <h1 className="text-4xl font-bold">Next.js + shadcn/ui</h1>
+      <p className="mt-4 text-lg text-gray-600">Edit app/page.tsx to get started.</p>
+    </main>
+  );
+}
+`,
+  ),
+  f(
+    'app/globals.css',
+    `@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+}
+`,
+  ),
+];
+
+/* 6. Vite Shadcn */
+const viteShadcn: InlineFile[] = [
+  f(
+    'package.json',
+    `{
+  "name": "vite-shadcn-app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.5.4",
+    "lucide-react": "^0.460.0",
+    "@radix-ui/react-slot": "^1.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.16",
+    "typescript": "^5.6.3",
+    "vite": "^6.0.0"
+  }
+}
+`,
+  ),
+  f(
+    'index.html',
+    `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + React + shadcn/ui</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+`,
+  ),
+  f(
+    'vite.config.ts',
+    `import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
+
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
+});
+`,
+  ),
+  f(
+    'tsconfig.json',
+    `{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "baseUrl": ".",
+    "paths": { "@/*": ["./src/*"] }
+  },
+  "include": ["src"]
+}
+`,
+  ),
+  f(
+    'tailwind.config.ts',
+    `import type { Config } from 'tailwindcss';
+
+const config: Config = {
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+};
+
+export default config;
+`,
+  ),
+  f(
+    'postcss.config.js',
+    `export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+};
+`,
+  ),
+  f(
+    'components.json',
+    `{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "default",
+  "rsc": false,
+  "tsx": true,
+  "tailwind": {
+    "config": "tailwind.config.ts",
+    "css": "src/index.css",
+    "baseColor": "neutral",
+    "cssVariables": true
+  },
+  "aliases": {
+    "components": "@/components",
+    "utils": "@/lib/utils"
+  }
+}
+`,
+  ),
+  f(
+    'src/lib/utils.ts',
+    `import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+`,
+  ),
+  f(
+    'src/vite-env.d.ts',
+    `/// <reference types="vite/client" />
+`,
+  ),
+  f(
+    'src/main.tsx',
+    `import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import './index.css';
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+);
+`,
+  ),
+  f(
+    'src/App.tsx',
+    `function App() {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center">
+      <h1 className="text-4xl font-bold">Vite + React + shadcn/ui</h1>
+      <p className="mt-4 text-lg text-gray-600">Edit src/App.tsx to get started.</p>
+    </div>
+  );
+}
+
+export default App;
+`,
+  ),
+  f(
+    'src/index.css',
+    `@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+`,
+  ),
+];
+
+/* 7. Basic Astro */
+const basicAstro: InlineFile[] = [
+  f(
+    'package.json',
+    `{
+  "name": "astro-basic-app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "astro": "^4.16.18"
+  }
+}
+`,
+  ),
+  f(
+    'astro.config.mjs',
+    `import { defineConfig } from 'astro/config';
+
+export default defineConfig({});
+`,
+  ),
+  f(
+    'tsconfig.json',
+    `{
+  "extends": "astro/tsconfigs/strict"
+}
+`,
+  ),
+  f(
+    'src/pages/index.astro',
+    `---
+// Welcome to Astro
+---
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Astro App</title>
+    <style>
+      body {
+        font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+        margin: 0;
+        display: flex;
+        min-height: 100vh;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        color: #213547;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Welcome to Astro</h1>
+      <p>Edit src/pages/index.astro to get started.</p>
+    </main>
+  </body>
+</html>
+`,
+  ),
+];
+
+/* 8. Expo App */
+const expoApp: InlineFile[] = [
+  f(
+    'package.json',
+    `{
+  "name": "expo-app",
+  "private": true,
+  "version": "1.0.0",
+  "main": "expo-router/entry",
+  "scripts": {
+    "dev": "expo start",
+    "build": "expo export",
+    "start": "expo start"
+  },
+  "dependencies": {
+    "expo": "~52.0.0",
+    "expo-router": "~4.0.0",
+    "expo-status-bar": "~2.0.0",
+    "react": "18.3.1",
+    "react-native": "0.76.5",
+    "react-native-safe-area-context": "4.14.0",
+    "react-native-screens": "~4.4.0"
+  },
+  "devDependencies": {
+    "@types/react": "~18.3.12",
+    "typescript": "^5.6.3"
+  }
+}
+`,
+  ),
+  f(
+    'app.json',
+    `{
+  "expo": {
+    "name": "expo-app",
+    "slug": "expo-app",
+    "version": "1.0.0",
+    "scheme": "myapp",
+    "platforms": ["ios", "android", "web"],
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    }
+  }
+}
+`,
+  ),
+  f(
+    'tsconfig.json',
+    `{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true
+  }
+}
+`,
+  ),
+  f(
+    'app/_layout.tsx',
+    `import { Stack } from 'expo-router';
+
+export default function RootLayout() {
+  return <Stack />;
+}
+`,
+  ),
+  f(
+    'app/index.tsx',
+    `import { View, Text, StyleSheet } from 'react-native';
+
+export default function HomeScreen() {
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Welcome to Expo</Text>
+      <Text style={styles.subtitle}>Edit app/index.tsx to get started.</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+  },
+  subtitle: {
+    fontSize: 16,
+    marginTop: 8,
+    color: '#666',
+  },
+});
+`,
+  ),
+];
+
+/* 9. Qwik Typescript */
+const qwikTypescript: InlineFile[] = [
+  f(
+    'package.json',
+    `{
+  "name": "qwik-app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --mode ssr",
+    "build": "qwik build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@builder.io/qwik": "^1.12.0",
+    "@builder.io/qwik-city": "^1.12.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vite": "^6.0.0",
+    "vite-tsconfig-paths": "^5.1.4"
+  }
+}
+`,
+  ),
+  f(
+    'vite.config.ts',
+    `import { defineConfig } from 'vite';
+import { qwikVite } from '@builder.io/qwik/optimizer';
+import { qwikCity } from '@builder.io/qwik-city/vite';
+import tsconfigPaths from 'vite-tsconfig-paths';
+
+export default defineConfig({
+  plugins: [qwikCity(), qwikVite(), tsconfigPaths()],
+});
+`,
+  ),
+  f(
+    'tsconfig.json',
+    `{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ES2020",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "jsxImportSource": "@builder.io/qwik",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "isolatedModules": true,
+    "paths": { "~/*": ["./src/*"] }
+  },
+  "include": ["src"]
+}
+`,
+  ),
+  f(
+    'src/root.tsx',
+    `import { component$ } from '@builder.io/qwik';
+import { QwikCityProvider, RouterOutlet } from '@builder.io/qwik-city';
+
+export default component$(() => {
+  return (
+    <QwikCityProvider>
+      <head>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Qwik App</title>
+      </head>
+      <body>
+        <RouterOutlet />
+      </body>
+    </QwikCityProvider>
+  );
+});
+`,
+  ),
+  f(
+    'src/routes/index.tsx',
+    `import { component$ } from '@builder.io/qwik';
+
+export default component$(() => {
+  return (
+    <div style={{ textAlign: 'center', padding: '2rem' }}>
+      <h1>Welcome to Qwik</h1>
+      <p>Edit src/routes/index.tsx to get started.</p>
+    </div>
+  );
+});
+`,
+  ),
+  f(
+    'src/routes/layout.tsx',
+    `import { component$, Slot } from '@builder.io/qwik';
+
+export default component$(() => {
+  return <Slot />;
+});
+`,
+  ),
+];
+
+/* 10. Remix Typescript */
+const remixTypescript: InlineFile[] = [
+  f(
+    'package.json',
+    `{
+  "name": "remix-app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "remix vite:dev",
+    "build": "remix vite:build",
+    "start": "remix-serve ./build/server/index.js"
+  },
+  "dependencies": {
+    "@remix-run/node": "^2.15.2",
+    "@remix-run/react": "^2.15.2",
+    "@remix-run/serve": "^2.15.2",
+    "isbot": "^5.1.17",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@remix-run/dev": "^2.15.2",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "typescript": "^5.6.3",
+    "vite": "^6.0.0",
+    "vite-tsconfig-paths": "^5.1.4"
+  }
+}
+`,
+  ),
+  f(
+    'vite.config.ts',
+    `import { vitePlugin as remix } from '@remix-run/dev';
+import { defineConfig } from 'vite';
+import tsconfigPaths from 'vite-tsconfig-paths';
+
+export default defineConfig({
+  plugins: [remix(), tsconfigPaths()],
+});
+`,
+  ),
+  f(
+    'tsconfig.json',
+    `{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "isolatedModules": true,
+    "paths": { "~/*": ["./app/*"] }
+  },
+  "include": ["app/**/*.ts", "app/**/*.tsx"]
+}
+`,
+  ),
+  f(
+    'app/root.tsx',
+    `import { Links, Meta, Outlet, Scripts, ScrollRestoration } from '@remix-run/react';
+
+export default function App() {
+  return (
+    <html lang="en">
+      <head>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <Meta />
+        <Links />
+      </head>
+      <body>
+        <Outlet />
+        <ScrollRestoration />
+        <Scripts />
+      </body>
+    </html>
+  );
+}
+`,
+  ),
+  f(
+    'app/routes/_index.tsx',
+    `export default function Index() {
+  return (
+    <div style={{ fontFamily: 'system-ui, sans-serif', textAlign: 'center', padding: '2rem' }}>
+      <h1>Welcome to Remix</h1>
+      <p>Edit app/routes/_index.tsx to get started.</p>
+    </div>
+  );
+}
+`,
+  ),
+];
+
+/* 11. Slidev */
+const slidev: InlineFile[] = [
+  f(
+    'package.json',
+    `{
+  "name": "slidev-presentation",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "slidev",
+    "build": "slidev build",
+    "export": "slidev export"
+  },
+  "dependencies": {
+    "@slidev/cli": "^0.50.0",
+    "@slidev/theme-default": "latest"
+  }
+}
+`,
+  ),
+  f(
+    'slides.md',
+    `---
+theme: default
+title: My Presentation
+---
+
+# Welcome to Slidev
+
+Presentation slides for developers
+
+---
+
+# Slide 2
+
+- Item 1
+- Item 2
+- Item 3
+
+---
+
+# Thank you!
+
+Edit slides.md to get started.
+`,
+  ),
+];
+
+/* 12. SvelteKit */
+const sveltekit: InlineFile[] = [
+  f(
+    'package.json',
+    `{
+  "name": "sveltekit-app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@sveltejs/adapter-auto": "^3.3.1",
+    "@sveltejs/kit": "^2.12.1",
+    "@sveltejs/vite-plugin-svelte": "^4.0.4",
+    "svelte": "^5.12.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vite": "^6.0.0"
+  }
+}
+`,
+  ),
+  f(
+    'svelte.config.js',
+    `import adapter from '@sveltejs/adapter-auto';
+
+/** @type {import('@sveltejs/kit').Config} */
+const config = {
+  kit: {
+    adapter: adapter(),
+  },
+};
+
+export default config;
+`,
+  ),
+  f(
+    'vite.config.ts',
+    `import { sveltekit } from '@sveltejs/kit/vite';
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  plugins: [sveltekit()],
+});
+`,
+  ),
+  f(
+    'tsconfig.json',
+    `{
+  "extends": "./.svelte-kit/tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "moduleResolution": "bundler"
+  }
+}
+`,
+  ),
+  f(
+    'src/app.html',
+    `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    %sveltekit.head%
+  </head>
+  <body>
+    <div>%sveltekit.body%</div>
+  </body>
+</html>
+`,
+  ),
+  f(
+    'src/routes/+page.svelte',
+    `<script lang="ts">
+  let name = 'SvelteKit';
+</script>
+
+<main>
+  <h1>Welcome to {name}</h1>
+  <p>Edit src/routes/+page.svelte to get started.</p>
+</main>
+
+<style>
+  main {
+    text-align: center;
+    padding: 2rem;
+    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  }
+</style>
+`,
+  ),
+  f(
+    'src/routes/+layout.svelte',
+    `<slot />
+`,
+  ),
+];
+
+/* 13. Angular */
+const angular: InlineFile[] = [
+  f(
+    'package.json',
+    `{
+  "name": "angular-app",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "ng serve",
+    "build": "ng build",
+    "start": "ng serve"
+  },
+  "dependencies": {
+    "@angular/animations": "^19.0.0",
+    "@angular/common": "^19.0.0",
+    "@angular/compiler": "^19.0.0",
+    "@angular/core": "^19.0.0",
+    "@angular/forms": "^19.0.0",
+    "@angular/platform-browser": "^19.0.0",
+    "@angular/platform-browser-dynamic": "^19.0.0",
+    "@angular/router": "^19.0.0",
+    "rxjs": "~7.8.1",
+    "tslib": "^2.7.0",
+    "zone.js": "~0.15.0"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^19.0.0",
+    "@angular/cli": "^19.0.0",
+    "@angular/compiler-cli": "^19.0.0",
+    "typescript": "~5.6.3"
+  }
+}
+`,
+  ),
+  f(
+    'angular.json',
+    `{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "newProjectRoot": "projects",
+  "projects": {
+    "angular-app": {
+      "projectType": "application",
+      "root": "",
+      "sourceRoot": "src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:application",
+          "options": {
+            "outputPath": "dist/angular-app",
+            "index": "src/index.html",
+            "browser": "src/main.ts",
+            "tsConfig": "tsconfig.json",
+            "styles": ["src/styles.css"]
+          }
+        },
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "buildTarget": "angular-app:build"
+          }
+        }
+      }
+    }
+  }
+}
+`,
+  ),
+  f(
+    'tsconfig.json',
+    `{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "outDir": "./dist/out-tsc",
+    "strict": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "bundler",
+    "importHelpers": true,
+    "target": "ES2022",
+    "module": "ES2022",
+    "lib": ["ES2022", "dom"],
+    "skipLibCheck": true
+  },
+  "angularCompilerOptions": {
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "strictTemplates": true
+  }
+}
+`,
+  ),
+  f(
+    'src/index.html',
+    `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Angular App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body>
+    <app-root></app-root>
+  </body>
+</html>
+`,
+  ),
+  f(
+    'src/main.ts',
+    `import { bootstrapApplication } from '@angular/platform-browser';
+import { AppComponent } from './app/app.component';
+
+bootstrapApplication(AppComponent).catch((err) => console.error(err));
+`,
+  ),
+  f(
+    'src/app/app.component.ts',
+    `import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-root',
+  standalone: true,
+  template: \`
+    <main>
+      <h1>Welcome to Angular</h1>
+      <p>Edit src/app/app.component.ts to get started.</p>
+    </main>
+  \`,
+  styles: [\`
+    main {
+      text-align: center;
+      padding: 2rem;
+      font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+    }
+  \`],
+})
+export class AppComponent {
+  title = 'angular-app';
+}
+`,
+  ),
+  f(
+    'src/styles.css',
+    `body {
+  margin: 0;
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  color: #213547;
+  background-color: #ffffff;
+}
+`,
+  ),
+];
+
+/* 14. SolidJS */
+const solidjs: InlineFile[] = [
+  f(
+    'package.json',
+    `{
+  "name": "solidjs-app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "solid-js": "^1.9.3"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.16",
+    "typescript": "^5.6.3",
+    "vite": "^6.0.0",
+    "vite-plugin-solid": "^2.11.0"
+  }
+}
+`,
+  ),
+  f(
+    'index.html',
+    `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SolidJS App</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/index.tsx"></script>
+  </body>
+</html>
+`,
+  ),
+  f(
+    'vite.config.ts',
+    `import { defineConfig } from 'vite';
+import solidPlugin from 'vite-plugin-solid';
+
+export default defineConfig({
+  plugins: [solidPlugin()],
+});
+`,
+  ),
+  f(
+    'tsconfig.json',
+    `{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "isolatedModules": true
+  },
+  "include": ["src"]
+}
+`,
+  ),
+  f(
+    'tailwind.config.js',
+    `/** @type {import('tailwindcss').Config} */
+export default {
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+};
+`,
+  ),
+  f(
+    'postcss.config.js',
+    `export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+};
+`,
+  ),
+  f(
+    'src/index.tsx',
+    `import { render } from 'solid-js/web';
+import App from './App';
+import './index.css';
+
+render(() => <App />, document.getElementById('root')!);
+`,
+  ),
+  f(
+    'src/App.tsx',
+    `import type { Component } from 'solid-js';
+
+const App: Component = () => {
+  return (
+    <div class="flex min-h-screen flex-col items-center justify-center">
+      <h1 class="text-4xl font-bold">SolidJS + Tailwind</h1>
+      <p class="mt-4 text-lg text-gray-600">Edit src/App.tsx to get started.</p>
+    </div>
+  );
+};
+
+export default App;
+`,
+  ),
+  f(
+    'src/index.css',
+    `@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+}
+`,
+  ),
+];
+
+/* Template registry — keys MUST match `name` field in STARTER_TEMPLATES */
+export const INLINE_TEMPLATES: Record<string, InlineFile[]> = {
+  'Vite React': viteReact,
+  'Vite Typescript': viteTypescript,
+  'Vanilla Vite': vanillaVite,
+  Vue: vue,
+  'NextJS Shadcn': nextjsShadcn,
+  'Vite Shadcn': viteShadcn,
+  'Basic Astro': basicAstro,
+  'Expo App': expoApp,
+  'Qwik Typescript': qwikTypescript,
+  'Remix Typescript': remixTypescript,
+  Slidev: slidev,
+  Sveltekit: sveltekit,
+  Angular: angular,
+  SolidJS: solidjs,
+};

@@ -53,7 +53,7 @@ async function fsLoader({ request }: LoaderFunctionArgs) {
         });
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Read failed';
-        logger.error(`readFile failed: ${filePath}`, error);
+        logger.debug(`readFile not found: ${filePath}`);
 
         return json({ error: message }, { status: 404 });
       }
@@ -68,7 +68,7 @@ async function fsLoader({ request }: LoaderFunctionArgs) {
         });
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Read failed';
-        logger.error(`readFileRaw failed: ${filePath}`, error);
+        logger.debug(`readFileRaw not found: ${filePath}`);
 
         return json({ error: message }, { status: 404 });
       }
@@ -80,7 +80,7 @@ async function fsLoader({ request }: LoaderFunctionArgs) {
         return json(entries);
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Readdir failed';
-        logger.error(`readdir failed: ${filePath}`, error);
+        logger.debug(`readdir not found: ${filePath}`);
 
         return json({ error: message }, { status: 404 });
       }
@@ -92,7 +92,7 @@ async function fsLoader({ request }: LoaderFunctionArgs) {
         return json(stat);
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Stat failed';
-        logger.error(`stat failed: ${filePath}`, error);
+        logger.debug(`stat not found: ${filePath}`);
 
         return json({ error: message }, { status: 404 });
       }

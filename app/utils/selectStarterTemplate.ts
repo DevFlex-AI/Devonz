@@ -2,6 +2,9 @@ import ignore from 'ignore';
 import type { ProviderInfo } from '~/types/model';
 import type { Template } from '~/types/template';
 import { STARTER_TEMPLATES } from './constants';
+import { findBestMatch } from './fuzzy-match';
+import { INLINE_TEMPLATES } from './inline-templates';
+import { loadShowcaseTemplates } from './showcase-templates';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('StarterTemplate');
@@ -72,18 +75,28 @@ const COMMON_EXTRA_PACKAGES: Record<string, string> = {
   '@hookform/resolvers': '^3.9.1',
 };
 
-const starterTemplateSelectionPrompt = (templates: Template[]) => `
+interface PromptTemplate {
+  name: string;
+  description: string;
+  tags?: string[];
+}
+
+const starterTemplateSelectionPrompt = (
+  starterTemplates: PromptTemplate[],
+  showcaseTemplates: PromptTemplate[] = [],
+) => `
 You are an experienced developer who helps people choose the best starter template for their projects.
 IMPORTANT: Vite is preferred
 IMPORTANT: Prefer shadcn templates for React projects that need UI components.
+IMPORTANT: When the user asks for something specific like a portfolio, landing page, dashboard, or SaaS template, prefer a showcase template that matches.
 
-Available templates:
+Available starter templates (basic scaffolding):
 <template>
   <name>blank</name>
   <description>Empty starter for simple scripts and trivial tasks that don't require a full template setup</description>
   <tags>basic, script</tags>
 </template>
-${templates
+${starterTemplates
   .map(
     (template) => `
 <template>
@@ -94,6 +107,24 @@ ${templates
 `,
   )
   .join('\n')}
+${
+  showcaseTemplates.length > 0
+    ? `
+Available showcase templates (full pre-built projects — use when the user wants a specific type of site):
+${showcaseTemplates
+  .map(
+    (template) => `
+<template>
+  <name>${template.name}</name>
+  <description>${template.description}</description>
+  ${template.tags ? `<tags>${template.tags.join(', ')}</tags>` : ''}
+</template>
+`,
+  )
+  .join('\n')}
+`
+    : ''
+}
 
 Response Format:
 <selection>
@@ -107,7 +138,7 @@ Examples:
 User: I need to build a todo app
 Response:
 <selection>
-  <templateName>react-basic-starter</templateName>
+  <templateName>Vite Shadcn</templateName>
   <title>Simple React todo application</title>
 </selection>
 </example>
@@ -121,12 +152,22 @@ Response:
 </selection>
 </example>
 
+<example>
+User: Build me a portfolio website
+Response:
+<selection>
+  <templateName>Luxury Portfolio</templateName>
+  <title>Personal portfolio website</title>
+</selection>
+</example>
+
 Instructions:
 1. For trivial tasks and simple scripts, always recommend the blank template
 2. For more complex projects, recommend templates from the provided list
 3. Follow the exact XML format
 4. Consider both technical requirements and tags
-5. If no perfect match exists, recommend the closest option
+5. If the user asks for something specific (portfolio, landing page, dashboard, SaaS), prefer a matching showcase template
+6. If no perfect match exists, recommend the closest starter template
 
 Important: Provide only the selection tags in your response, no additional text.
 MOST IMPORTANT: YOU DONT HAVE TIME TO THINK JUST START RESPONDING BASED ON HUNCH 
@@ -153,11 +194,26 @@ const parseSelectedTemplate = (llmOutput: string): { template: string; title: st
 
 export const selectStarterTemplate = async (options: { message: string; model: string; provider: ProviderInfo }) => {
   const { message, model, provider } = options;
+
+  // Load showcase templates so the LLM can pick a specific pre-built project
+  let showcasePromptTemplates: PromptTemplate[] = [];
+
+  try {
+    const showcase = await loadShowcaseTemplates();
+    showcasePromptTemplates = showcase.map((st) => ({
+      name: st.name,
+      description: st.description,
+      tags: st.tags,
+    }));
+  } catch {
+    logger.warn('Failed to load showcase templates for selection prompt');
+  }
+
   const requestBody = {
     message,
     model,
     provider,
-    system: starterTemplateSelectionPrompt(templates),
+    system: starterTemplateSelectionPrompt(templates, showcasePromptTemplates),
   };
   const response = await fetch('/api/llmcall', {
     method: 'POST',
@@ -247,8 +303,10 @@ function injectShadcnPeerDeps(files: Array<{ name: string; path: string; content
       }
     }
 
-    // Always pre-install commonly used packages that LLMs frequently import
-    // (e.g. framer-motion, lucide-react) to prevent auto-fix loops
+    /*
+     * Always pre-install commonly used packages that LLMs frequently import
+     * (e.g. framer-motion, lucide-react) to prevent auto-fix loops
+     */
     for (const [pkg, version] of Object.entries(COMMON_EXTRA_PACKAGES)) {
       if (!allExistingDeps[pkg] && !deps[pkg]) {
         deps[pkg] = version;
@@ -266,22 +324,164 @@ function injectShadcnPeerDeps(files: Array<{ name: string; path: string; content
   }
 }
 
-export async function getTemplates(templateName: string, title?: string) {
-  const template = STARTER_TEMPLATES.find((t) => t.name == templateName);
+/**
+ * Inject only the common extra packages (framer-motion, lucide-react, etc.)
+ * into a non-shadcn React-family template's package.json. This prevents
+ * auto-fix loops when the LLM imports popular libraries that aren't in
+ * the template's dependency list.
+ */
+function injectCommonPackages(files: Array<{ name: string; path: string; content: string }>): void {
+  const pkgJsonFile = files.find((f) => f.path === 'package.json' || f.name === 'package.json');
 
+  if (!pkgJsonFile) {
+    return;
+  }
+
+  try {
+    const pkgJson = JSON.parse(pkgJsonFile.content);
+    const deps = pkgJson.dependencies || {};
+    const devDeps = pkgJson.devDependencies || {};
+    const allExistingDeps = { ...deps, ...devDeps };
+    let injectedCount = 0;
+
+    for (const [pkg, version] of Object.entries(COMMON_EXTRA_PACKAGES)) {
+      if (!allExistingDeps[pkg] && !deps[pkg]) {
+        deps[pkg] = version;
+        injectedCount++;
+      }
+    }
+
+    if (injectedCount > 0) {
+      pkgJson.dependencies = deps;
+      pkgJsonFile.content = JSON.stringify(pkgJson, null, 2);
+      logger.info(`Injected ${injectedCount} common packages into template package.json`);
+    }
+  } catch (error) {
+    logger.error('Failed to inject common packages:', error);
+  }
+}
+
+/**
+ * Frameworks / libraries whose templates should get COMMON_EXTRA_PACKAGES
+ * injected into package.json. Matched case-insensitively against the
+ * template name so that "Vite React", "NextJS Shadcn", etc. all qualify.
+ */
+const REACT_TEMPLATE_KEYWORDS = ['react', 'next', 'remix', 'shadcn', 'solid', 'qwik'];
+
+/**
+ * Returns true when `templateName` belongs to a React-family framework
+ * that benefits from pre-installed common packages.
+ */
+function isReactFamily(templateName: string): boolean {
+  const lower = templateName.toLowerCase();
+  return REACT_TEMPLATE_KEYWORDS.some((kw) => lower.includes(kw));
+}
+
+export async function getTemplates(templateName: string, title?: string) {
+  /*
+   * ——— Step 1: Resolve template by name (exact → fuzzy → showcase) ———
+   */
+  let template: Template | undefined = STARTER_TEMPLATES.find((t) => t.name === templateName);
+  let showcaseRepo: string | undefined;
+  let resolvedName = templateName;
+
+  // If no exact starter match, try fuzzy matching against starter names
   if (!template) {
+    const starterNames = STARTER_TEMPLATES.map((t) => t.name);
+    const fuzzyStarterMatch = findBestMatch(templateName, starterNames);
+
+    if (fuzzyStarterMatch) {
+      template = STARTER_TEMPLATES.find((t) => t.name === fuzzyStarterMatch);
+      logger.info(`Fuzzy matched "${templateName}" → starter "${fuzzyStarterMatch}"`);
+      resolvedName = fuzzyStarterMatch;
+    }
+  }
+
+  // If still no starter match, check showcase templates (exact then fuzzy)
+  if (!template) {
+    try {
+      const showcaseTemplates = await loadShowcaseTemplates();
+      const showcaseMatch = showcaseTemplates.find((st) => st.name === templateName);
+
+      if (showcaseMatch) {
+        showcaseRepo = showcaseMatch.githubRepo;
+        resolvedName = showcaseMatch.name;
+      } else {
+        const showcaseNames = showcaseTemplates.map((st) => st.name);
+        const fuzzyShowcaseMatch = findBestMatch(templateName, showcaseNames);
+
+        if (fuzzyShowcaseMatch) {
+          const matched = showcaseTemplates.find((st) => st.name === fuzzyShowcaseMatch);
+
+          if (matched) {
+            showcaseRepo = matched.githubRepo;
+            resolvedName = matched.name;
+            logger.info(`Fuzzy matched "${templateName}" → showcase "${fuzzyShowcaseMatch}"`);
+          }
+        }
+      }
+    } catch {
+      logger.warn('Failed to load showcase templates');
+    }
+  }
+
+  if (!template && !showcaseRepo) {
+    logger.warn(`No template match found for "${templateName}"`);
     return null;
   }
 
-  const githubRepo = template.githubRepo;
-  const files = await getGitHubRepoContent(githubRepo);
+  /*
+   * ——— Step 2: Fetch template files (inline → GitHub → fallback) ———
+   */
+  let files: Array<{ name: string; path: string; content: string }>;
+
+  if (template) {
+    const inlineFiles = INLINE_TEMPLATES[template.name];
+
+    if (inlineFiles) {
+      files = inlineFiles.map((f) => ({ ...f }));
+      logger.info(`Using inline template for "${template.name}" (${files.length} files)`);
+    } else {
+      logger.info(`No inline content for "${template.name}", fetching from GitHub`);
+      files = await getGitHubRepoContent(template.githubRepo);
+    }
+  } else {
+    // Showcase template — try GitHub; on failure, fall back to closest starter
+    logger.info(`Fetching showcase template from GitHub: ${showcaseRepo}`);
+
+    try {
+      files = await getGitHubRepoContent(showcaseRepo!);
+    } catch (error) {
+      logger.warn(`Showcase fetch failed for "${resolvedName}", falling back to closest starter`, error);
+
+      // Find the best starter template as fallback
+      const starterNames = STARTER_TEMPLATES.map((t) => t.name);
+      const fallbackName = findBestMatch(resolvedName, starterNames) ?? 'Vite Shadcn';
+      const fallback = STARTER_TEMPLATES.find((t) => t.name === fallbackName)!;
+      const fallbackInline = INLINE_TEMPLATES[fallback.name];
+
+      if (fallbackInline) {
+        files = fallbackInline.map((f) => ({ ...f }));
+        logger.info(`Falling back to inline starter "${fallback.name}" (${files.length} files)`);
+      } else {
+        files = await getGitHubRepoContent(fallback.githubRepo);
+      }
+
+      // Update resolved name so downstream messages reference the actual template used
+      resolvedName = fallback.name;
+      template = fallback;
+    }
+  }
 
   /*
-   * Inject missing shadcn/ui peer dependencies for shadcn templates.
-   * This prevents auto-fix loops caused by missing @radix-ui packages.
+   * ——— Step 3: Inject dependencies ———
+   * - Shadcn templates: inject peer deps + common packages
+   * - Other React-family templates: inject common packages only
    */
-  if (templateName.toLowerCase().includes('shadcn')) {
+  if (resolvedName.toLowerCase().includes('shadcn')) {
     injectShadcnPeerDeps(files);
+  } else if (isReactFamily(resolvedName)) {
+    injectCommonPackages(files);
   }
 
   let filteredFiles = files;
@@ -326,8 +526,10 @@ export async function getTemplates(templateName: string, title?: string) {
     filesToImport.ignoreFile = ignoredFiles;
   }
 
+  const displayName = template?.name || resolvedName;
+
   const assistantMessage = `
-Devonz is initializing your project with the required files using the ${template.name} template.
+Devonz is initializing your project with the required files using the ${displayName} template.
 <devonzArtifact id="imported-files" title="${title || 'Create initial files'}" type="bundled">
 ${filesToImport.files
   .map(
@@ -389,7 +591,7 @@ If you need to make changes to functionality, create new files instead of modify
    * @radix-ui/*, class-variance-authority, etc. which causes cascading
    * auto-fix loops.
    */
-  if (templateName.toLowerCase().includes('shadcn')) {
+  if (resolvedName.toLowerCase().includes('shadcn')) {
     const pkgFile = files.find((f) => f.path === 'package.json' || f.name === 'package.json');
 
     if (pkgFile) {
