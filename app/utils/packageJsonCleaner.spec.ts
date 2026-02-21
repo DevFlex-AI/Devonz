@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { cleanPackageJsonForWebContainer } from './packageJsonCleaner';
+import { cleanPackageJsonForWebContainer, replaceUnsupportedFonts } from './packageJsonCleaner';
 
 describe('cleanPackageJsonForWebContainer', () => {
   it('should remove expo and react-native dependencies', () => {
@@ -196,5 +196,47 @@ describe('cleanPackageJsonForWebContainer', () => {
     expect(cleaned.dependencies['react-dom']).toBe('^18.3.1');
     expect(cleaned.dependencies.expo).toBeUndefined();
     expect(cleaned.dependencies['react-native']).toBeUndefined();
+  });
+});
+
+describe('replaceUnsupportedFonts', () => {
+  it('should replace Geist and Geist_Mono in next/font/google imports', () => {
+    const layout = `import { Geist, Geist_Mono } from 'next/font/google';
+
+const geistSans = Geist({ subsets: ['latin'] });
+const geistMono = Geist_Mono({ subsets: ['latin'] });
+
+export default function RootLayout({ children }) {
+  return <html className={\`\${geistSans.variable} \${geistMono.variable}\`}><body>{children}</body></html>;
+}`;
+
+    const result = replaceUnsupportedFonts(layout);
+
+    expect(result.replaced).toBe(true);
+    expect(result.content).toContain("import { Inter, Roboto_Mono } from 'next/font/google'");
+    expect(result.content).toContain('const geistSans = Inter(');
+    expect(result.content).toContain('const geistMono = Roboto_Mono(');
+    expect(result.content).not.toContain('Geist');
+  });
+
+  it('should not modify files without next/font/google', () => {
+    const component = `import React from 'react';
+export default function Home() { return <div>Hello</div>; }`;
+
+    const result = replaceUnsupportedFonts(component);
+
+    expect(result.replaced).toBe(false);
+    expect(result.content).toBe(component);
+  });
+
+  it('should handle Geist only (no Geist_Mono)', () => {
+    const layout = `import { Geist } from "next/font/google";
+const font = Geist({ subsets: ['latin'] });`;
+
+    const result = replaceUnsupportedFonts(layout);
+
+    expect(result.replaced).toBe(true);
+    expect(result.content).toContain('import { Inter }');
+    expect(result.content).toContain('const font = Inter(');
   });
 });

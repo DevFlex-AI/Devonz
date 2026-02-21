@@ -7,6 +7,15 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig((config) => {
   return {
+    server: {
+      fs: {
+        /*
+         * Allow serving files when ?url= query param is used. Vite reserves ?url for
+         * its module system, which conflicts with our template import ?url=https://... pattern.
+         */
+        strict: false,
+      },
+    },
     define: {
       'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
     },

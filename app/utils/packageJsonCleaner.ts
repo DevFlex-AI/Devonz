@@ -219,3 +219,50 @@ export function cleanPackageJsonForWebContainer(packageJsonContent: string, proj
     };
   }
 }
+
+/**
+ * Fonts unsupported by Next.js 14's `next/font/google` built-in font list.
+ * These were added in Next.js 15+ and must be swapped to compatible alternatives.
+ */
+const FONT_REPLACEMENTS: [RegExp, string][] = [
+  /*
+   * Order matters: replace multiword names first to avoid partial matches.
+   * e.g. "Geist_Mono" must be replaced before "Geist".
+   */
+  [/\bGeist_Mono\b/g, 'Roboto_Mono'],
+  [/\bGeist\b/g, 'Inter'],
+];
+
+/**
+ * Replaces unsupported Google Font references in source files for
+ * WebContainer compatibility with Next.js 14.
+ *
+ * When Next.js is capped to 14.x, fonts like `Geist` and `Geist_Mono`
+ * (added in 15+) cause `Unknown font` build errors. This replaces
+ * them with visually similar fonts available in all versions.
+ *
+ * Only modifies files that import from `next/font/google`.
+ */
+export function replaceUnsupportedFonts(content: string): { content: string; replaced: boolean } {
+  if (!content.includes('next/font/google')) {
+    return { content, replaced: false };
+  }
+
+  let result = content;
+  let replaced = false;
+
+  for (const [pattern, replacement] of FONT_REPLACEMENTS) {
+    const updated = result.replace(pattern, replacement);
+
+    if (updated !== result) {
+      result = updated;
+      replaced = true;
+    }
+  }
+
+  if (replaced) {
+    logger.info('Replaced unsupported fonts in next/font/google usage');
+  }
+
+  return { content: result, replaced };
+}

@@ -8,7 +8,7 @@ import { Chat } from '~/components/chat/Chat.client';
 import { useGit } from '~/lib/hooks/useGit';
 import { useChatHistory } from '~/lib/persistence';
 import { createCommandsMessage, detectProjectCommands, escapeDevonzTags } from '~/utils/projectCommands';
-import { cleanPackageJsonForWebContainer } from '~/utils/packageJsonCleaner';
+import { cleanPackageJsonForWebContainer, replaceUnsupportedFonts } from '~/utils/packageJsonCleaner';
 import { LoadingOverlay } from '~/components/ui/LoadingOverlay';
 import { toast } from 'react-toastify';
 import { createScopedLogger } from '~/utils/logger';
@@ -92,6 +92,21 @@ export function GitUrlImport() {
                 content: cleanResult.content,
               };
               logger.info('Cleaned package.json for WebContainer:', cleanResult.removedDeps);
+            }
+
+            /*
+             * When Next.js is capped to 14.x, fonts like Geist/Geist_Mono
+             * (added in 15+) break the build. Replace them in layout files.
+             */
+            if (cleanResult.removedDeps.some((d) => d.includes('next version capped'))) {
+              for (let i = 0; i < fileContents.length; i++) {
+                const fontResult = replaceUnsupportedFonts(fileContents[i].content);
+
+                if (fontResult.replaced) {
+                  fileContents[i] = { ...fileContents[i], content: fontResult.content };
+                  logger.info(`Replaced unsupported fonts in ${fileContents[i].path}`);
+                }
+              }
             }
           }
 
