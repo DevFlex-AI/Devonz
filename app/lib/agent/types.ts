@@ -275,7 +275,7 @@ export const DEFAULT_AGENT_SETTINGS: AgentModeSettings = {
   enabled: false,
   autoApproveFileCreation: true,
   autoApproveFileModification: true,
-  autoApproveCommands: false,
+  autoApproveCommands: true,
   maxIterations: 25,
 };
 

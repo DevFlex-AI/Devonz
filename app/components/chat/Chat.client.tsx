@@ -257,8 +257,10 @@ export const ChatImpl = memo(
          * By returning the actual tool result, maxSteps handles re-submission automatically
          * and the server receives the real result instead of 'Yes, approved.'
          */
-        if (agentState.settings.enabled) {
-          if (shouldAutoApproveAgentTool(toolCall.toolName, agentState.settings)) {
+        const currentSettings = agentModeStore.get().settings;
+
+        if (currentSettings.enabled) {
+          if (shouldAutoApproveAgentTool(toolCall.toolName, currentSettings)) {
             logger.debug(`[onToolCall] Auto-approving and executing agent tool: ${toolCall.toolName}`);
 
             try {
