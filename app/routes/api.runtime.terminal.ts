@@ -17,6 +17,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { json } from '@remix-run/node';
 import { RuntimeManager } from '~/lib/runtime/local-runtime';
 import { isValidProjectId } from '~/lib/runtime/runtime-provider';
+import { validateCommand, auditCommand } from '~/lib/runtime/command-safety';
 import { withSecurity } from '~/lib/security';
 import { createScopedLogger } from '~/utils/logger';
 
@@ -150,12 +151,23 @@ async function terminalAction({ request }: ActionFunctionArgs) {
         return json({ error: 'Invalid or missing projectId' }, { status: 400 });
       }
 
+      const shellCommand = command || (process.platform === 'win32' ? 'cmd.exe' : '/bin/bash');
+
+      if (command) {
+        const validation = validateCommand(command);
+
+        if (!validation.allowed) {
+          logger.warn(`Blocked terminal command for project "${projectId}": ${command}`);
+          return json({ error: `Command blocked: ${validation.reason}` }, { status: 403 });
+        }
+      }
+
+      auditCommand(projectId, shellCommand, 'terminal');
+
       try {
         const manager = RuntimeManager.getInstance();
         const runtime = await manager.getRuntime(projectId);
 
-        // If no command given, spawn a default shell
-        const shellCommand = command || (process.platform === 'win32' ? 'cmd.exe' : '/bin/bash');
         const spawnedProcess = await runtime.spawn(shellCommand, [], {
           terminal: { cols: cols ?? 80, rows: rows ?? 24 },
           env,

@@ -15,6 +15,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { json } from '@remix-run/node';
 import { RuntimeManager } from '~/lib/runtime/local-runtime';
 import { isValidProjectId, isSafePath } from '~/lib/runtime/runtime-provider';
+import { validateCommand, auditCommand, DEFAULT_EXEC_TIMEOUT_MS } from '~/lib/runtime/command-safety';
 import { withSecurity } from '~/lib/security';
 import { createScopedLogger } from '~/utils/logger';
 
@@ -139,9 +140,33 @@ async function execAction({ request }: ActionFunctionArgs) {
         return json({ error: 'Invalid cwd: traversal detected' }, { status: 400 });
       }
 
+      const validation = validateCommand(command);
+
+      if (!validation.allowed) {
+        logger.warn(`Blocked command for project "${projectId}": ${command}`);
+
+        return json(
+          {
+            error: `Command blocked: ${validation.reason}`,
+            exitCode: 1,
+            output: `Command blocked: ${validation.reason}`,
+          },
+          { status: 403 },
+        );
+      }
+
+      auditCommand(projectId, command, 'exec');
+
       try {
         const runtime = await manager.getRuntime(projectId);
-        const result = await runtime.exec(command, { cwd, env });
+        const timeoutMs = body.timeout ?? DEFAULT_EXEC_TIMEOUT_MS;
+
+        const result = await Promise.race([
+          runtime.exec(command, { cwd, env }),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error(`Command timed out after ${Math.round(timeoutMs / 1000)}s`)), timeoutMs),
+          ),
+        ]);
 
         return json(result);
       } catch (error) {

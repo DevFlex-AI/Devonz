@@ -8,8 +8,10 @@ const logger = createScopedLogger('AutoBackup');
 
 const BACKUP_KEY_PREFIX = 'devonz_backup_';
 const BACKUP_META_KEY = 'devonz_backup_meta';
-const MAX_BACKUPS = 5;
+const MAX_BACKUPS = 3;
 const DEFAULT_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+const MAX_BACKUP_CHATS = 10;
+const MAX_BACKUP_SIZE_BYTES = 2 * 1024 * 1024; // 2 MB — safe threshold for localStorage
 
 interface BackupMeta {
   lastBackupTime: string;
@@ -42,16 +44,27 @@ function setBackupMeta(meta: BackupMeta) {
 }
 
 /**
- * Create a full backup of all chats, snapshots, and versions.
+ * Create a full backup of recent chats, snapshots, and versions.
  * Stores in localStorage with rotation (keeps last MAX_BACKUPS).
+ * Gracefully degrades: drops versions, then snapshots, if data exceeds localStorage limits.
  */
 export async function createBackup(db: IDBDatabase): Promise<string | null> {
   try {
-    const chats = await getAllChats(db);
+    const allChats = await getAllChats(db);
 
-    if (chats.length === 0) {
+    if (allChats.length === 0) {
       return null;
     }
+
+    /* Only back up the most recent chats to keep the payload manageable */
+    const chats = allChats
+      .sort((a, b) => {
+        const ta = new Date(b.timestamp ?? 0).getTime();
+        const tb = new Date(a.timestamp ?? 0).getTime();
+
+        return ta - tb;
+      })
+      .slice(0, MAX_BACKUP_CHATS);
 
     const snapshots: Record<string, Snapshot> = {};
     const versions: Record<string, ProjectVersion[]> = {};
@@ -70,23 +83,35 @@ export async function createBackup(db: IDBDatabase): Promise<string | null> {
           versions[chat.id] = chatVersions;
         }
       } catch {
-        // Skip individual chat errors -- partial backup is better than none
+        // Skip individual chat errors — partial backup is better than none
       }
     }
 
-    const backup: BackupData = {
-      _meta: {
-        version: '1.0',
-        createdAt: new Date().toISOString(),
-        chatCount: chats.length,
-      },
-      chats,
-      snapshots,
-      versions,
+    const metaBlock = {
+      version: '1.0' as const,
+      createdAt: new Date().toISOString(),
+      chatCount: chats.length,
     };
 
+    /* Try full backup first, then degrade if too large */
+    let backup: BackupData = { _meta: metaBlock, chats, snapshots, versions };
+    let serialized = JSON.stringify(backup);
+
+    if (serialized.length > MAX_BACKUP_SIZE_BYTES) {
+      /* Drop versions (usually the largest part) */
+      logger.debug('Backup too large with versions, dropping versions data');
+      backup = { _meta: metaBlock, chats, snapshots, versions: {} };
+      serialized = JSON.stringify(backup);
+    }
+
+    if (serialized.length > MAX_BACKUP_SIZE_BYTES) {
+      /* Drop snapshots too — keep only chat messages */
+      logger.debug('Backup still too large, dropping snapshots data');
+      backup = { _meta: metaBlock, chats, snapshots: {}, versions: {} };
+      serialized = JSON.stringify(backup);
+    }
+
     const backupKey = `${BACKUP_KEY_PREFIX}${Date.now()}`;
-    const serialized = JSON.stringify(backup);
 
     try {
       localStorage.setItem(backupKey, serialized);
