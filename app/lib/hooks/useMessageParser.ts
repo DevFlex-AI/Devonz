@@ -106,9 +106,15 @@ const messageParser = new EnhancedStreamingMessageParser({
         if (runtimeContext.projectId) {
           import('~/lib/runtime/git-client')
             .then(({ commit }) => {
-              commit(runtimeContext.projectId!, title).catch(() => {
-                // Git commit is best-effort -- don't block the UI
-              });
+              commit(runtimeContext.projectId!, title)
+                .then((sha) => {
+                  if (sha) {
+                    versionsStore.updateCommitSha(version.id, sha);
+                  }
+                })
+                .catch(() => {
+                  // Git commit is best-effort -- don't block the UI
+                });
             })
             .catch(() => {
               // Dynamic import failed -- non-critical, ignore

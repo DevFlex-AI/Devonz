@@ -12,6 +12,7 @@ export interface ProjectVersion {
   timestamp: number;
   files: Record<string, { content: string; type: string }>;
   thumbnail?: string; // Base64 preview image (optional, for future)
+  commitSha?: string; // Git commit SHA, set after auto-commit completes
   isLatest: boolean;
 }
 
@@ -233,6 +234,35 @@ class VersionsStore {
       this.versions.setKey(versionId, { ...version, thumbnail });
       this._persistToDB();
     }
+  }
+
+  /**
+   * Store the git commit SHA on a version so Versions.tsx can match
+   * git commits to their thumbnails.
+   */
+  updateCommitSha(versionId: string, sha: string) {
+    const version = this.versions.get()[versionId];
+
+    if (version) {
+      this.versions.setKey(versionId, { ...version, commitSha: sha });
+      this._persistToDB();
+    }
+  }
+
+  /**
+   * Build a lookup map from commit SHA → thumbnail data URL.
+   * Used by the Git History panel to display thumbnails on commit cards.
+   */
+  getThumbnailsBySha(): Map<string, string> {
+    const map = new Map<string, string>();
+
+    for (const version of Object.values(this.versions.get())) {
+      if (version.commitSha && version.thumbnail) {
+        map.set(version.commitSha, version.thumbnail);
+      }
+    }
+
+    return map;
   }
 
   /**

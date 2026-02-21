@@ -1,8 +1,10 @@
-import { memo, useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
+import { useStore } from '@nanostores/react';
 import { runtimeContext } from '~/lib/runtime';
 import { type GitCommitInfo, getLog, checkout, checkoutMain, getCommitFiles } from '~/lib/runtime/git-client';
+import { versionsStore } from '~/lib/stores/versions';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('Versions');
@@ -34,9 +36,10 @@ interface CommitCardProps {
   isCheckedOut: boolean;
   onRestore: (sha: string) => void;
   onViewFiles: (sha: string) => void;
+  thumbnail?: string;
 }
 
-const CommitCard = memo(({ commit, isLatest, isCheckedOut, onRestore, onViewFiles }: CommitCardProps) => {
+const CommitCard = memo(({ commit, isLatest, isCheckedOut, onRestore, onViewFiles, thumbnail }: CommitCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -46,7 +49,7 @@ const CommitCard = memo(({ commit, isLatest, isCheckedOut, onRestore, onViewFile
       exit={{ opacity: 0, y: -10 }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="flex gap-3 p-3 rounded-xl transition-colors"
+      className="flex gap-3 p-3 rounded-xl transition-all"
       style={{
         background: isCheckedOut
           ? 'var(--devonz-elements-button-primary-background)'
@@ -54,16 +57,19 @@ const CommitCard = memo(({ commit, isLatest, isCheckedOut, onRestore, onViewFile
             ? 'var(--devonz-elements-bg-depth-4)'
             : 'transparent',
         opacity: isCheckedOut ? 0.95 : 1,
+        borderBottom: '1px solid var(--devonz-elements-borderColor)',
+        borderLeft: isHovered ? '2px solid var(--devonz-elements-button-primary-background)' : '2px solid transparent',
       }}
     >
-      {/* Git commit icon */}
-      <div className="flex-shrink-0 pt-0.5">
+      {/* Timeline column: icon + vertical line */}
+      <div className="flex flex-col items-center flex-shrink-0" style={{ width: '32px' }}>
         <div
-          className="w-8 h-8 rounded-full flex items-center justify-center"
+          className="w-8 h-8 rounded-full flex items-center justify-center relative z-1"
           style={{
             background: isLatest
               ? 'var(--devonz-elements-button-primary-background)'
               : 'var(--devonz-elements-button-secondary-background)',
+            border: `2px solid ${isLatest ? 'var(--devonz-elements-button-primary-background)' : 'var(--devonz-elements-borderColor)'}`,
           }}
         >
           <div
@@ -73,6 +79,39 @@ const CommitCard = memo(({ commit, isLatest, isCheckedOut, onRestore, onViewFile
             }}
           />
         </div>
+        {/* Vertical timeline connector */}
+        <div
+          className="flex-1 w-px mt-1"
+          style={{ background: 'var(--devonz-elements-borderColor)', minHeight: '12px' }}
+        />
+      </div>
+
+      {/* Thumbnail */}
+      <div className="flex-shrink-0 pt-0.5">
+        {thumbnail ? (
+          <img
+            src={thumbnail}
+            alt={`Preview for ${commit.shortSha}`}
+            className="rounded-md object-cover"
+            style={{
+              width: '56px',
+              height: '36px',
+              border: '1px solid var(--devonz-elements-borderColor)',
+            }}
+          />
+        ) : (
+          <div
+            className="rounded-md flex items-center justify-center"
+            style={{
+              width: '56px',
+              height: '36px',
+              background: 'var(--devonz-elements-bg-depth-3)',
+              border: '1px solid var(--devonz-elements-borderColor)',
+            }}
+          >
+            <div className="i-ph:image text-base" style={{ color: 'var(--devonz-elements-textTertiary)' }} />
+          </div>
+        )}
       </div>
 
       {/* Commit info */}
@@ -159,6 +198,20 @@ export const Versions = memo(() => {
   const [checkedOutSha, setCheckedOutSha] = useState<string | null>(null);
   const [changedFiles, setChangedFiles] = useState<{ sha: string; files: string[] } | null>(null);
   const [restoring, setRestoring] = useState(false);
+
+  const versionsMap = useStore(versionsStore.versions);
+
+  const thumbnailsBySha = useMemo(() => {
+    const thumbMap = new Map<string, string>();
+
+    for (const version of Object.values(versionsMap)) {
+      if (version.commitSha && version.thumbnail) {
+        thumbMap.set(version.commitSha, version.thumbnail);
+      }
+    }
+
+    return thumbMap;
+  }, [versionsMap]);
 
   const loadCommits = useCallback(async () => {
     // Read projectId at call time (not render time) since runtimeContext is non-reactive
@@ -366,6 +419,7 @@ export const Versions = memo(() => {
                   isCheckedOut={checkedOutSha === commit.sha}
                   onRestore={handleRestore}
                   onViewFiles={handleViewFiles}
+                  thumbnail={thumbnailsBySha.get(commit.sha)}
                 />
                 {/* Changed files dropdown */}
                 {changedFiles?.sha === commit.sha && changedFiles.files.length > 0 && (
