@@ -13,6 +13,24 @@ interface DeployRequestBody {
   chatId: string;
 }
 
+/** Subset of the Netlify Sites API response we actually use */
+interface NetlifyApiSite {
+  id: string;
+  name: string;
+  url: string;
+  ssl_url?: string;
+}
+
+/** Subset of the Netlify Deploy API response we actually use */
+interface NetlifyApiDeploy {
+  id: string;
+  state: string;
+  url: string;
+  ssl_url?: string;
+  error_message?: string;
+  required?: string[];
+}
+
 async function readNetlifyError(response: Response) {
   try {
     const contentType = response.headers.get('content-type') || '';
@@ -66,7 +84,7 @@ async function netlifyDeployAction({ request }: ActionFunctionArgs) {
           );
         }
 
-        const newSite = (await createSiteResponse.json()) as any;
+        const newSite = (await createSiteResponse.json()) as NetlifyApiSite;
         targetSiteId = newSite.id;
         siteInfo = {
           id: newSite.id,
@@ -84,7 +102,7 @@ async function netlifyDeployAction({ request }: ActionFunctionArgs) {
           });
 
           if (siteResponse.ok) {
-            const existingSite = (await siteResponse.json()) as any;
+            const existingSite = (await siteResponse.json()) as NetlifyApiSite;
             siteInfo = {
               id: existingSite.id,
               name: existingSite.name,
@@ -119,7 +137,7 @@ async function netlifyDeployAction({ request }: ActionFunctionArgs) {
             );
           }
 
-          const newSite = (await createSiteResponse.json()) as any;
+          const newSite = (await createSiteResponse.json()) as NetlifyApiSite;
           targetSiteId = newSite.id;
           siteInfo = {
             id: newSite.id,
@@ -165,7 +183,7 @@ async function netlifyDeployAction({ request }: ActionFunctionArgs) {
         );
       }
 
-      const deploy = (await deployResponse.json()) as any;
+      const deploy = (await deployResponse.json()) as NetlifyApiDeploy;
       let retryCount = 0;
       const maxRetries = 60;
       let filesUploaded = false;
@@ -189,7 +207,7 @@ async function netlifyDeployAction({ request }: ActionFunctionArgs) {
           );
         }
 
-        const status = (await statusResponse.json()) as any;
+        const status = (await statusResponse.json()) as NetlifyApiDeploy;
 
         if (!filesUploaded && (status.state === 'prepared' || status.state === 'uploaded')) {
           // Upload all files regardless of required array
