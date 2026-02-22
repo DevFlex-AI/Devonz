@@ -11,7 +11,6 @@ import Cookies from 'js-cookie';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import styles from './BaseChat.module.scss';
 import { LeftActionPanel } from '~/components/chat/LeftActionPanel';
-import { ExamplePrompts } from '~/components/chat/ExamplePrompts';
 import { TemplateSection } from '~/components/chat/TemplateSection';
 import { RecentChats } from '~/components/chat/RecentChats';
 import type { ProviderInfo } from '~/types/model';
@@ -552,22 +551,6 @@ export const BaseChat = React.memo(
                         />
                       </div>
                     </div>
-
-                    {/* Example Prompts - Below ChatBox */}
-                    {!chatStarted && (
-                      <div className="flex flex-col items-center gap-4 mt-4 max-w-chat mx-auto w-full">
-                        <ExamplePrompts
-                          sendMessage={(event, messageInput) => {
-                            if (isStreaming) {
-                              handleStop?.();
-                              return;
-                            }
-
-                            handleSendMessage?.(event, messageInput);
-                          }}
-                        />
-                      </div>
-                    )}
                   </div>
                 </StickToBottom>
                 {/* Template Gallery - Below Example Prompts */}

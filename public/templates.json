@@ -40,16 +40,6 @@
     "icon": "i-ph:robot-duotone"
   },
   {
-    "id": "interface",
-    "name": "Interface",
-    "description": "Minimal dark-themed UI dashboard interface template",
-    "category": "dashboard",
-    "vercelUrl": "https://interface-black-omega.vercel.app",
-    "githubRepo": "devonz-templates/interface",
-    "tags": ["ui", "dashboard", "minimal", "dark-mode"],
-    "icon": "i-ph:layout-duotone"
-  },
-  {
     "id": "luxury-portfolio",
     "name": "Luxury Portfolio",
     "description": "Premium personal portfolio with elegant aesthetics",
@@ -70,26 +60,6 @@
     "icon": "i-ph:globe-duotone"
   },
   {
-    "id": "ibra-automate",
-    "name": "Ibra Automate",
-    "description": "Workflow automation platform for streamlined processes",
-    "category": "saas",
-    "vercelUrl": "",
-    "githubRepo": "devonz-templates/ibra-automate",
-    "tags": ["automation", "workflow", "saas", "productivity"],
-    "icon": "i-ph:gear-six-duotone"
-  },
-  {
-    "id": "portfolio-main",
-    "name": "Portfolio Main",
-    "description": "Clean developer portfolio with project showcase",
-    "category": "portfolio",
-    "vercelUrl": "",
-    "githubRepo": "devonz-templates/portifolio-main",
-    "tags": ["portfolio", "developer", "projects", "clean"],
-    "icon": "i-ph:user-circle-duotone"
-  },
-  {
     "id": "saas-landing-page",
     "name": "SaaS Landing Page",
     "description": "Conversion-focused landing page for SaaS products",
@@ -100,13 +70,123 @@
     "icon": "i-ph:rocket-launch-duotone"
   },
   {
-    "id": "web-navigation",
-    "name": "Web Navigation",
-    "description": "Curated web links and bookmarks navigation hub",
+    "id": "ai-agent-builder",
+    "name": "AI Agent Builder",
+    "description": "Visual AI agent workflow builder with ReactFlow nodes",
+    "category": "ai-app",
+    "vercelUrl": "https://ai-agent-builder-weld.vercel.app",
+    "githubRepo": "devonz-templates/ai-agent-builder",
+    "tags": ["ai", "agent", "workflow", "reactflow"],
+    "icon": "i-ph:flow-arrow-duotone"
+  },
+  {
+    "id": "auralink-saas-landing",
+    "name": "AuraLink SaaS",
+    "description": "SaaS landing page with integrations and pricing sections",
+    "category": "saas",
+    "vercelUrl": "https://auralink-saas-landing.vercel.app",
+    "githubRepo": "devonz-templates/auralink-saas-landing",
+    "tags": ["saas", "integrations", "pricing", "startup"],
+    "icon": "i-ph:link-duotone"
+  },
+  {
+    "id": "background-paths",
+    "name": "Background Paths",
+    "description": "Animated background paths component with smooth transitions",
+    "category": "landing-page",
+    "vercelUrl": "https://background-paths-kappa.vercel.app",
+    "githubRepo": "devonz-templates/background-paths",
+    "tags": ["animation", "paths", "background", "creative"],
+    "icon": "i-ph:path-duotone"
+  },
+  {
+    "id": "digital-lab",
+    "name": "Digital Lab",
+    "description": "Digital lab portfolio with projects grid and blog",
+    "category": "portfolio",
+    "vercelUrl": "https://digital-lab-weld.vercel.app",
+    "githubRepo": "devonz-templates/digital-lab",
+    "tags": ["portfolio", "lab", "projects", "blog"],
+    "icon": "i-ph:flask-duotone"
+  },
+  {
+    "id": "electric-landing-page",
+    "name": "Electric Landing",
+    "description": "Electric-themed landing page with video gallery and animations",
+    "category": "landing-page",
+    "vercelUrl": "https://electric-landing-page-nu.vercel.app",
+    "githubRepo": "devonz-templates/electric-landing-page",
+    "tags": ["electric", "video", "animation", "landing"],
+    "icon": "i-ph:lightning-duotone"
+  },
+  {
+    "id": "future-is-now-agent",
+    "name": "Future Agent",
+    "description": "AI agent landing page with GSAP animations and effects",
+    "category": "ai-app",
+    "vercelUrl": "https://future-is-now-agent.vercel.app",
+    "githubRepo": "devonz-templates/future-is-now-agent",
+    "tags": ["ai", "agent", "gsap", "futuristic"],
+    "icon": "i-ph:robot-duotone"
+  },
+  {
+    "id": "homie-template",
+    "name": "Homie Services",
+    "description": "Home services SaaS landing page with booking features",
+    "category": "saas",
+    "vercelUrl": "https://homie-template.vercel.app",
+    "githubRepo": "devonz-templates/homie-template",
+    "tags": ["services", "home", "booking", "saas"],
+    "icon": "i-ph:house-duotone"
+  },
+  {
+    "id": "interactive-portfolio-gallery",
+    "name": "Interactive Gallery",
+    "description": "Interactive portfolio with hover video cards and effects",
+    "category": "portfolio",
+    "vercelUrl": "https://interactive-portfolio-gallery.vercel.app",
+    "githubRepo": "devonz-templates/interactive-portfolio-gallery",
+    "tags": ["portfolio", "gallery", "video", "interactive"],
+    "icon": "i-ph:video-camera-duotone"
+  },
+  {
+    "id": "modern-task-dashboard",
+    "name": "Task Dashboard",
+    "description": "Modern task management dashboard with kanban board",
     "category": "dashboard",
-    "vercelUrl": "https://web-navigation-gamma.vercel.app",
-    "githubRepo": "devonz-templates/web-navigation",
-    "tags": ["navigation", "bookmarks", "links", "directory"],
-    "icon": "i-ph:compass-duotone"
+    "vercelUrl": "https://modern-task-dashboard.vercel.app",
+    "githubRepo": "devonz-templates/modern-task-dashboard",
+    "tags": ["dashboard", "tasks", "kanban", "productivity"],
+    "icon": "i-ph:kanban-duotone"
+  },
+  {
+    "id": "personal-portfolio-services",
+    "name": "Portfolio Services",
+    "description": "Personal portfolio and services website with contact forms",
+    "category": "portfolio",
+    "vercelUrl": "https://personal-portfolio-services.vercel.app",
+    "githubRepo": "devonz-templates/personal-portfolio-services",
+    "tags": ["portfolio", "services", "personal", "contact"],
+    "icon": "i-ph:user-circle-duotone"
+  },
+  {
+    "id": "portfolio-website-design",
+    "name": "Dev Portfolio",
+    "description": "Developer portfolio with project showcase and skills",
+    "category": "portfolio",
+    "vercelUrl": "https://portfolio-website-design-orpin.vercel.app",
+    "githubRepo": "devonz-templates/portfolio-website-design",
+    "tags": ["portfolio", "developer", "projects", "skills"],
+    "icon": "i-ph:palette-duotone"
+  },
+  {
+    "id": "skydda-ai-sentinel",
+    "name": "Skydda AI Sentinel",
+    "description": "AI security product landing page with modern design",
+    "category": "ai-app",
+    "vercelUrl": "https://skydda-ai-sentinel.vercel.app",
+    "githubRepo": "devonz-templates/skydda-ai-sentinel",
+    "tags": ["ai", "security", "sentinel", "product"],
+    "icon": "i-ph:shield-check-duotone"
   }
 ]
