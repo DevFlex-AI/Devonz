@@ -6,7 +6,7 @@
 
 ## Overview
 
-All components live in `app/components/`, organized into 9 groups by feature area.
+All components live in `app/components/`, organized into 10 groups by feature area.
 
 ---
 
@@ -28,7 +28,8 @@ The primary user interaction surface. Handles message display, input, file uploa
 | `CodeBlock.tsx` | Syntax-highlighted code blocks |
 | `Markdown.tsx` | Markdown renderer (react-markdown + rehype) |
 | `ExamplePrompts.tsx` | Starter prompt suggestions |
-| `StarterTemplates.tsx` | Template gallery for new projects |
+| `TemplateCard.tsx` | Individual template card display |
+| `TemplateSection.tsx` | Template section grouping |
 | `RecentChats.tsx` | Recent chat history |
 | `APIKeyManager.tsx` | API key input/management |
 | `CombinedModelSelector.tsx` | Provider + model dropdown selector |
@@ -46,6 +47,13 @@ The primary user interaction surface. Handles message display, input, file uploa
 | `ChatModeSelector.tsx` | Unified Build/Plan/Discuss mode selector (Radix Popover) — replaces separate Plan and Discuss toggles |
 | `DicussMode.tsx` | Discuss (non-coding) mode |
 | `MCPTools.tsx` | MCP tools indicator in the chat toolbar; MCP tool selection |
+| `AgentToggle.tsx` | Agent mode toggle control |
+| `artifact-utils.ts` | Utility functions for artifact processing |
+| `LeftActionPanel.tsx` | Left-side action panel in chat |
+| `NetlifyDeploymentLink.client.tsx` | Netlify deployment link display |
+| `VercelDeploymentLink.client.tsx` | Vercel deployment link display |
+| `WebSearch.client.tsx` | Web search integration in chat |
+| `SupabaseConnection.tsx` | Supabase connection status in chat |
 | `chatExportAndImport/` | Chat export/import functionality |
 
 ### `workbench/` — Code Editor & Preview
@@ -174,6 +182,7 @@ Modular settings UI organized by concern.
 | `VercelDeploy.client.tsx` | Vercel deployment dialog |
 | `VercelDomainModal.tsx` | Vercel custom domain setup |
 | `NetlifyDeploy.client.tsx` | Netlify deployment dialog |
+| `deployUtils.ts` | Shared deployment utility functions |
 
 ### `editor/` — CodeMirror Integration
 
@@ -181,6 +190,12 @@ Modular settings UI organized by concern.
 editor/
 └── codemirror/    # CodeMirror 6 setup, extensions, themes
 ```
+
+### `templates/` — Template Gallery
+
+| Component | Purpose |
+| --------- | ------- |
+| `TemplatePreviewModal.tsx` | Modal for previewing and cloning project templates |
 
 ### `Page Scroll Areas`
 w-full h-auto = User text chat scroll

@@ -194,6 +194,8 @@ All hooks live in `app/lib/hooks/`. They often wrap store access or provide data
 | `useViewport` | Responsive breakpoint detection |
 | `useVersionCheck` | Polls `/api/version-check` to detect available updates, drives `UpdateBanner` |
 | `usePlanSync` | Syncs PLAN.md file changes from LocalRuntime via RuntimeClient into the plan store, preserving user approval state |
+| `useFileContent` | Read and track file content from runtime |
+| `useGitHubStats` | GitHub repository statistics |
 
 ---
 
@@ -208,7 +210,7 @@ All hooks live in `app/lib/hooks/`. They often wrap store access or provide data
 
 ### IndexedDB Schema
 
-Database: `devonzHistory` (version 2)
+Database: `devonzHistory` (version 3)
 
 **Object Stores:**
 

@@ -17,7 +17,7 @@ Devonz supports deploying generated projects to four platforms directly from the
 ```bash
 # 1. Clone the repo
 git clone https://github.com/zebbern/Devonz.git
-cd Devonz/devonz.diy
+cd Devonz
 
 # 2. Copy environment template
 cp .env.example .env.local

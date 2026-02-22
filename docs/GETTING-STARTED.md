@@ -19,7 +19,7 @@
 ```bash
 # Clone the repository
 git clone https://github.com/zebbern/Devonz.git
-cd Devonz/devonz.diy
+cd Devonz
 
 # Install dependencies
 pnpm install
@@ -29,7 +29,7 @@ pnpm install
 
 ## Environment Variables
 
-Create a `.env.local` file in `devonz.diy/` (gitignored). The app loads env files in this priority:
+Create a `.env.local` file in the project root (gitignored). The app loads env files in this priority:
 
 1. `.env.local` (highest priority)
 2. `.env`
@@ -76,10 +76,8 @@ HuggingFace_API_KEY=...
 # Perplexity
 PERPLEXITY_API_KEY=...
 
-# Amazon Bedrock
-AWS_ACCESS_KEY_ID=...
-AWS_SECRET_ACCESS_KEY=...
-AWS_REGION=us-east-1
+# Amazon Bedrock (JSON format)
+AWS_BEDROCK_CONFIG={"region":"us-east-1","accessKeyId":"...","secretAccessKey":"..."}
 
 # Z.ai
 ZAI_API_KEY=your-zai-key
@@ -108,11 +106,11 @@ Extended Thinking (AI reasoning visualization) is available for Anthropic Claude
 For self-hosted models, you can also set API keys via the UI settings panel.
 
 ```env
-# Ollama (default: http://localhost:11434)
-OLLAMA_API_BASE_URL=http://localhost:11434
+# Ollama (default: http://127.0.0.1:11434)
+OLLAMA_API_BASE_URL=http://127.0.0.1:11434
 
-# LM Studio (default: http://localhost:1234)
-LMSTUDIO_API_BASE_URL=http://localhost:1234
+# LM Studio (default: http://127.0.0.1:1234)
+LMSTUDIO_API_BASE_URL=http://127.0.0.1:1234
 
 # OpenAI-compatible servers
 OPENAI_LIKE_API_BASE_URL=http://localhost:8080
@@ -242,7 +240,7 @@ The app shows a blue banner at the top of the page when a new version is availab
 ## Project Structure Quick Reference
 
 ```text
-devonz.diy/
+./
 ├── .dockerignore         # Docker ignore rules
 ├── .github/workflows/    # CI/CD pipelines
 ├── Dockerfile            # Production Docker build

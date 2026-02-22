@@ -56,13 +56,13 @@
 
 ### 1. Presentation Layer (`app/components/`)
 
-React components organized into 9 groups. See [Components](COMPONENTS.md) for full details.
+React components organized into 10 groups. See [Components](COMPONENTS.md) for full details.
 
 **Key pattern**: Components with `.client.tsx` suffix are browser-only (no SSR). Remix's `ClientOnly` wrapper is used in routes to lazy-load them.
 
 ### 2. State Layer (`app/lib/stores/`)
 
-25 nanostore files managing all application state. See [State Management](STATE-MANAGEMENT.md) for full details.
+24 nanostore files managing all application state. See [State Management](STATE-MANAGEMENT.md) for full details.
 
 **Key pattern**: Class-based stores (`WorkbenchStore`) compose sub-stores (`EditorStore`, `FilesStore`, `TerminalStore`, `PreviewsStore`). HMR-safe via `import.meta.hot.data`.
 
@@ -99,8 +99,12 @@ Handles LLM response parsing and action execution:
 | `enhanced-message-parser.ts` | Extended parser that auto-wraps untagged code blocks and shell commands into action tags |
 | `action-runner.ts` | Executes parsed actions via LocalRuntime (create files, run commands) |
 | `local-runtime.ts` | Server-side runtime managing code execution, file I/O, shell commands, and port detection |
+| `local-filesystem.ts` | Local filesystem abstraction for project file operations |
 | `runtime-client.ts` | Browser-side client communicating with LocalRuntime via `/api/runtime/*` routes |
 | `runtime-provider.ts` | React context provider for runtime initialization and access |
+| `git-client.ts` | Git client for repository operations |
+| `git-manager.ts` | Git repository lifecycle management |
+| `command-safety.ts` | Command validation and safety checks for shell execution |
 
 ### 6. Persistence Layer (`app/lib/persistence/`)
 
@@ -113,13 +117,15 @@ Handles LLM response parsing and action execution:
 | `lockedFiles.ts` | File/folder lock management per chat (localStorage-backed) |
 | `snapshotUtils.ts` | Global snapshot utilities for persisting file state |
 | `projectPlanMode.ts` | Project plan mode settings per chat (localStorage-backed) |
+| `autoBackup.ts` | Automatic backup management for chat data |
+| `types.ts` | Shared persistence type definitions |
 | `ChatDescription.client.tsx` | Chat description editing component |
 
 ### 7. Server Layer (`app/routes/api.*`)
 
-~36 Remix API routes. See [API Routes](API-ROUTES.md).
+42 Remix API routes. See [API Routes](API-ROUTES.md).
 
-**Key pattern**: Routes use Remix conventions — `action()` for POST/PUT/DELETE, `loader()` for GET. Server-only code lives in `app/lib/.server/`. All 35+ route handlers are wrapped with `withSecurity()` from `app/lib/security.ts`, which enforces CORS origin validation, SameSite cookie attributes, request sanitization, and a URL allowlist on the git proxy.
+**Key pattern**: Routes use Remix conventions — `action()` for POST/PUT/DELETE, `loader()` for GET. Server-only code lives in `app/lib/.server/`. All 42 route handlers are wrapped with `withSecurity()` from `app/lib/security.ts`, which enforces CORS origin validation, SameSite cookie attributes, request sanitization, and a URL allowlist on the git proxy.
 
 ---
 
@@ -215,7 +221,7 @@ User enables Agent Mode + sends task
 
 7. **CSS custom properties for theming**: All theme colors flow through `--devonz-elements-*` variables, enabling runtime theme switching without rebuilds.
 
-8. **Security by default** — Every API route (all 35+ handlers) is wrapped with `withSecurity()` from `app/lib/security.ts`, enforcing CORS origin validation, SameSite cookie attributes, request sanitization, and a URL allowlist on the git proxy.
+8. **Security by default** — Every API route (all 42 handlers) is wrapped with `withSecurity()` from `app/lib/security.ts`, enforcing CORS origin validation, SameSite cookie attributes, request sanitization, and a URL allowlist on the git proxy.
 
 9. **Docker-first deployment** — Multi-stage Dockerfile + docker-compose.yml with GHCR CI/CD and optional Watchtower auto-update enables one-command self-hosting.
 

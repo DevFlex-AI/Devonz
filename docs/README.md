@@ -29,8 +29,8 @@
 - **Formatted Tool Results** — MCP tool results render as formatted markdown instead of raw JSON
 - **Unified Mode Selector** — Single Build/Plan/Discuss dropdown replaces separate toggles
 - **Auto-Collapse Plan** — Plan panel auto-collapses when all tasks reach 100%
-- **Security Hardening** — `withSecurity()` on all 35+ API routes with input validation, rate limiting options, URL allowlisting
-- **537 Tests** — Across 27 test files for comprehensive coverage
+- **Security Hardening** — `withSecurity()` on all 42 API routes with input validation, rate limiting options, URL allowlisting
+- **810 tests** — Across 36 test files for comprehensive coverage
 - **Z.ai Provider** — Integration with 10 static GLM models optimized for coding tasks
 
 ---
@@ -39,7 +39,7 @@
 
 | Layer | Technology |
 |-------|-----------|
-| Framework | Remix v2.15 + React 18 |
+| Framework | Remix v2.16 + React 18 |
 | Build | Vite 5.4 |
 | Language | TypeScript (strict) |
 | Styling | UnoCSS + SCSS + Radix UI |
@@ -56,11 +56,10 @@
 ## Project Structure
 
 ```
-devonz.diy/
 ├── app/
-│   ├── components/       # React components (9 groups)
+│   ├── components/       # React components (10 groups)
 │   ├── lib/              # Core logic (stores, services, agent, LLM)
-│   ├── routes/           # Remix routes (pages + ~35 API endpoints)
+│   ├── routes/           # Remix routes (pages + 42 API routes)
 │   ├── styles/           # Global SCSS + CSS
 │   ├── types/            # Shared TypeScript types
 │   ├── utils/            # Utility functions

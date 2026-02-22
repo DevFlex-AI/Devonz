@@ -27,7 +27,7 @@ Devonz supports **22 LLM providers** through a pluggable provider system built o
 | XAI | `XAI_API_KEY` | No | Grok models |
 | Perplexity | `PERPLEXITY_API_KEY` | No | Perplexity Sonar |
 | Amazon Bedrock | `AWS_ACCESS_KEY_ID` + `AWS_SECRET_ACCESS_KEY` | No | AWS-hosted models |
-| GitHub | `GITHUB_TOKEN` | No | GitHub Models API |
+| GitHub | `GITHUB_API_KEY` | No | GitHub Models API |
 | Moonshot | `MOONSHOT_API_KEY` | No | Kimi models |
 | Hyperbolic | `HYPERBOLIC_API_KEY` | No | Hyperbolic inference |
 | Ollama | `OLLAMA_API_BASE_URL` | Yes | Local models (no API key) |

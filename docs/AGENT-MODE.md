@@ -56,9 +56,9 @@ Agent Mode enables Devonz to act as an **autonomous coding agent**. Instead of g
 | File | Purpose |
 | ---- | ------- |
 | `app/lib/agent/index.ts` | Public API — re-exports all agent types and services |
-| `app/lib/agent/types.ts` | TypeScript interfaces (454 lines of thorough type definitions) |
-| `app/lib/agent/prompts.ts` | System prompts for agent mode (405 lines) |
-| `app/lib/services/agentOrchestratorService.ts` | Session management, iteration control, approval flows (321 lines) |
+| `app/lib/agent/types.ts` | TypeScript interfaces (464 lines of thorough type definitions) |
+| `app/lib/agent/prompts.ts` | System prompts for agent mode (391 lines) |
+| `app/lib/services/agentOrchestratorService.ts` | Session management, iteration control, approval flows (326 lines) |
 | `app/lib/services/agentToolsService.ts` | Tool definitions and execution logic |
 | `app/lib/services/agentChatIntegration.ts` | Integration layer between chat API and agent |
 | `app/lib/stores/agentMode.ts` | Nanostore for agent mode UI state |

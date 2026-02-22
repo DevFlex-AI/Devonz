@@ -6,7 +6,7 @@
 
 [![Docker Build](https://img.shields.io/github/actions/workflow/status/zebbern/Devonz/docker-publish.yml?branch=main&label=Docker%20Build&logo=docker)](https://github.com/zebbern/Devonz/actions/workflows/docker-publish.yml)
 [![Node](https://img.shields.io/badge/Node-18.18%2B-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
 [Features](#features) ━━ [Installation](#installation) ━━ [Configuration](#configuration)
 
@@ -79,7 +79,7 @@ pnpm run dev
 - File locking to prevent conflicts during generation
 
 **Security & Reliability**
-- **Security Hardened** — `withSecurity()` on all 35+ API routes with input validation, rate limiting options, URL allowlisting
+- **Security Hardened** — `withSecurity()` on all 42 API routes with input validation, rate limiting options, URL allowlisting
 
 **Deployment & Integrations**
 - GitHub / GitLab push and repo management
@@ -150,11 +150,11 @@ GOOGLE_GENERATIVE_AI_API_KEY=your_google_key
 ZAI_API_KEY=your_zai_key
 
 # Local Provider URLs (optional)
-OLLAMA_BASE_URL=http://127.0.0.1:11434
+OLLAMA_API_BASE_URL=http://127.0.0.1:11434
 
-# Deployment Tokens (optional)
-GITHUB_ACCESS_TOKEN=your_github_token
-NETLIFY_AUTH_TOKEN=your_netlify_token
+# Deployment Tokens (optional — can also be set via UI)
+VITE_GITHUB_ACCESS_TOKEN=your_github_token
+VITE_NETLIFY_ACCESS_TOKEN=your_netlify_token
 ```
 
 You can also configure providers in-app: **Settings (gear icon) → Providers tab**.
@@ -234,30 +234,35 @@ docker compose --profile auto-update up -d
 <summary>Expand file tree</summary>
 
 ```
-bolt.diy/
+devonz/
 ├── app/
-│   ├── components/         # React components
+│   ├── components/         # React components (10 groups)
 │   │   ├── @settings/      # Settings panel (14 tabs)
 │   │   ├── chat/           # Chat interface
 │   │   ├── deploy/         # Deployment integrations
-│   │   ├── editor/         # Code editor
+│   │   ├── editor/         # Code editor (CodeMirror)
 │   │   ├── git/            # Git integration
 │   │   ├── header/         # App header
 │   │   ├── sidebar/        # Sidebar navigation
-│   │   ├── ui/             # Shared UI components
+│   │   ├── templates/      # Template gallery
+│   │   ├── ui/             # 40+ shared UI components
 │   │   └── workbench/      # Development workbench
 │   ├── lib/
-│   │   ├── hooks/          # React hooks
-│   │   ├── modules/        # Feature modules (LLM providers)
+│   │   ├── .server/        # Server-only code (LLM streaming)
+│   │   ├── agent/          # Agent prompts + orchestration
+│   │   ├── common/         # Prompt library + shared prompts
+│   │   ├── hooks/          # 25 custom React hooks
+│   │   ├── modules/        # Feature modules (22 LLM providers)
+│   │   ├── persistence/    # IndexedDB, localStorage, autoBackup
+│   │   ├── runtime/        # Action runner, message parser, local runtime
 │   │   ├── services/       # API services
-│   │   ├── stores/         # State management (nanostores)
-│   │   └── utils/          # Utility functions
-│   ├── routes/             # Remix routes (39 API + page routes)
-│   ├── styles/             # Global styles
+│   │   ├── stores/         # 24 nanostores
+│   │   └── utils/          # Service-level utilities
+│   ├── routes/             # 48 Remix routes (6 pages + 42 API)
+│   ├── styles/             # Global styles (SCSS + CSS)
 │   └── types/              # TypeScript type definitions
 ├── docs/                   # Extended documentation
-├── scripts/                # Build & update scripts
-└── supabase/               # Supabase configuration
+└── scripts/                # Build & update scripts
 ```
 
 </details>

@@ -82,6 +82,7 @@ Validated with Zod. Returns a data stream with:
 | Endpoint | Method | Purpose |
 | -------- | ------ | ------- |
 | `/api/git-info` | GET | Get current git repository information |
+| `/api/git-clone` | POST | Clone a git repository into a project runtime |
 | `/api/git-proxy/*` | GET/POST | Proxy for git operations (clone, fetch, push) |
 
 ---
@@ -151,6 +152,9 @@ Validated with Zod. Returns a data stream with:
 | `/` | `_index.tsx` | Landing page with chat interface |
 | `/chat/:id` | `chat.$id.tsx` | Chat page with specific conversation loaded |
 | `/git` | `git.tsx` | Git URL import page |
+| `/templates` | `templates.tsx` | Template gallery with category filtering, search, and preview |
+| `/preview/:port` | `preview.$port.tsx` | Preview proxy page for dev server output |
+| `/*` | `$.tsx` | Catch-all route |
 
 ---
 
@@ -160,10 +164,11 @@ Server-side local runtime for code execution, file I/O, and shell management. `L
 
 | Endpoint | Method | Purpose |
 | -------- | ------ | ------- |
-| `/api/runtime/boot` | POST | Initialize a project runtime (`bootRuntime(projectId)`). Creates project directory at `~/.devonz/projects/{projectId}/` |
-| `/api/runtime/fs` | GET | File system operations — query param `op`: `readFile`, `writeFile`, `readdir`, `mkdir`, `rm`, `watch` |
+| `/api/runtime/exec` | GET/POST | Process execution and runtime lifecycle. POST `op`: `boot` (initialize project runtime at `~/.devonz/projects/{projectId}/`), `exec` (execute a process), `teardown` (destroy runtime). GET `op`: `portEvents` (SSE stream for port detection — strips ANSI codes, fires `PortEvent` → `RuntimeClient` → `PreviewsStore` → iframe at `http://localhost:PORT`) |
+| `/api/runtime/fs` | GET/POST | File system operations. GET `op`: `readFile`, `readFileRaw`, `readdir`, `stat`, `exists`, `watch` (SSE). POST `op`: `writeFile`, `mkdir`, `rm`, `rename` |
 | `/api/runtime/terminal` | POST | Shell session management — create, write, kill, list, resize. Uses Git Bash on Windows, system shell otherwise |
-| `/api/runtime/exec` | GET | Process execution and port event SSE — query param `op`: `spawn`, `portEvents`. Port detection strips ANSI codes, fires `PortEvent` → SSE → `RuntimeClient` → `PreviewsStore` → iframe at `http://localhost:PORT` |
+| `/api/runtime/search` | GET | Code search across project files — supports regex patterns, include/exclude filters |
+| `/api/runtime/git` | GET/POST | Git operations within a project runtime (status, commit, branch, etc.) |
 
 ---
 

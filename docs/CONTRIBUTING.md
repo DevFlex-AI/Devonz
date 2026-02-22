@@ -55,7 +55,7 @@ Integrated with ESLint via `eslint-config-prettier` + `eslint-plugin-prettier`. 
 | ------- | ------- |
 | `*.client.tsx` | Browser-only component — never runs on the server |
 | `*.server.ts` | Server-only code — never shipped to the client |
-| `*.test.ts` / `*.test.tsx` | Test files (colocated with source) |
+| `*.spec.ts` / `*.spec.tsx` | Test files (colocated with source) |
 | `api.*.ts` | Remix API route under `app/routes/` |
 | `PascalCase.tsx` | React components |
 | `camelCase.ts` | Utilities, services, stores |
@@ -138,7 +138,7 @@ describe('MyComponent', () => {
 });
 ```
 
-The project currently has 537 tests across 27 test files.
+The project currently has 810 tests across 38 spec files.
 
 Recent test expansion areas include:
 
@@ -153,8 +153,8 @@ Colocate test files next to source files:
 ```
 components/
   chat/
-    BaseChat.tsx
-    BaseChat.test.tsx
+    Markdown.tsx
+    Markdown.spec.ts
 ```
 
 ---
@@ -290,3 +290,7 @@ Use conventional commits:
 | `docker:down` | `pnpm docker:down` | Stop Docker Compose |
 | `docker:dev` | `pnpm docker:dev` | Docker dev mode |
 | `docker:update` | `pnpm docker:update` | Update Docker deployment |
+| `setup` | `pnpm run setup` | Interactive setup wizard (init .env.local, prompt for keys) |
+| `preview` | `pnpm preview` | Build + serve locally |
+| `test:coverage` | `pnpm test:coverage` | Run tests with V8 coverage |
+| `test:integration` | `pnpm test:integration` | Run integration tests (LocalRuntime, AgentTools) |
