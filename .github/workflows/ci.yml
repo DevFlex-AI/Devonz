@@ -23,7 +23,7 @@ permissions:
 
 jobs:
   quality:
-    name: Lint & Typecheck
+    name: Lint, Typecheck & Test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
