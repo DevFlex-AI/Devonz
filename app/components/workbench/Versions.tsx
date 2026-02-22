@@ -332,6 +332,7 @@ export const Versions = memo(() => {
     files: FileChange[];
     diffs: Map<string, string>;
   } | null>(null);
+  const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
   const [downloading, setDownloading] = useState<string | null>(null);
   const [diffModalContent, setDiffModalContent] = useState<string | null>(null);
   const [restoring, setRestoring] = useState(false);
@@ -500,6 +501,7 @@ export const Versions = memo(() => {
     );
 
     setFilesModal({ sha, files, diffs: new Map(diffEntries) });
+    setExpandedFiles(new Set());
   }, []);
 
   const handleDownload = useCallback(
@@ -897,17 +899,36 @@ export const Versions = memo(() => {
                 </div>
               </div>
 
-              {/* File list with diffs */}
+              {/* File list with collapsible diffs */}
               <div className="flex-1 overflow-auto">
                 {filesModal.files.map(({ file, status }) => {
                   const diff = filesModal.diffs.get(file);
+                  const isExpanded = expandedFiles.has(file);
 
                   return (
                     <div key={file} style={{ borderBottom: '1px solid var(--devonz-elements-borderColor)' }}>
-                      <div
-                        className="flex items-center gap-2 px-4 py-2"
+                      <button
+                        type="button"
+                        className="flex items-center gap-2 px-4 py-2 w-full text-left cursor-pointer transition-colors hover:brightness-110"
                         style={{ background: 'var(--devonz-elements-bg-depth-3)' }}
+                        onClick={() => {
+                          setExpandedFiles((prev) => {
+                            const next = new Set(prev);
+
+                            if (next.has(file)) {
+                              next.delete(file);
+                            } else {
+                              next.add(file);
+                            }
+
+                            return next;
+                          });
+                        }}
+                        aria-expanded={isExpanded}
                       >
+                        <div
+                          className={`i-ph:caret-right text-xs transition-transform text-devonz-elements-textSecondary ${isExpanded ? 'rotate-90' : ''}`}
+                        />
                         <span
                           className="w-4 text-center font-mono font-bold text-xs"
                           style={{
@@ -918,8 +939,8 @@ export const Versions = memo(() => {
                         </span>
                         <div className="i-ph:file-text text-xs text-devonz-elements-textSecondary" />
                         <span className="font-mono text-sm text-devonz-elements-textPrimary">{file}</span>
-                      </div>
-                      {diff && (
+                      </button>
+                      {isExpanded && diff && (
                         <pre
                           className="px-4 py-2 text-xs font-mono leading-relaxed overflow-x-auto"
                           style={{ background: 'var(--devonz-elements-bg-depth-1)' }}
