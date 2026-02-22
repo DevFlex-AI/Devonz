@@ -269,6 +269,10 @@ class PreviewErrorHandler {
       /Maximum update depth exceeded/i,
       /Invalid hook call/i,
       /must be used within/i,
+      /Invariant Violation/i,
+      /ChunkLoadError/i,
+      /Failed to fetch dynamically imported module/i,
+      /Cannot use import statement outside a module/i,
     ];
 
     return autoFixablePatterns.some((pattern) => pattern.test(errorMessage));

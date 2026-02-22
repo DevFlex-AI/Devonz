@@ -329,6 +329,42 @@ export const USER_FRIENDLY_MESSAGES: Array<{
     suggestion: 'Check array indices and numeric operations.',
     severity: 'critical',
   },
+
+  // Cannot read properties of undefined/null
+  {
+    pattern: /Cannot read propert(?:y|ies) of (?:undefined|null)/i,
+    title: 'Null Reference',
+    description: 'Trying to access a property on undefined or null.',
+    suggestion: 'Add a null check or use optional chaining (?.) before accessing the property.',
+    severity: 'critical',
+  },
+
+  // Invariant Violation
+  {
+    pattern: /Invariant Violation/i,
+    title: 'Invariant Violation',
+    description: 'An internal assertion was violated in a library or framework.',
+    suggestion: 'Check the error message for details about what went wrong.',
+    severity: 'critical',
+  },
+
+  // ESM/CJS mismatch
+  {
+    pattern: /Cannot use import statement outside a module/i,
+    title: 'Module Format Error',
+    description: 'ES module import syntax used in a CommonJS context.',
+    suggestion: 'Add "type": "module" to package.json or use .mjs file extension.',
+    severity: 'critical',
+  },
+
+  // Dynamic import failure
+  {
+    pattern: /ChunkLoadError|Failed to fetch dynamically imported module/i,
+    title: 'Dynamic Import Failed',
+    description: 'A lazily loaded module could not be fetched.',
+    suggestion: 'Check that the imported file exists and the path is correct.',
+    severity: 'critical',
+  },
 ];
 
 /**
@@ -416,6 +452,36 @@ export const RECOVERY_SUGGESTIONS: Array<{
     suggestion:
       'The component uses a context hook that needs a matching Provider wrapper higher in the component tree. Check the library docs for the required provider component.',
   },
+  {
+    pattern: /Cannot read propert/i,
+    suggestion:
+      'Use optional chaining (?.) for property access, initialize state with default values, and add loading guards before rendering data-dependent UI.',
+  },
+  {
+    pattern: /Objects are not valid as a React child/i,
+    suggestion:
+      'You are rendering a raw object or Date. Use JSON.stringify(), access a specific property, or .map() over arrays to create JSX elements.',
+  },
+  {
+    pattern: /Invalid hook call/i,
+    suggestion:
+      'Hooks must be called at the top level of function components, not inside conditions, loops, or callbacks. Also check for multiple React versions (npm ls react).',
+  },
+  {
+    pattern: /Invariant Violation/i,
+    suggestion:
+      'This is a library assertion failure. Check the specific message for details. Common causes: incorrect component nesting, missing providers, or API misuse.',
+  },
+  {
+    pattern: /Cannot use import statement outside/i,
+    suggestion:
+      'The file uses ESM import syntax but is loaded as CommonJS. Add "type": "module" to package.json, use .mjs extension, or convert to require() syntax.',
+  },
+  {
+    pattern: /ChunkLoadError|dynamically imported module/i,
+    suggestion:
+      'A lazy-loaded module failed to load. Ensure the file exists, the default export is present, and check for circular dependencies.',
+  },
 ];
 
 /**
@@ -443,6 +509,21 @@ const NEVER_SUPPRESS_PATTERNS: RegExp[] = [
 
   // ReferenceError - undeclared variable
   /ReferenceError/i,
+
+  // Invalid hook call — always a real issue
+  /Invalid hook call/i,
+
+  // Element type invalid — wrong import/export
+  /Element type is invalid/i,
+
+  // Infinite re-render loop — must be fixed
+  /Maximum update depth exceeded/i,
+
+  // Invariant Violation — library assertion failure
+  /Invariant Violation/i,
+
+  // ESM/CJS mismatch — config issue
+  /Cannot use import statement outside a module/i,
 ];
 
 /**

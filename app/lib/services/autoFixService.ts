@@ -422,6 +422,58 @@ function classifyError(error: AutoFixError): ClassifiedError {
     };
   }
 
+  // ─── Pattern: "Cannot use import statement outside a module" (ESM/CJS mismatch) ───
+  if (content.includes('Cannot use import statement outside a module')) {
+    return {
+      category: 'build',
+      fixInstructions: [
+        '**Root Cause**: A file uses ES module syntax (`import/export`) but is being loaded as CommonJS.',
+        '',
+        '**Required Fix**:',
+        '1. If using Vite — ensure the file has a `.ts`, `.tsx`, `.mts`, or `.mjs` extension',
+        '2. Add `"type": "module"` to `package.json` if the project should use ESM',
+        '3. Or convert `import` statements to `require()` / `module.exports` if the file must be CJS',
+        '4. In config files (e.g., `tailwind.config.js`), use `.mjs` extension or `module.exports`',
+      ].join('\n'),
+    };
+  }
+
+  // ─── Pattern: Dynamic import / chunk load failures ───
+  if (
+    content.includes('ChunkLoadError') ||
+    content.includes('Loading chunk') ||
+    content.includes('Failed to fetch dynamically imported module')
+  ) {
+    return {
+      category: 'build',
+      fixInstructions: [
+        '**Root Cause**: A dynamic import (`import()` or `React.lazy()`) could not be loaded.',
+        '',
+        '**Required Fix**:',
+        '1. Check that the imported file/module exists at the expected path',
+        '2. If using `React.lazy()`, verify the component is default-exported',
+        '3. Check for circular imports between the dynamically imported module and its parent',
+        '4. Try converting the dynamic import to a static import to identify the real error',
+      ].join('\n'),
+    };
+  }
+
+  // ─── Pattern: Invariant Violation ───
+  if (content.includes('Invariant Violation')) {
+    return {
+      category: 'runtime',
+      fixInstructions: [
+        '**Root Cause**: An internal assertion (invariant) was violated, usually from React or a library.',
+        '',
+        '**Required Fix**:',
+        '1. Read the message after "Invariant Violation:" — it describes what went wrong',
+        '2. Common causes: rendering hooks conditionally, incorrect prop types, missing required context',
+        '3. Check the call stack to identify which component triggered the violation',
+        '4. If from a library (React Router, Apollo, etc.), check you are using the correct version and API',
+      ].join('\n'),
+    };
+  }
+
   // ─── Pattern: Build failures (generic catch-all) ───
   if (content.match(/Build failed|error during build/i)) {
     return {

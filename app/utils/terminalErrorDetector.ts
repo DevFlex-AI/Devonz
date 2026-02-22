@@ -368,6 +368,125 @@ const ERROR_PATTERNS: ErrorPattern[] = [
     },
   },
 
+  // Cannot use import statement outside a module (ESM/CJS mismatch)
+  {
+    pattern: /Cannot use import statement outside a module/i,
+    type: 'syntax',
+    severity: 'error',
+    title: 'ESM/CJS Mismatch',
+    autoFixable: true,
+    extractDetails: (_match, fullOutput) => {
+      const errorIdx = fullOutput.indexOf('Cannot use import');
+      const contextEnd = Math.min(fullOutput.length, errorIdx + 400);
+
+      return fullOutput.slice(Math.max(0, errorIdx - 100), contextEnd).trim();
+    },
+  },
+
+  // Node ESM module not found (ERR_MODULE_NOT_FOUND)
+  {
+    pattern: /ERR_MODULE_NOT_FOUND.*?['"]([^'"]+)['"]/i,
+    type: 'module',
+    severity: 'error',
+    title: 'ESM Module Not Found',
+    autoFixable: true,
+    extractDetails: (match) => `ESM module not found: ${match[1]}`,
+  },
+
+  // Invariant Violation (React, libraries)
+  {
+    pattern: /Invariant Violation:\s*(.+?)(?:\n|$)/i,
+    type: 'runtime',
+    severity: 'error',
+    title: 'Invariant Violation',
+    autoFixable: true,
+    extractDetails: (match) => match[1],
+  },
+
+  // Dynamic import / chunk load failure
+  {
+    pattern: /ChunkLoadError|Loading chunk \d+ failed|Failed to fetch dynamically imported module/i,
+    type: 'build',
+    severity: 'error',
+    title: 'Dynamic Import Failed',
+    autoFixable: true,
+    extractDetails: (_match, fullOutput) => {
+      const errorIdx = fullOutput.search(/ChunkLoadError|Loading chunk|dynamically imported/i);
+      const contextEnd = Math.min(fullOutput.length, errorIdx + 400);
+
+      return fullOutput.slice(Math.max(0, errorIdx - 50), contextEnd).trim();
+    },
+  },
+
+  // Vite pre-transform error
+  {
+    pattern: /Pre-transform error:\s*(.+?)(?:\n|$)/i,
+    type: 'build',
+    severity: 'error',
+    title: 'Vite Pre-transform Error',
+    autoFixable: true,
+    extractDetails: (match, fullOutput) => {
+      const errorIdx = fullOutput.indexOf(match[0]);
+      const contextEnd = Math.min(fullOutput.length, errorIdx + 500);
+
+      return fullOutput.slice(errorIdx, contextEnd).trim();
+    },
+  },
+
+  // Objects are not valid as a React child (sometimes shows in terminal SSR)
+  {
+    pattern: /Objects are not valid as a React child/i,
+    type: 'runtime',
+    severity: 'error',
+    title: 'Invalid React Child',
+    autoFixable: true,
+    extractDetails: (_match, fullOutput) => {
+      const errorIdx = fullOutput.indexOf('Objects are not valid');
+      const contextEnd = Math.min(fullOutput.length, errorIdx + 500);
+
+      return fullOutput.slice(Math.max(0, errorIdx - 50), contextEnd).trim();
+    },
+  },
+
+  // Maximum update depth exceeded (sometimes shows in terminal SSR)
+  {
+    pattern: /Maximum update depth exceeded/i,
+    type: 'runtime',
+    severity: 'error',
+    title: 'Infinite Re-render Loop',
+    autoFixable: true,
+  },
+
+  // Invalid hook call
+  {
+    pattern: /Invalid hook call/i,
+    type: 'runtime',
+    severity: 'error',
+    title: 'Invalid Hook Call',
+    autoFixable: true,
+    extractDetails: (_match, fullOutput) => {
+      const errorIdx = fullOutput.indexOf('Invalid hook call');
+      const contextEnd = Math.min(fullOutput.length, errorIdx + 600);
+
+      return fullOutput.slice(Math.max(0, errorIdx - 50), contextEnd).trim();
+    },
+  },
+
+  // Element type is invalid (sometimes shows in terminal SSR)
+  {
+    pattern: /Element type is invalid.*?expected a string.*?but got/i,
+    type: 'runtime',
+    severity: 'error',
+    title: 'Invalid Component Type',
+    autoFixable: true,
+    extractDetails: (_match, fullOutput) => {
+      const errorIdx = fullOutput.indexOf('Element type is invalid');
+      const contextEnd = Math.min(fullOutput.length, errorIdx + 500);
+
+      return fullOutput.slice(Math.max(0, errorIdx - 50), contextEnd).trim();
+    },
+  },
+
   /*
    * Port in use - NOT auto-fixable and NOT alertable
    * Dev servers (Vite, Next.js, etc.) auto-retry on the next available port,
@@ -654,6 +773,19 @@ export class TerminalErrorDetector {
           'single package.json update, then run npm install once. Do NOT fix just this one package — ' +
           'check for @radix-ui/*, class-variance-authority, clsx, tailwind-merge, lucide-react, ' +
           'and any other imported packages that may be missing.'
+        );
+      }
+
+      /*
+       * For runtime errors, add instruction to check the full component tree.
+       * The error may cascade from a parent component passing wrong props.
+       */
+      if (error.type === 'runtime') {
+        return (
+          error.details +
+          '\n\nIMPORTANT: Check the FULL component tree, not just the file mentioned in the error. ' +
+          'Runtime errors often originate from a parent passing wrong data/props. ' +
+          'Trace the data flow from the source (API call, state initialization) to where it crashes.'
         );
       }
 
