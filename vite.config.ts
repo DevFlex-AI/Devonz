@@ -6,6 +6,8 @@ import { optimizeCssModules } from 'vite-plugin-optimize-css-modules';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig((config) => {
+  const isTest = !!process.env.VITEST;
+
   return {
     server: {
       fs: {
@@ -48,19 +50,27 @@ export default defineConfig((config) => {
       ],
     },
     plugins: [
-      nodePolyfills({
-        include: ['buffer', 'process', 'util'],
-        globals: {
-          Buffer: true,
-          process: true,
-          global: true,
-        },
-        protocolImports: true,
-        exclude: ['child_process', 'fs', 'path', 'stream'],
-      }),
-      {
+      /*
+       * Skip heavy plugins during test runs — Remix, UnoCSS, and nodePolyfills
+       * start background processes / dev servers that prevent the Vitest process
+       * from exiting cleanly, causing VS Code's test runner to hang on
+       * "Starting test run..." after tests complete.
+       * tsconfigPaths is kept so ~ path aliases still resolve in specs.
+       */
+      !isTest &&
+        nodePolyfills({
+          include: ['buffer', 'process', 'util'],
+          globals: {
+            Buffer: true,
+            process: true,
+            global: true,
+          },
+          protocolImports: true,
+          exclude: ['child_process', 'fs', 'path', 'stream'],
+        }),
+      !isTest && {
         name: 'buffer-polyfill',
-        transform(code, id) {
+        transform(code: string, id: string) {
           if (id.includes('env.mjs')) {
             return {
               code: `import { Buffer } from 'buffer';\n${code}`,
@@ -71,18 +81,19 @@ export default defineConfig((config) => {
           return null;
         },
       },
-      remixVitePlugin({
-        future: {
-          v3_fetcherPersist: true,
-          v3_relativeSplatPath: true,
-          v3_throwAbortReason: true,
-          v3_lazyRouteDiscovery: true,
-        },
-      }),
-      UnoCSS(),
+      !isTest &&
+        remixVitePlugin({
+          future: {
+            v3_fetcherPersist: true,
+            v3_relativeSplatPath: true,
+            v3_throwAbortReason: true,
+            v3_lazyRouteDiscovery: true,
+          },
+        }),
+      !isTest && UnoCSS(),
       tsconfigPaths(),
       config.mode === 'production' && optimizeCssModules({ apply: 'build' }),
-    ],
+    ].filter(Boolean),
     envPrefix: [
       'VITE_',
       'OPENAI_LIKE_API_BASE_URL',
@@ -107,8 +118,10 @@ export default defineConfig((config) => {
       },
       testTimeout: 30_000,
       teardownTimeout: 3_000,
+      hookTimeout: 10_000,
       fileParallelism: true,
       watch: false,
+      passWithNoTests: true,
       exclude: [
         '**/node_modules/**',
         '**/dist/**',
