@@ -70,6 +70,15 @@ export class WorkbenchStore {
   modifiedFiles = new Set<string>();
   artifactIdList: string[] = [];
   #globalExecutionQueue = Promise.resolve();
+
+  /**
+   * Batch counter to reduce per-action debug log spam.
+   * Only the first action and every Nth action are logged individually;
+   * a summary is logged when the batch flushes.
+   */
+  #actionLogCounter = 0;
+  #actionLogBatchSize = 25;
+
   constructor() {
     if (import.meta.hot) {
       import.meta.hot.data.artifacts = this.artifacts;
@@ -627,6 +636,11 @@ export class WorkbenchStore {
    * Called when the LLM response stream ends to prevent stuck spinners.
    */
   finalizeRunningActions(): void {
+    if (this.#actionLogCounter > 0) {
+      logger.debug(`Batch summary: ${this.#actionLogCounter} actions processed`);
+      this.#actionLogCounter = 0;
+    }
+
     const artifacts = this.artifacts.get();
 
     for (const artifact of Object.values(artifacts)) {
@@ -635,11 +649,13 @@ export class WorkbenchStore {
   }
 
   addAction(data: ActionCallbackData) {
-    logger.debug('addAction queued:', {
-      artifactId: data.artifactId,
-      actionId: data.actionId,
-      actionType: data.action.type,
-    });
+    this.#actionLogCounter++;
+
+    // Log only the first action and every Nth to reduce console spam
+    if (this.#actionLogCounter === 1 || this.#actionLogCounter % this.#actionLogBatchSize === 0) {
+      logger.debug(`addAction queued (#${this.#actionLogCounter}):`, data.actionId, 'type:', data.action.type);
+    }
+
     this.addToExecutionQueue(() => this._addAction(data));
   }
 
@@ -669,18 +685,24 @@ export class WorkbenchStore {
       unreachable('Artifact not found');
     }
 
-    logger.debug('_addAction executing:', data.actionId, 'type:', data.action.type);
+    // Only log non-file actions individually to avoid console spam
+    if (data.action.type !== 'file') {
+      logger.debug('_addAction:', data.actionId, 'type:', data.action.type);
+    }
 
     return artifact.runner.addAction(data);
   }
 
   runAction(data: ActionCallbackData, isStreaming: boolean = false) {
-    logger.debug('runAction:', {
-      artifactId: data.artifactId,
-      actionId: data.actionId,
-      actionType: data.action.type,
-      isStreaming,
-    });
+    // Only log non-file actions individually to avoid console spam
+    if (data.action.type !== 'file') {
+      logger.debug('runAction:', {
+        artifactId: data.artifactId,
+        actionId: data.actionId,
+        actionType: data.action.type,
+        isStreaming,
+      });
+    }
 
     if (isStreaming) {
       this.actionStreamSampler(data, isStreaming);

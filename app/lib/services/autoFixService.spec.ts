@@ -1,10 +1,11 @@
 import { describe, expect, it, beforeEach } from 'vitest';
 import { formatErrorForLLM, extractMissingPackage, type AutoFixError } from './autoFixService';
-import { resetAutoFix, startAutoFix, recordFixAttempt } from '~/lib/stores/autofix';
+import { resetAutoFix, startAutoFix, recordFixAttempt, resetSessionState } from '~/lib/stores/autofix';
 
 describe('autoFixService', () => {
   beforeEach(() => {
     resetAutoFix();
+    resetSessionState();
   });
 
   describe('extractMissingPackage', () => {

@@ -4,12 +4,32 @@
  * State management for the automatic error fixing feature.
  * When enabled, errors detected in terminal/preview are automatically
  * sent to the LLM for fixing, up to a configurable max retry count.
+ *
+ * Session-level safeguards prevent infinite loops:
+ * - Total attempt limit across all error types within a rolling window
+ * - Cooldown period after a session ends before a new one can start
  */
 
 import { atom, map } from 'nanostores';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('AutoFixStore');
+
+/**
+ * Session-level safeguards to prevent infinite auto-fix loops.
+ * When a fix resolves one error but introduces another, the per-error
+ * retry counter resets. These limits cap total attempts across ALL
+ * error types within a rolling time window.
+ */
+const MAX_TOTAL_SESSION_ATTEMPTS = 10;
+const SESSION_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
+const SESSION_COOLDOWN_MS = 30_000; // 30 seconds after session ends
+
+/**
+ * Rolling session tracker (module-level, not in store to avoid serialization)
+ */
+let sessionAttemptTimestamps: number[] = [];
+let lastSessionEndTime = 0;
 
 /**
  * Record of a single fix attempt
@@ -197,7 +217,28 @@ export function startAutoFix(error: { source: ErrorSource; type: string; message
     return false;
   }
 
-  // Check if we've exceeded max retries
+  // Check session cooldown — prevent rapid re-triggering after a session ends
+  const now = Date.now();
+
+  if (lastSessionEndTime > 0 && now - lastSessionEndTime < SESSION_COOLDOWN_MS) {
+    const remaining = Math.ceil((SESSION_COOLDOWN_MS - (now - lastSessionEndTime)) / 1000);
+    logger.debug(`Auto-fix in cooldown, ${remaining}s remaining`);
+
+    return false;
+  }
+
+  /* Check rolling session-level total attempt limit — prune timestamps outside the rolling window */
+  sessionAttemptTimestamps = sessionAttemptTimestamps.filter((t) => now - t < SESSION_WINDOW_MS);
+
+  if (sessionAttemptTimestamps.length >= MAX_TOTAL_SESSION_ATTEMPTS) {
+    logger.warn(
+      `Session-level limit reached (${MAX_TOTAL_SESSION_ATTEMPTS} attempts in ${SESSION_WINDOW_MS / 1000}s window), stopping auto-fix`,
+    );
+
+    return false;
+  }
+
+  // Check if we've exceeded max retries for this specific error
   if (currentState.currentRetries >= currentState.settings.maxRetries) {
     logger.warn(`Max retries (${currentState.settings.maxRetries}) reached, stopping auto-fix`);
 
@@ -212,12 +253,15 @@ export function startAutoFix(error: { source: ErrorSource; type: string; message
     return false;
   }
 
+  // Track this attempt in the rolling session window
+  sessionAttemptTimestamps.push(now);
+
   autoFixStore.set({
     ...currentState,
     isFixing: true,
     currentError: error,
     currentRetries: currentState.currentRetries + 1,
-    sessionStartTime: currentState.sessionStartTime ?? Date.now(),
+    sessionStartTime: currentState.sessionStartTime ?? now,
   });
 
   logger.info(`Starting auto-fix attempt ${currentState.currentRetries + 1}/${currentState.settings.maxRetries}`, {
@@ -282,6 +326,7 @@ export function markFixFailed(): void {
 
 /**
  * Reset auto-fix state (end of session)
+ * Sets a cooldown timer to prevent immediate re-triggering
  */
 export function resetAutoFix(): void {
   const currentState = autoFixStore.get();
@@ -295,25 +340,56 @@ export function resetAutoFix(): void {
     sessionStartTime: null,
   });
 
-  logger.debug('Auto-fix session reset');
+  // Set cooldown to prevent immediate re-triggering if the fix created a new error
+  lastSessionEndTime = Date.now();
+
+  logger.debug('Auto-fix session reset, cooldown started');
 }
 
 /**
- * Check if we should continue attempting fixes
+ * Check if we should continue attempting fixes.
+ * Also checks session-level limits and cooldown.
  */
 export function shouldContinueFix(): boolean {
   const state = autoFixStore.get();
 
-  return state.settings.isEnabled && !state.isFixing && state.currentRetries < state.settings.maxRetries;
+  if (!state.settings.isEnabled || state.isFixing || state.currentRetries >= state.settings.maxRetries) {
+    return false;
+  }
+
+  // Check session cooldown
+  const now = Date.now();
+
+  if (lastSessionEndTime > 0 && now - lastSessionEndTime < SESSION_COOLDOWN_MS) {
+    return false;
+  }
+
+  // Check rolling session-level limit
+  const recentAttempts = sessionAttemptTimestamps.filter((t) => now - t < SESSION_WINDOW_MS);
+
+  if (recentAttempts.length >= MAX_TOTAL_SESSION_ATTEMPTS) {
+    return false;
+  }
+
+  return true;
 }
 
 /**
- * Check if we've exceeded max retries
+ * Check if we've exceeded max retries (per-error or session-level)
  */
 export function hasExceededMaxRetries(): boolean {
   const state = autoFixStore.get();
+  const now = Date.now();
 
-  return state.currentRetries >= state.settings.maxRetries;
+  // Per-error retry limit
+  if (state.currentRetries >= state.settings.maxRetries) {
+    return true;
+  }
+
+  // Session-level rolling limit
+  const recentAttempts = sessionAttemptTimestamps.filter((t) => now - t < SESSION_WINDOW_MS);
+
+  return recentAttempts.length >= MAX_TOTAL_SESSION_ATTEMPTS;
 }
 
 /**
@@ -354,4 +430,14 @@ export function getAutoFixStatus(): {
     maxAttempts: state.settings.maxRetries,
     errorType: state.currentError?.type ?? null,
   };
+}
+
+/**
+ * Full reset including session-level state.
+ * Use in tests and when the user manually clears session state.
+ */
+export function resetSessionState(): void {
+  resetAutoFix();
+  sessionAttemptTimestamps = [];
+  lastSessionEndTime = 0;
 }

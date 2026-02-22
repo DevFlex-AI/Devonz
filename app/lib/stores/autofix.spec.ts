@@ -3,6 +3,7 @@ import {
   autoFixStore,
   getAutoFixStatus,
   resetAutoFix,
+  resetSessionState,
   recordFixAttempt,
   markFixComplete,
   markFixFailed,
@@ -14,8 +15,8 @@ import {
 
 describe('autoFixStore', () => {
   beforeEach(() => {
-    // Reset to clean state before each test
-    resetAutoFix();
+    // Full reset including session-level cooldown and attempt counters
+    resetSessionState();
   });
 
   describe('initial state', () => {
