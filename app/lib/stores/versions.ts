@@ -267,16 +267,42 @@ class VersionsStore {
     this._pendingMeta = meta;
   }
 
+  /** Max number of versions to keep screenshots for (oldest are pruned). */
+  private static readonly _maxScreenshots = 20;
+
   /**
-   * Update a version's thumbnail and persist the change.
+   * Update a version's thumbnail, enforce retention limit, and persist.
    */
   updateThumbnail(versionId: string, thumbnail: string) {
     const version = this.versions.get()[versionId];
 
     if (version) {
       this.versions.setKey(versionId, { ...version, thumbnail });
+      this._pruneOldScreenshots();
       this._persistToDB();
     }
+  }
+
+  /**
+   * Keep screenshots only on the newest _maxScreenshots versions.
+   * Older versions retain all metadata but have their thumbnail cleared.
+   */
+  private _pruneOldScreenshots() {
+    const allVersions = Object.values(this.versions.get())
+      .filter((v) => v.thumbnail)
+      .sort((a, b) => b.timestamp - a.timestamp);
+
+    if (allVersions.length <= VersionsStore._maxScreenshots) {
+      return;
+    }
+
+    const toPrune = allVersions.slice(VersionsStore._maxScreenshots);
+
+    for (const v of toPrune) {
+      this.versions.setKey(v.id, { ...v, thumbnail: undefined });
+    }
+
+    logger.trace(`Pruned screenshots from ${toPrune.length} old versions`);
   }
 
   /**
@@ -327,7 +353,7 @@ class VersionsStore {
    * Even simple apps produce JPEGs of at least ~500 chars.
    */
   private _isRealScreenshot(dataUrl: string): boolean {
-    return dataUrl.length > 500 && dataUrl.startsWith('data:image/jpeg');
+    return dataUrl.length > 500 && (dataUrl.startsWith('data:image/webp') || dataUrl.startsWith('data:image/jpeg'));
   }
 
   /**

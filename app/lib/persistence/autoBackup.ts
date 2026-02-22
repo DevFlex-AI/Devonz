@@ -80,7 +80,12 @@ export async function createBackup(db: IDBDatabase): Promise<string | null> {
         const chatVersions = await getVersionsByChatId(db, chat.id);
 
         if (chatVersions) {
-          versions[chat.id] = chatVersions;
+          /*
+           * Strip screenshot data URLs from versions — they dominate backup size
+           * and can be recaptured. This keeps version metadata in backups while
+           * staying well within the 2 MB localStorage cap.
+           */
+          versions[chat.id] = chatVersions.map(({ thumbnail: _thumb, ...rest }) => rest);
         }
       } catch {
         // Skip individual chat errors — partial backup is better than none
