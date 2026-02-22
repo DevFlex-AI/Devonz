@@ -11,6 +11,7 @@ import { TAB_LABELS, TAB_ICONS, SIDEBAR_CATEGORIES } from './constants';
 import { DialogTitle } from '~/components/ui/Dialog';
 import { classNames } from '~/utils/classNames';
 import { createScopedLogger } from '~/utils/logger';
+import { PanelErrorBoundary } from '~/components/ui/PanelErrorBoundary';
 
 const logger = createScopedLogger('ControlPanel');
 
@@ -136,7 +137,11 @@ export const ControlPanel = ({ open, onClose, initialTab }: ControlPanelProps) =
       'project-memory': <ProjectMemoryTab />,
     };
 
-    return <Suspense fallback={<TabLoadingFallback />}>{tabComponents[tabId] || null}</Suspense>;
+    return (
+      <PanelErrorBoundary panelName={`settings-${tabId}`}>
+        <Suspense fallback={<TabLoadingFallback />}>{tabComponents[tabId] || null}</Suspense>
+      </PanelErrorBoundary>
+    );
   }, []);
 
   const getTabUpdateStatus = (tabId: TabType): boolean => {
