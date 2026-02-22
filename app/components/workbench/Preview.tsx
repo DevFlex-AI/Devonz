@@ -8,8 +8,8 @@ import { PortDropdown } from './PortDropdown';
 import { expoUrlAtom } from '~/lib/stores/qrCode';
 import { ExpoQrModal } from '~/components/workbench/ExpoQrModal';
 import { InspectorPanel } from './InspectorPanel';
-import type { ElementInfo } from './inspector-types';
-import { getPreviewErrorHandler } from '~/utils/previewErrorHandler';
+import { useInspector } from '~/lib/hooks/useInspector';
+import type { ElementInfo } from '~/lib/inspector/types';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('Preview');
@@ -191,23 +191,18 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
 
   const [displayPath, setDisplayPath] = useState('/');
   const [iframeUrl, setIframeUrl] = useState<string | undefined>();
-  const [isInspectorMode, setIsInspectorMode] = useState(false);
   const [isDeviceModeOn, setIsDeviceModeOn] = useState(false);
   const [widthPercent, setWidthPercent] = useState<number>(37.5);
   const [currentWidth, setCurrentWidth] = useState<number>(0);
 
-  // Inspector panel state
-  const [inspectorElement, setInspectorElement] = useState<ElementInfo | null>(null);
-  const [isInspectorPanelVisible, setIsInspectorPanelVisible] = useState(false);
-
-  // Bulk style changes tracking - accumulates all bulk style changes for CSS injection
-  interface BulkStyleChange {
-    selector: string;
-    property: string;
-    value: string;
-  }
-
-  const [accumulatedBulkChanges, setAccumulatedBulkChanges] = useState<BulkStyleChange[]>([]);
+  /* ── Inspector hook (replaces all manual inspector state / handlers) ── */
+  const inspector = useInspector({
+    iframeRef,
+    onAIAction: (message) => {
+      setPendingChatMessage(message);
+    },
+    onSelectedElementChange: setSelectedElement ?? undefined,
+  });
 
   const resizingState = useRef({
     isResizing: false,
@@ -863,418 +858,32 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
     };
   }, [showDeviceFrameInPreview]);
 
+  /*
+   * Screenshot response listener — kept separate from the inspector hook
+   * so that the exported `requestPreviewScreenshot()` function continues
+   * to resolve correctly via the module-level `screenshotCallbacks` map.
+   */
   useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data.type === 'INSPECTOR_READY') {
-        if (iframeRef.current?.contentWindow) {
-          iframeRef.current.contentWindow.postMessage(
-            {
-              type: 'INSPECTOR_ACTIVATE',
-              active: isInspectorMode,
-            },
-            '*',
-          );
-        }
-      } else if (event.data.type === 'INSPECTOR_CLICK') {
-        const element = event.data.elementInfo;
-
-        navigator.clipboard
-          .writeText(element.displayText)
-          .then(() => {
-            setSelectedElement?.(element);
-            setInspectorElement(element);
-            setIsInspectorPanelVisible(true);
-          })
-          .catch(() => {
-            // Still show inspector even if clipboard write fails
-            setSelectedElement?.(element);
-            setInspectorElement(element);
-            setIsInspectorPanelVisible(true);
-          });
-      } else if (event.data.type === 'INSPECTOR_BULK_APPLIED') {
-        setBulkAffectedCount(event.data.count);
-      } else if (event.data.type === 'INSPECTOR_BULK_REVERTED') {
-        setBulkAffectedCount(undefined);
-      } else if (event.data.type === 'PREVIEW_CONSOLE_ERROR') {
-        /*
-         * Handle console errors captured from preview iframe (module import errors, etc.)
-         * Route to preview error handler's auto-fix system
-         */
-        let parsedUrl: URL;
-
-        try {
-          parsedUrl = new URL(event.data.url || window.location.href);
-        } catch {
-          parsedUrl = new URL(window.location.href);
-        }
-
-        getPreviewErrorHandler().handlePreviewMessage({
-          type: 'PREVIEW_UNCAUGHT_EXCEPTION', // Use existing type for compatibility
-          message: event.data.message,
-          stack: event.data.stack,
-          pathname: parsedUrl.pathname,
-          search: parsedUrl.search,
-          hash: parsedUrl.hash,
-          port: selectedWindowSize?.width || 0,
-        });
-      } else if (event.data.type === 'PREVIEW_VITE_ERROR') {
-        /*
-         * Handle Vite error overlay detection (ES module errors, HMR failures, etc.)
-         * Route to preview error handler's auto-fix system
-         */
-        let parsedViteUrl: URL;
-
-        try {
-          parsedViteUrl = new URL(event.data.url || window.location.href);
-        } catch {
-          parsedViteUrl = new URL(window.location.href);
-        }
-
-        getPreviewErrorHandler().handlePreviewMessage({
-          type: 'PREVIEW_UNCAUGHT_EXCEPTION', // Use existing type for compatibility
-          message: event.data.fullMessage || event.data.message,
-          stack: event.data.stack || '',
-          pathname: parsedViteUrl.pathname,
-          search: parsedViteUrl.search,
-          hash: parsedViteUrl.hash,
-          port: selectedWindowSize?.width || 0,
-        });
-      } else if (event.data.type === 'PREVIEW_SCREENSHOT_RESPONSE') {
-        // Handle screenshot response from iframe
-        const requestId = event.data.requestId;
-        const callback = screenshotCallbacks.get(requestId);
+    const handleScreenshotResponse = (event: MessageEvent) => {
+      if (event.data.type === 'PREVIEW_SCREENSHOT_RESPONSE') {
+        const callback = screenshotCallbacks.get(event.data.requestId);
 
         if (callback) {
           callback(event.data.dataUrl, event.data.isPlaceholder);
-          screenshotCallbacks.delete(requestId);
+          screenshotCallbacks.delete(event.data.requestId);
         }
       }
     };
 
-    window.addEventListener('message', handleMessage);
+    window.addEventListener('message', handleScreenshotResponse);
 
-    return () => window.removeEventListener('message', handleMessage);
-  }, [isInspectorMode]);
-
-  const toggleInspectorMode = () => {
-    const newInspectorMode = !isInspectorMode;
-    setIsInspectorMode(newInspectorMode);
-
-    if (!newInspectorMode) {
-      // Close inspector panel when deactivating inspector mode
-      setIsInspectorPanelVisible(false);
-      setInspectorElement(null);
-    }
-
-    if (iframeRef.current?.contentWindow) {
-      iframeRef.current.contentWindow.postMessage(
-        {
-          type: 'INSPECTOR_ACTIVATE',
-          active: newInspectorMode,
-        },
-        '*',
-      );
-    }
-  };
-
-  // Handler for style changes from InspectorPanel
-  const handleStyleChange = useCallback((property: string, value: string) => {
-    if (iframeRef.current?.contentWindow) {
-      iframeRef.current.contentWindow.postMessage(
-        {
-          type: 'INSPECTOR_EDIT_STYLE',
-          property,
-          value,
-        },
-        '*',
-      );
-    }
+    return () => window.removeEventListener('message', handleScreenshotResponse);
   }, []);
-
-  // Handler for text changes from InspectorPanel
-  const handleTextChange = useCallback((text: string) => {
-    if (iframeRef.current?.contentWindow) {
-      iframeRef.current.contentWindow.postMessage(
-        {
-          type: 'INSPECTOR_EDIT_TEXT',
-          text,
-        },
-        '*',
-      );
-    }
-  }, []);
-
-  // Handler for closing inspector panel
-  const handleCloseInspectorPanel = useCallback(() => {
-    setIsInspectorPanelVisible(false);
-    setInspectorElement(null);
-  }, []);
-
-  // Handler for selecting element from tree navigator
-  const handleSelectFromTree = useCallback((selector: string) => {
-    if (iframeRef.current?.contentWindow) {
-      iframeRef.current.contentWindow.postMessage(
-        {
-          type: 'INSPECTOR_SELECT_BY_SELECTOR',
-          selector,
-        },
-        '*',
-      );
-    }
-  }, []);
-
-  // Handler for reverting changes on selected element
-  const handleRevert = useCallback(() => {
-    if (iframeRef.current?.contentWindow) {
-      iframeRef.current.contentWindow.postMessage(
-        {
-          type: 'INSPECTOR_REVERT',
-        },
-        '*',
-      );
-    }
-  }, []);
-
-  // State for tracking bulk affected element count
-  const [bulkAffectedCount, setBulkAffectedCount] = useState<number | undefined>(undefined);
-
-  // Handler for bulk style changes
-  const handleBulkStyleChange = useCallback((selector: string, property: string, value: string) => {
-    // Accumulate the change for CSS injection
-    setAccumulatedBulkChanges((prev) => {
-      // Check if we already have a change for this selector+property combo
-      const existingIndex = prev.findIndex((c) => c.selector === selector && c.property === property);
-
-      if (existingIndex >= 0) {
-        // Update existing change
-        const updated = [...prev];
-        updated[existingIndex] = { selector, property, value };
-
-        return updated;
-      } else {
-        // Add new change
-        return [...prev, { selector, property, value }];
-      }
-    });
-
-    if (iframeRef.current?.contentWindow) {
-      iframeRef.current.contentWindow.postMessage(
-        {
-          type: 'INSPECTOR_BULK_STYLE',
-          selector,
-          property,
-          value,
-        },
-        '*',
-      );
-    }
-  }, []);
-
-  // Handler for bulk revert
-  const handleBulkRevert = useCallback((selector: string) => {
-    // Remove accumulated changes for this selector
-    setAccumulatedBulkChanges((prev) => prev.filter((c) => c.selector !== selector));
-
-    if (iframeRef.current?.contentWindow) {
-      iframeRef.current.contentWindow.postMessage(
-        {
-          type: 'INSPECTOR_BULK_REVERT',
-          selector,
-        },
-        '*',
-      );
-    }
-  }, []);
-
-  // Handler for applying changes with AI
-  const handleApplyWithAI = useCallback(
-    (changes: { element: ElementInfo; styles: Record<string, string>; text?: string }) => {
-      const { element, styles, text } = changes;
-
-      // Build the selector description
-      const selectorParts = [element.tagName.toLowerCase()];
-
-      if (element.id) {
-        selectorParts.push(`#${element.id}`);
-      }
-
-      if (element.className) {
-        const firstClass = element.className.split(' ')[0];
-
-        if (firstClass) {
-          selectorParts.push(`.${firstClass}`);
-        }
-      }
-
-      const selector = selectorParts.join('');
-
-      // Build the changes description
-      const changeLines: string[] = [];
-
-      if (Object.keys(styles).length > 0) {
-        changeLines.push('**Style changes:**');
-        Object.entries(styles).forEach(([prop, value]) => {
-          changeLines.push(`- ${prop}: ${value}`);
-        });
-      }
-
-      if (text) {
-        changeLines.push(`**Text content:** "${text}"`);
-      }
-
-      const message = `Please apply these changes to the element \`${selector}\`:
-
-${changeLines.join('\n')}
-
-Find this element in the source code and update its styles/text accordingly.`;
-
-      // Send to chat
-      setPendingChatMessage(message);
-
-      // Close inspector panel
-      setIsInspectorPanelVisible(false);
-      setInspectorElement(null);
-    },
-    [],
-  );
-
-  // Handler for deleting an element via AI
-  const handleDeleteElement = useCallback((element: ElementInfo) => {
-    // Build the selector description
-    const selectorParts = [element.tagName.toLowerCase()];
-
-    if (element.id) {
-      selectorParts.push(`#${element.id}`);
-    }
-
-    if (element.className) {
-      const firstClass = element.className.split(' ')[0];
-
-      if (firstClass) {
-        selectorParts.push(`.${firstClass}`);
-      }
-    }
-
-    const selector = selectorParts.join('');
-
-    // Get text content preview for context
-    const textPreview = element.textContent?.slice(0, 50) || '';
-    const textContext = textPreview
-      ? ` with text "${textPreview}${element.textContent && element.textContent.length > 50 ? '...' : ''}"`
-      : '';
-
-    const message = `Please delete/remove the element \`${selector}\`${textContext} from the source code.
-
-Remove this element completely from the JSX/HTML.`;
-
-    // Send to chat
-    setPendingChatMessage(message);
-
-    // Close inspector panel
-    setIsInspectorPanelVisible(false);
-    setInspectorElement(null);
-  }, []);
-
-  // Handler for AI quick actions
-  const handleAIAction = useCallback((message: string) => {
-    // Send the message to chat
-    setPendingChatMessage(message);
-
-    // Close inspector panel
-    setIsInspectorPanelVisible(false);
-    setInspectorElement(null);
-  }, []);
-
-  // Handler for applying bulk CSS changes directly
-  const handleApplyBulkCSS = useCallback(() => {
-    if (accumulatedBulkChanges.length === 0) {
-      return;
-    }
-
-    // Group changes by selector for cleaner CSS output
-    const groupedChanges: Record<string, Record<string, string>> = {};
-
-    accumulatedBulkChanges.forEach(({ selector, property, value }) => {
-      if (!groupedChanges[selector]) {
-        groupedChanges[selector] = {};
-      }
-
-      groupedChanges[selector][property] = value;
-    });
-
-    // Generate CSS
-    const cssRules = Object.entries(groupedChanges)
-      .map(([selector, styles]) => {
-        const styleLines = Object.entries(styles)
-          .map(([prop, value]) => `  ${prop}: ${value} !important;`)
-          .join('\n');
-        return `${selector} {\n${styleLines}\n}`;
-      })
-      .join('\n\n');
-
-    const fullCSS = `/* Bulk Style Changes - Applied via Inspector */\n${cssRules}`;
-
-    // Create a message for the AI to apply the CSS
-    const message = `Please add the following CSS rules to the project's main stylesheet (or create a new style block if needed):
-
-\`\`\`css
-${fullCSS}
-\`\`\`
-
-Add these rules to style the elements as specified. The !important flags ensure these styles take precedence.`;
-
-    // Send to chat
-    setPendingChatMessage(message);
-
-    // Clear accumulated changes since they're being applied
-    setAccumulatedBulkChanges([]);
-
-    // Close inspector panel
-    setIsInspectorPanelVisible(false);
-    setInspectorElement(null);
-  }, [accumulatedBulkChanges]);
-
-  // Handler for clearing all bulk changes
-  const handleClearBulkChanges = useCallback(() => {
-    setAccumulatedBulkChanges([]);
-
-    // Revert all changes in the iframe
-    if (iframeRef.current?.contentWindow) {
-      // Send revert for all unique selectors
-      const uniqueSelectors = [...new Set(accumulatedBulkChanges.map((c) => c.selector))];
-      uniqueSelectors.forEach((selector) => {
-        iframeRef.current?.contentWindow?.postMessage(
-          {
-            type: 'INSPECTOR_BULK_REVERT',
-            selector,
-          },
-          '*',
-        );
-      });
-    }
-  }, [accumulatedBulkChanges]);
 
   return (
     <div ref={containerRef} className={`w-full h-full flex flex-col relative`}>
       {/* Inspector Panel */}
-      <InspectorPanel
-        selectedElement={inspectorElement}
-        isVisible={isInspectorPanelVisible}
-        onClose={handleCloseInspectorPanel}
-        onStyleChange={handleStyleChange}
-        onTextChange={handleTextChange}
-        onApplyWithAI={handleApplyWithAI}
-        onDeleteElement={handleDeleteElement}
-        onAIAction={handleAIAction}
-        onSelectFromTree={handleSelectFromTree}
-        onRevert={handleRevert}
-        onBulkStyleChange={handleBulkStyleChange}
-        onBulkRevert={handleBulkRevert}
-        bulkAffectedCount={bulkAffectedCount}
-        accumulatedBulkChanges={accumulatedBulkChanges}
-        onApplyBulkCSS={handleApplyBulkCSS}
-        onClearBulkChanges={handleClearBulkChanges}
-      />
+      <InspectorPanel inspector={inspector} />
 
       {isPortDropdownOpen && (
         <div className="z-iframe-overlay w-full h-full absolute" onClick={() => setIsPortDropdownOpen(false)} />
@@ -1391,11 +1000,13 @@ Add these rules to style the elements as specified. The !important flags ensure 
           )}
           <IconButton
             icon="i-ph:cursor-click"
-            onClick={toggleInspectorMode}
+            onClick={inspector.toggle}
             className={
-              isInspectorMode ? 'bg-devonz-elements-background-depth-3 !text-devonz-elements-item-contentAccent' : ''
+              inspector.mode !== 'off'
+                ? 'bg-devonz-elements-background-depth-3 !text-devonz-elements-item-contentAccent'
+                : ''
             }
-            title={isInspectorMode ? 'Disable Element Inspector' : 'Enable Element Inspector'}
+            title={inspector.mode !== 'off' ? 'Disable Element Inspector' : 'Enable Element Inspector'}
           />
           <IconButton
             icon={isFullscreen ? 'i-ph:arrows-in' : 'i-ph:arrows-out'}

@@ -338,6 +338,43 @@ describe('LocalFileSystem', () => {
       const headCloseIdx = rawContent.indexOf('</head>');
       expect(captureIdx).toBeLessThan(headCloseIdx);
     });
+
+    it('should inject inspector script tag into index.html and strip on read', async () => {
+      await localFs.writeFile('index.html', sampleHtml);
+
+      // readFile should return clean content (no inspector tag)
+      const readContent = await localFs.readFile('index.html');
+      expect(readContent).not.toContain('data-devonz-inspector');
+
+      // Raw disk content should contain the inspector tag
+      const rawContent = await fs.readFile(nodePath.join(tmpDir, 'index.html'), 'utf-8');
+      expect(rawContent).toContain('data-devonz-inspector');
+      expect(rawContent).toContain('_devonz-inspector.js');
+    });
+
+    it('should write _devonz-inspector.js to public/ for index.html', async () => {
+      await localFs.writeFile('index.html', sampleHtml);
+
+      const inspectorPath = nodePath.join(tmpDir, 'public', '_devonz-inspector.js');
+      const exists = await fs
+        .access(inspectorPath)
+        .then(() => true)
+        .catch(() => false);
+      expect(exists).toBe(true);
+
+      const content = await fs.readFile(inspectorPath, 'utf-8');
+      expect(content).toContain('INSPECTOR_ACTIVATE');
+      expect(content).toContain('INSPECTOR_READY');
+    });
+
+    it('should not double-inject inspector tag on repeated writes', async () => {
+      await localFs.writeFile('index.html', sampleHtml);
+      await localFs.writeFile('index.html', sampleHtml);
+
+      const rawContent = await fs.readFile(nodePath.join(tmpDir, 'index.html'), 'utf-8');
+      const matches = rawContent.match(/data-devonz-inspector/g);
+      expect(matches).toHaveLength(1);
+    });
   });
 
   describe('root layout capture script injection', () => {
@@ -434,6 +471,43 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
       const rawContent = await fs.readFile(nodePath.join(tmpDir, 'app', 'layout.jsx'), 'utf-8');
       expect(rawContent).toContain('data-devonz-capture');
+    });
+
+    it('should inject inspector script tag into root layout and strip on read', async () => {
+      await localFs.writeFile('app/layout.tsx', sampleLayout);
+
+      // readFile should return clean content (no inspector tag)
+      const readContent = await localFs.readFile('app/layout.tsx');
+      expect(readContent).not.toContain('data-devonz-inspector');
+
+      // Raw disk content should contain the inspector tag
+      const rawContent = await fs.readFile(nodePath.join(tmpDir, 'app', 'layout.tsx'), 'utf-8');
+      expect(rawContent).toContain('data-devonz-inspector');
+      expect(rawContent).toContain('_devonz-inspector.js');
+    });
+
+    it('should write _devonz-inspector.js to public/ for root layout', async () => {
+      await localFs.writeFile('app/layout.tsx', sampleLayout);
+
+      const inspectorPath = nodePath.join(tmpDir, 'public', '_devonz-inspector.js');
+      const exists = await fs
+        .access(inspectorPath)
+        .then(() => true)
+        .catch(() => false);
+      expect(exists).toBe(true);
+
+      const content = await fs.readFile(inspectorPath, 'utf-8');
+      expect(content).toContain('INSPECTOR_ACTIVATE');
+      expect(content).toContain('INSPECTOR_READY');
+    });
+
+    it('should not double-inject inspector tag on repeated layout writes', async () => {
+      await localFs.writeFile('app/layout.tsx', sampleLayout);
+      await localFs.writeFile('app/layout.tsx', sampleLayout);
+
+      const rawContent = await fs.readFile(nodePath.join(tmpDir, 'app', 'layout.tsx'), 'utf-8');
+      const matches = rawContent.match(/data-devonz-inspector/g);
+      expect(matches).toHaveLength(1);
     });
   });
 });
