@@ -1,0 +1,11 @@
+{
+  "templates": [
+    {
+      "name": "Gemini Next Chat",
+      "description": "A full-featured AI chat application powered by Google Gemini, built with Next.js",
+      "githubRepo": "babaohuang/GeminiProChat",
+      "vercelUrl": "https://vercel.com/new/clone?repository-url=https://github.com/babaohuang/GeminiProChat",
+      "tags": ["nextjs", "ai", "gemini", "chat", "google"]
+    }
+  ]
+}
