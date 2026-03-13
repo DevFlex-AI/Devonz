@@ -3,13 +3,17 @@ import type { ProviderInfo } from '~/types/model';
 import type { Template } from '~/types/template';
 import { STARTER_TEMPLATES } from './constants';
 
-const ADDITIONAL_TEMPLATES = [
+const ADDITIONAL_TEMPLATES: Template[] = [
   {
     name: 'Gemini Next Chat',
+    label: 'Gemini Next Chat',
     description: 'A full-featured AI chat application powered by Google Gemini, built with Next.js',
+    githubRepo: 'babaohuang/GeminiProChat',
     tags: ['nextjs', 'ai', 'gemini', 'chat', 'google'],
   },
 ];
+
+const ALL_TEMPLATES: Template[] = [...STARTER_TEMPLATES, ...ADDITIONAL_TEMPLATES];
 
 const starterTemplateSelectionPrompt = (templates: Template[]) => `
 You are an experienced developer who helps people choose the best starter template for their projects.
@@ -33,15 +37,6 @@ ${templates
 `,
     )
     .join('\n')}
-${ADDITIONAL_TEMPLATES.map(
-  (template) => `
-<template>
-  <name>${template.name}</name>
-  <description>${template.description}</description>
-  <tags>${template.tags.join(', ')}</tags>
-</template>
-`,
-).join('\n')}
 
 Response Format:
 <selection>
@@ -80,7 +75,7 @@ Important: Provide only the selection tags in your response, no additional text.
 MOST IMPORTANT: YOU DONT HAVE TIME TO THINK JUST START RESPONDING BASED ON HUNCH 
 `;
 
-const templates: Template[] = STARTER_TEMPLATES.filter((t) => !t.name.includes('shadcn'));
+const templates: Template[] = ALL_TEMPLATES.filter((t) => !t.name.includes('shadcn'));
 
 const parseSelectedTemplate = (llmOutput: string): { template: string; title: string } | null => {
   try {
@@ -149,7 +144,7 @@ const getGitHubRepoContent = async (repoName: string): Promise<{ name: string; p
 };
 
 export async function getTemplates(templateName: string, title?: string) {
-  const template = STARTER_TEMPLATES.find((t) => t.name == templateName);
+  const template = ALL_TEMPLATES.find((t) => t.name == templateName);
 
   if (!template) {
     return null;
