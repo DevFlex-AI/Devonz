@@ -143,5 +143,14 @@ export const STARTER_TEMPLATES: Template[] = [
     githubRepo: 'xKevIsDev/solidjs-ts-tw',
     tags: ['solidjs'],
     icon: 'i-bolt:solidjs',
+  },,
+  {
+    name: 'Gemini Next Chat',
+    label: 'Gemini Next Chat',
+    description: 'Starter template powered by Gemini, built for fast and intelligent chat applications',
+    githubRepo: 'babaohuang/GeminiProChat',
+    tags: ['gemini', 'ai', 'chat', 'nextjs'],
+    icon: 'i-bolt:gemini',
+    vercelUrl: 'https://vercel.com/new/clone?repository-url=https://github.com/babaohuang/GeminiProChat',
   },
 ];
