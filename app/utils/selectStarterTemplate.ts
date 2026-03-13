@@ -3,6 +3,14 @@ import type { ProviderInfo } from '~/types/model';
 import type { Template } from '~/types/template';
 import { STARTER_TEMPLATES } from './constants';
 
+const ADDITIONAL_TEMPLATES = [
+  {
+    name: 'Gemini Next Chat',
+    description: 'A full-featured AI chat application powered by Google Gemini, built with Next.js',
+    tags: ['nextjs', 'ai', 'gemini', 'chat', 'google'],
+  },
+];
+
 const starterTemplateSelectionPrompt = (templates: Template[]) => `
 You are an experienced developer who helps people choose the best starter template for their projects.
 IMPORTANT: Vite is preferred
@@ -25,6 +33,15 @@ ${templates
 `,
     )
     .join('\n')}
+${ADDITIONAL_TEMPLATES.map(
+  (template) => `
+<template>
+  <name>${template.name}</name>
+  <description>${template.description}</description>
+  <tags>${template.tags.join(', ')}</tags>
+</template>
+`,
+).join('\n')}
 
 Response Format:
 <selection>
