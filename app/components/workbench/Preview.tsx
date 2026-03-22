@@ -251,7 +251,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
      */
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
-    const MAX_RETRIES = 20;
+    const MAX_RETRIES = 50;
     const INTERVAL_MS = 500;
 
     const probe = async (attempt: number) => {
@@ -259,11 +259,17 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
         return;
       }
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
+
       try {
         await fetch(baseUrl, {
           method: 'HEAD',
           mode: 'no-cors', // avoid CORB/CORS issues — we only care about connectivity
+          signal: controller.signal,
         });
+
+        clearTimeout(timeoutId);
 
         // mode: 'no-cors' yields an opaque response (status 0), but no throw = server is reachable
         if (!cancelled) {
@@ -271,6 +277,8 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
           setDisplayPath('/');
         }
       } catch {
+        clearTimeout(timeoutId);
+
         // Server not ready yet — retry
         if (!cancelled && attempt < MAX_RETRIES) {
           timer = setTimeout(() => probe(attempt + 1), INTERVAL_MS);

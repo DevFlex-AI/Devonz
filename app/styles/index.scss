@@ -26,12 +26,30 @@ html[data-theme='light'] {
   color-scheme: light;
 }
 
-// Hide all scrollbars globally — scroll still works via trackpad/wheel/keyboard
+// Global scrollbar styles for better usability
 * {
-  scrollbar-width: none;
+  scrollbar-width: thin;
+  scrollbar-color: var(--modern-scrollbar-thumb-background) transparent;
 
   &::-webkit-scrollbar {
-    display: none;
+    width: 8px;
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--modern-scrollbar-thumb-background);
+    border-radius: 20px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+
+    &:hover {
+      background: var(--modern-scrollbar-thumb-backgroundHover);
+      background-clip: content-box;
+    }
   }
 }
 
@@ -51,19 +69,10 @@ html[data-theme='light'] {
 
 .modern-scrollbar {
   overflow: auto;
-  scrollbar-width: none;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
 }
 
 .modern-scrollbar-invert {
-  scrollbar-width: none;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
+  overflow: auto;
 }
 
 // Content visibility optimization for long message lists

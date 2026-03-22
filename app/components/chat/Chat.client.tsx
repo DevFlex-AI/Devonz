@@ -5,7 +5,7 @@ import { useAnimate } from 'framer-motion';
 import { memo, useCallback, useEffect, useMemo, useRef, useState, startTransition } from 'react';
 import { toast } from 'react-toastify';
 import { useMessageParser, usePromptEnhancer, useShortcuts } from '~/lib/hooks';
-import { resetVersionTracking } from '~/lib/hooks/useMessageParser';
+import { resetMessageParser } from '~/lib/hooks/useMessageParser';
 import { description, useChatHistory } from '~/lib/persistence';
 import { chatId } from '~/lib/persistence/useChatHistory';
 import type { ImportChatFn } from '~/lib/persistence/db';
@@ -81,8 +81,8 @@ export function Chat() {
   useEffect(() => {
     workbenchStore.setReloadedMessages(initialMessages.map((m) => m.id));
 
-    // Clear stale version tracking from previous chat sessions to prevent memory leaks
-    resetVersionTracking();
+    // Clear stale version tracking and parser state from previous chat sessions to prevent memory leaks
+    resetMessageParser();
   }, [initialMessages]);
 
   return (
