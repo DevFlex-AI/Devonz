@@ -19,6 +19,8 @@
 </div>
 
 
+[![Sourcery](https://img.shields.io/badge/Sourcery-enabled-brightgreen)](https://sourcery.ai)
+
 ## Quick Start
 
 **Docker** (recommended):
