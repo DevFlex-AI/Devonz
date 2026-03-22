@@ -244,7 +244,7 @@ export function useMessageParser() {
     }
 
     if (resetOccurred || forceReset) {
-      messageParser.reset();
+      resetMessageParser();
 
       const fullParsed: Record<number, string> = {};
 

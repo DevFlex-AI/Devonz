@@ -26,8 +26,11 @@ html[data-theme='light'] {
   color-scheme: light;
 }
 
-// Global scrollbar styles for better usability
-* {
+// Scrollbar styles scoped to specific containers
+// Using .devonz-scroll class to avoid unintentionally affecting all scrollable areas
+.devonz-scroll,
+.modern-scrollbar,
+.modern-scrollbar-invert {
   scrollbar-width: thin;
   scrollbar-color: var(--modern-scrollbar-thumb-background) transparent;
 
