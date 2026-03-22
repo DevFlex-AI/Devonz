@@ -62,6 +62,9 @@ type Pages = {
   "/api/check-env-key": {
     params: {};
   };
+  "/api/sentry-tunnel": {
+    params: {};
+  };
   "/api/supabase-user": {
     params: {};
   };
@@ -196,7 +199,7 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/api/configured-providers" | "/api/system/diagnostics" | "/api/mcp-update-config" | "/api/runtime/terminal" | "/api/system/disk-info" | "/api/export-api-keys" | "/api/github-branches" | "/api/github-template" | "/api/gitlab-branches" | "/api/gitlab-projects" | "/api/system/git-info" | "/api/check-env-keys" | "/api/netlify-deploy" | "/api/runtime/search" | "/api/vercel-domains" | "/api/check-env-key" | "/api/supabase-user" | "/api/vercel-deploy" | "/api/version-check" | "/api/github-stats" | "/api/netlify-user" | "/api/runtime/exec" | "/api/vercel-proxy" | "/api/git-proxy/*" | "/api/github-user" | "/api/runtime/git" | "/api/vercel-user" | "/api/bug-report" | "/api/db/migrate" | "/api/runtime/fs" | "/api/web-search" | "/api/git-clone" | "/api/mcp-check" | "/api/v1/status" | "/preview/:port" | "/api/db/chats" | "/api/db/chats/:id" | "/api/enhancer" | "/api/git-info" | "/api/supabase" | "/api/supabase/variables" | "/api/supabase/query" | "/api/encrypt" | "/api/llmcall" | "/api/v1/chat" | "/api/deploy" | "/api/health" | "/api/models" | "/api/models/:provider" | "/api/update" | "/templates" | "/api/chat" | "/chat/:id" | "/git" | "/*";
+    page: "/" | "/api/configured-providers" | "/api/system/diagnostics" | "/api/mcp-update-config" | "/api/runtime/terminal" | "/api/system/disk-info" | "/api/export-api-keys" | "/api/github-branches" | "/api/github-template" | "/api/gitlab-branches" | "/api/gitlab-projects" | "/api/system/git-info" | "/api/check-env-keys" | "/api/netlify-deploy" | "/api/runtime/search" | "/api/vercel-domains" | "/api/check-env-key" | "/api/sentry-tunnel" | "/api/supabase-user" | "/api/vercel-deploy" | "/api/version-check" | "/api/github-stats" | "/api/netlify-user" | "/api/runtime/exec" | "/api/vercel-proxy" | "/api/git-proxy/*" | "/api/github-user" | "/api/runtime/git" | "/api/vercel-user" | "/api/bug-report" | "/api/db/migrate" | "/api/runtime/fs" | "/api/web-search" | "/api/git-clone" | "/api/mcp-check" | "/api/v1/status" | "/preview/:port" | "/api/db/chats" | "/api/db/chats/:id" | "/api/enhancer" | "/api/git-info" | "/api/supabase" | "/api/supabase/variables" | "/api/supabase/query" | "/api/encrypt" | "/api/llmcall" | "/api/v1/chat" | "/api/deploy" | "/api/health" | "/api/models" | "/api/models/:provider" | "/api/update" | "/templates" | "/api/chat" | "/chat/:id" | "/git" | "/*";
   };
   "routes/api.configured-providers.ts": {
     id: "routes/api.configured-providers";
@@ -261,6 +264,10 @@ type RouteFiles = {
   "routes/api.check-env-key.ts": {
     id: "routes/api.check-env-key";
     page: "/api/check-env-key";
+  };
+  "routes/api.sentry-tunnel.ts": {
+    id: "routes/api.sentry-tunnel";
+    page: "/api/sentry-tunnel";
   };
   "routes/api.supabase-user.ts": {
     id: "routes/api.supabase-user";
@@ -442,6 +449,7 @@ type RouteModules = {
   "routes/api.runtime.search": typeof import("./app/routes/api.runtime.search.ts");
   "routes/api.vercel-domains": typeof import("./app/routes/api.vercel-domains.ts");
   "routes/api.check-env-key": typeof import("./app/routes/api.check-env-key.ts");
+  "routes/api.sentry-tunnel": typeof import("./app/routes/api.sentry-tunnel.ts");
   "routes/api.supabase-user": typeof import("./app/routes/api.supabase-user.ts");
   "routes/api.vercel-deploy": typeof import("./app/routes/api.vercel-deploy.ts");
   "routes/api.version-check": typeof import("./app/routes/api.version-check.ts");

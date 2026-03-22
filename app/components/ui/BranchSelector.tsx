@@ -199,7 +199,7 @@ export function BranchSelector({
                 )}
 
                 {/* Branch List */}
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto modern-scrollbar">
                   {filteredBranches.length > 0 ? (
                     <div className="p-4 space-y-1">
                       {filteredBranches.map((branch) => (

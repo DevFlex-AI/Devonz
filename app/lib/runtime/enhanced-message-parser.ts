@@ -540,6 +540,11 @@ ${content.trim()}
     });
   }
 
+  /**
+   * Reset internal parser state. For external callers, prefer using
+   * resetMessageParser() from useMessageParser.ts which also clears
+   * version tracking state to keep parser and version tracking in sync.
+   */
   reset() {
     super.reset();
     this._processedCodeBlocks.clear();
