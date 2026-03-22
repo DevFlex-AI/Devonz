@@ -636,7 +636,7 @@ export const Versions = memo(() => {
       </div>
 
       {/* Commits list */}
-      <div className="flex-1 overflow-y-auto p-2">
+      <div className="flex-1 overflow-y-auto p-2 modern-scrollbar">
         {loading ? (
           <div className="flex flex-col items-center justify-center h-full">
             <div className="i-ph:spinner-gap-bold animate-spin text-2xl text-devonz-elements-textTertiary mb-2" />
@@ -780,7 +780,7 @@ export const Versions = memo(() => {
                   <div className="i-ph:x text-sm" />
                 </button>
               </div>
-              <div className="flex-1 overflow-auto p-4">
+              <div className="flex-1 overflow-auto p-4 modern-scrollbar">
                 <pre
                   className="rounded-md p-3 text-xs font-mono leading-relaxed"
                   style={{
@@ -907,7 +907,7 @@ export const Versions = memo(() => {
               </div>
 
               {/* File list with collapsible diffs */}
-              <div className="flex-1 overflow-auto">
+              <div className="flex-1 overflow-auto modern-scrollbar">
                 {filesModal.files.map(({ file, status }) => {
                   const diff = filesModal.diffs.get(file);
                   const isExpanded = expandedFiles.has(file);

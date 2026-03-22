@@ -132,7 +132,7 @@ export const EditorPanel = memo(
 
                   <Tabs.Content
                     value="files"
-                    className="flex-grow overflow-auto focus-visible:outline-none"
+                    className="flex-grow overflow-auto focus-visible:outline-none modern-scrollbar"
                     style={{ background: 'var(--devonz-elements-bg-depth-1)' }}
                   >
                     <FileTree
@@ -149,7 +149,7 @@ export const EditorPanel = memo(
 
                   <Tabs.Content
                     value="search"
-                    className="flex-grow overflow-auto focus-visible:outline-none"
+                    className="flex-grow overflow-auto focus-visible:outline-none modern-scrollbar"
                     style={{ background: 'var(--devonz-elements-bg-depth-1)' }}
                   >
                     <Search />
@@ -157,7 +157,7 @@ export const EditorPanel = memo(
 
                   <Tabs.Content
                     value="locks"
-                    className="flex-grow overflow-auto focus-visible:outline-none"
+                    className="flex-grow overflow-auto focus-visible:outline-none modern-scrollbar"
                     style={{ background: 'var(--devonz-elements-bg-depth-1)' }}
                   >
                     <LockManager />

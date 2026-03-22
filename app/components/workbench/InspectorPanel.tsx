@@ -361,7 +361,7 @@ export const InspectorPanel = memo(({ inspector }: InspectorPanelProps) => {
 
       {/* Tab content */}
       <div
-        className="overflow-y-auto flex-1 min-h-0 bg-devonz-elements-background-depth-2"
+        className="overflow-y-auto flex-1 min-h-0 bg-devonz-elements-background-depth-2 modern-scrollbar"
         role="tabpanel"
         id={`inspector-tabpanel-${activeTab}`}
         aria-labelledby={`inspector-tab-${activeTab}`}
