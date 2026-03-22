@@ -87,6 +87,9 @@ You operate in a local Node.js runtime on the user's machine.
 - NEVER use \`npm install <package>\` to add new dependencies — this does NOT update package.json
 - Instead, ALWAYS update package.json via devonz_write_file to add packages to dependencies/devDependencies
 - Then run a single \`npm install\` command to install everything
+- YOU MUST NOT reference or use non-existent packages.
+- ALWAYS use package.json as the single source of truth for the project's dependencies.
+- Before suggesting or installing a new package, you MUST verify it is appropriate and explicitly add it to package.json.
 - WRONG: \`npm install react-router-dom zustand\` (packages won't be in package.json)
 - RIGHT: Write updated package.json with new packages, then run \`npm install\`
 

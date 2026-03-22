@@ -17,10 +17,11 @@ let versionDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let pendingVersionData: { messageId: string; title: string } | null = null;
 
 /**
- * Reset version tracking state. Call when starting a new chat session
- * to prevent stale message IDs from accumulating indefinitely.
+ * Reset version tracking and message parser state. Call when starting a new chat session
+ * to prevent stale state from accumulating indefinitely.
  */
-export function resetVersionTracking() {
+export function resetMessageParser() {
+  messageParser.reset();
   versionedMessages.clear();
 
   if (versionDebounceTimer) {
@@ -29,6 +30,13 @@ export function resetVersionTracking() {
   }
 
   pendingVersionData = null;
+}
+
+/**
+ * @deprecated Use resetMessageParser instead.
+ */
+export function resetVersionTracking() {
+  resetMessageParser();
 }
 
 const messageParser = new EnhancedStreamingMessageParser({
@@ -210,37 +218,54 @@ export function useMessageParser() {
   const [parsedMessages, setParsedMessages] = useState<{ [key: number]: string }>({});
 
   const parseMessages = useCallback((messages: Message[], isLoading: boolean) => {
-    let reset = false;
+    let forceReset = false;
 
-    if (import.meta.env.DEV && !isLoading) {
-      reset = true;
-      messageParser.reset();
-      resetVersionTracking();
+    if (!isLoading && messages.length === 0) {
+      forceReset = true;
+      resetMessageParser();
     }
+
+    let resetOccurred = false;
+    const incrementalUpdates: Record<number, string> = {};
 
     for (const [index, message] of messages.entries()) {
       if (message.role === 'assistant' || message.role === 'user') {
         const newParsedContent = messageParser.parse(message.id, extractTextContent(message));
 
-        /*
-         * Check if the enhanced parser internally reset (e.g., when wrapping code blocks in artifact tags).
-         * When this happens, we need to REPLACE the previous content, not append to it,
-         * to avoid duplicate content during streaming.
-         */
-        const parserDidReset = messageParser.didResetOccur();
-        const shouldReplace = reset || parserDidReset;
-
-        // DEBUG: Log reset detection
-        if (parserDidReset) {
-          logger.debug('Parser reset detected for message', message.id, 'shouldReplace:', shouldReplace);
-          logger.debug('New content length:', newParsedContent.length);
+        if (messageParser.didResetOccur()) {
+          resetOccurred = true;
+          break;
         }
 
-        setParsedMessages((prevParsed) => ({
-          ...prevParsed,
-          [index]: !shouldReplace ? (prevParsed[index] || '') + newParsedContent : newParsedContent,
-        }));
+        if (newParsedContent) {
+          incrementalUpdates[index] = newParsedContent;
+        }
       }
+    }
+
+    if (resetOccurred || forceReset) {
+      messageParser.reset();
+
+      const fullParsed: Record<number, string> = {};
+
+      for (const [index, message] of messages.entries()) {
+        if (message.role === 'assistant' || message.role === 'user') {
+          fullParsed[index] = messageParser.parse(message.id, extractTextContent(message));
+        }
+      }
+
+      setParsedMessages(fullParsed);
+    } else if (Object.keys(incrementalUpdates).length > 0) {
+      setParsedMessages((prev) => {
+        const next = { ...prev };
+
+        for (const [indexStr, content] of Object.entries(incrementalUpdates)) {
+          const index = parseInt(indexStr, 10);
+          next[index] = (next[index] || '') + content;
+        }
+
+        return next;
+      });
     }
   }, []);
 
