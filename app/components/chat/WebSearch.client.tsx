@@ -88,6 +88,10 @@ export function WebSearch({ onSearchResult, disabled }: WebSearchProps) {
         body: JSON.stringify({ url: trimmedUrl }),
       });
 
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
       const result = (await response.json()) as WebSearchResponse;
 
       if (result.success && result.data) {

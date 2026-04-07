@@ -337,7 +337,7 @@ export function SelectionDialog({
   );
 
   // Render each item in the virtualized list
-  const ItemRenderer = ({ index, style }: { index: number; style: any }) => {
+  const ItemRenderer = ({ index, style }: { index: number; style: React.CSSProperties }) => {
     const item = items[index];
 
     return (
