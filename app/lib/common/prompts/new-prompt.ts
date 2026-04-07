@@ -171,6 +171,11 @@ export const getFineTunedPrompt = (
     * CSS-first configuration: use \`@theme\` block in CSS instead of config file
     * \`postcss-import\` and \`autoprefixer\` no longer needed (handled automatically)
     * Browser requirements: Safari 16.4+, Chrome 111+, Firefox 128+
+    * POSTCSS PLUGIN — CRITICAL: Tailwind v4 moved the PostCSS plugin to a SEPARATE package.
+      postcss.config.js MUST use \`@tailwindcss/postcss\` (NOT \`tailwindcss\` directly):
+      CORRECT: \`module.exports = { plugins: { "@tailwindcss/postcss": {} } }\`
+      WRONG:   \`module.exports = { plugins: { tailwindcss: {} } }\` ← causes "PostCSS plugin has moved" error
+      ALSO ADD \`@tailwindcss/postcss\` to package.json devDependencies.
   - NEVER mix v3 and v4 syntax — this causes \`Parser.unknownWord\` PostCSS errors
 
   - PREFER shadcn/ui for component library and project structure:
@@ -461,7 +466,9 @@ export const getFineTunedPrompt = (
 
   DEPENDENCY CROSS-CHECK (CRITICAL):
     - After writing ALL source files, BEFORE npm install: scan every .tsx/.ts file for \`import ... from 'package-name'\`.
-    - Verify EACH package exists in package.json deps/devDeps. Common missed: react-router-dom, lucide-react, recharts, zustand, framer-motion, @tanstack/react-query, date-fns, clsx, tailwind-merge.
+    - Verify EACH package exists in package.json deps/devDeps. Common missed: react-router-dom, lucide-react, recharts, zustand, framer-motion, @tanstack/react-query, date-fns, clsx, tailwind-merge, class-variance-authority, @tailwindcss/postcss (for Tailwind v4).
+    - class-variance-authority (cva) is FREQUENTLY imported but NEVER added to package.json — always double-check.
+    - @tailwindcss/postcss is required in devDependencies when using Tailwind v4 PostCSS plugin — missing it causes "Cannot find module" errors at build time.
     - Missing packages = Vite "Failed to resolve import" errors that break the entire app.
     - NEVER rewrite package.json from scratch in follow-up responses — only ADD new packages.
     - Template package.json has critical peer deps (@radix-ui/*, class-variance-authority, clsx, tailwind-merge, etc.). Omitting any causes cascading build failures.
