@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { workbenchStore } from '~/lib/stores/workbench';
 import { versionsStore } from '~/lib/stores/versions';
 import { logStore } from '~/lib/stores/logs';
+import { MODEL_REGEX, PROVIDER_REGEX } from '~/utils/constants';
 import {
   getMessages,
   getNextId,
@@ -470,17 +471,23 @@ export function useChatHistory() {
         takeSnapshot(messages[messages.length - 1].id, workbenchStore.files.get(), resolvedUrlId, chatSummary);
 
         if (!description.get()) {
-          if (firstArtifact?.title) {
-            description.set(firstArtifact.title);
+          const artifactTitle =
+            firstArtifact?.title && firstArtifact.title !== 'Code Changes' ? firstArtifact.title : '';
+
+          if (artifactTitle) {
+            description.set(artifactTitle);
           } else {
             const firstUserMsg = messages.find((m) => m.role === 'user');
 
             if (firstUserMsg) {
-              const text =
+              let text =
                 typeof firstUserMsg.content === 'string'
                   ? firstUserMsg.content
                   : (firstUserMsg.parts?.find((p: Record<string, unknown>) => p.type === 'text') as { text?: string })
                       ?.text ?? '';
+
+              // Strip [Model: ...] and [Provider: ...] metadata prefixes
+              text = text.replace(MODEL_REGEX, '').replace(PROVIDER_REGEX, '').trim();
 
               if (text) {
                 const truncated = text.slice(0, 60).trim();
