@@ -736,31 +736,23 @@ ${fileList.map((f) => `- ${f}`).join('\n')}
   async function probeStreamForErrors(
     streamResult: Awaited<ReturnType<typeof _streamText>>,
   ): Promise<void> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rawStream = streamResult.fullStream as any;
+    // AI SDK v4's `fullStream` is a GETTER that creates a fresh independent
+    // stream copy each time it's accessed (via internal `teeStream('full')`).
+    // We grab one copy to peek at the first event; downstream consumers
+    // (the monitoring IIFE and `mergeIntoDataStream()`) will each get
+    // their own complete copies when they access the getter later.
+    const probeStream = streamResult.fullStream;
+    const iterator = probeStream[Symbol.asyncIterator]();
+    const first = await iterator.next();
 
-    if (typeof rawStream?.tee !== 'function') {
-      return;
+    if (!first.done && first.value?.type === 'error') {
+      await iterator.return?.();
+      throw first.value.error ?? new Error('Stream returned an error event');
     }
 
-    const [probe, consumer] = rawStream.tee();
-    const reader = probe.getReader();
-    const { done, value } = await reader.read();
-
-    reader.cancel();
-
-    if (!done && value?.type === 'error') {
-      consumer.cancel();
-      throw value.error ?? new Error('Stream returned an error event');
-    }
-
-    // Replace fullStream with the untouched branch so downstream
-    // consumers (monitoring IIFE in api.chat.ts) can still iterate.
-    // mergeIntoDataStream() uses separate internal streams — unaffected.
-    Object.defineProperty(streamResult, 'fullStream', {
-      value: consumer,
-      configurable: true,
-    });
+    // Release the probe copy — we don't need it. The getter remains
+    // intact so downstream consumers get fresh, complete streams.
+    await iterator.return?.();
   }
 
   try {
