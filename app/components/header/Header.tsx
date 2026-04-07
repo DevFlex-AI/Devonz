@@ -38,6 +38,11 @@ export function Header() {
               <div className="i-ph:sidebar-simple text-xl text-devonz-elements-textSecondary hover:text-devonz-elements-textPrimary transition-colors" />
             </button>
           )}
+          {!sidebarOpen && (
+            <span className="text-sm font-semibold text-devonz-elements-textPrimary select-none tracking-tight">
+              Devonz
+            </span>
+          )}
         </div>
         {chat.started && (
           <>

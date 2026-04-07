@@ -263,7 +263,7 @@ export function BranchSelector({
                   onClick={handleConfirmSelection}
                   disabled={!selectedBranch}
                   size="sm"
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  className="bg-accent-600 hover:bg-accent-700 text-white"
                 >
                   Clone Branch
                 </Button>

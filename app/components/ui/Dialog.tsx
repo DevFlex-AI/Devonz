@@ -24,7 +24,7 @@ export const DialogButton = memo(({ type, children, onClick, disabled }: DialogB
       className={cn(
         'inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-colors',
         type === 'primary'
-          ? 'bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700'
+          ? 'bg-accent-600 text-white hover:bg-accent-700'
           : type === 'secondary'
             ? 'bg-transparent text-devonz-elements-textSecondary hover:bg-devonz-elements-bg-depth-3 hover:text-devonz-elements-textPrimary'
             : 'bg-transparent text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10',

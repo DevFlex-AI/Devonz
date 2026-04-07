@@ -132,7 +132,7 @@ export function EmptyState({
                 onClick={onAction}
                 variant="default"
                 size={styles.buttonSize}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="bg-accent-600 hover:bg-accent-700 text-white"
               >
                 {actionLabel}
               </Button>

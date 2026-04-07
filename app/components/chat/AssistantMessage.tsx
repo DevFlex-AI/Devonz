@@ -35,7 +35,7 @@ const ThinkingBlock = memo(({ reasoningParts }: { reasoningParts: ReasoningUIPar
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-devonz-elements-textSecondary bg-devonz-elements-background-depth-2 hover:bg-devonz-elements-background-depth-3 transition-colors"
       >
-        <div className="i-ph:brain w-4 h-4 text-purple-400" />
+        <div className="i-ph:brain w-4 h-4 text-devonz-elements-item-contentAccent" />
         <span>Thinking</span>
         <div
           className={`i-ph:caret-right w-3 h-3 ml-auto transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`}

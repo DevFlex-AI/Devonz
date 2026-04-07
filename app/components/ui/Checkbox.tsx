@@ -16,8 +16,8 @@ function Checkbox({ className, ref, ...props }: CheckboxProps) {
         'border-gray-400 dark:border-gray-600',
         'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-offset-1 focus-visible:ring-blue-500 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-950',
         'disabled:cursor-not-allowed disabled:opacity-50',
-        'data-[state=checked]:bg-blue-600 dark:data-[state=checked]:bg-blue-600',
-        'data-[state=checked]:border-blue-600 dark:data-[state=checked]:border-blue-600',
+        'data-[state=checked]:bg-accent-600 dark:data-[state=checked]:bg-accent-600',
+        'data-[state=checked]:border-accent-600 dark:data-[state=checked]:border-accent-600',
         'data-[state=checked]:text-white',
         className,
       )}

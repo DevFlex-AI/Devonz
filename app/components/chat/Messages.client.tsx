@@ -347,7 +347,10 @@ export function Messages(props: MessagesProps) {
         : null}
       {isStreaming && agentState.planPhase !== 'idle' && <AgentPhaseIndicator phase={agentState.planPhase} />}
       {isStreaming && (
-        <div className="text-center w-full  text-devonz-elements-item-contentAccent i-svg-spinners:3-dots-fade text-4xl mt-4"></div>
+        <div className="flex items-center justify-center gap-2 w-full mt-4">
+          <div className="i-svg-spinners:3-dots-fade text-xl text-devonz-elements-item-contentAccent" />
+          <span className="text-sm text-devonz-elements-textSecondary animate-pulse">Generating...</span>
+        </div>
       )}
     </div>
   );
