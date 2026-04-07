@@ -259,6 +259,11 @@ export const getFineTunedPrompt = (
     * ALWAYS customize shadcn/ui components with project design tokens — NEVER leave default styling
     * Follow shadcn/ui project structure: components/ui/ for primitives, components/ for composed components
     * Use the cn() utility from lib/utils.ts for className merging
+    * CRITICAL — CSS VARIABLES REQUIRED: shadcn/ui uses custom Tailwind classes like \`bg-background\`, \`text-foreground\`, \`bg-card\`, \`text-muted-foreground\`, etc. These classes ONLY work if you:
+      1. Define CSS variables in index.css under \`:root\` (e.g., \`--background: 0 0% 100%;\`, \`--foreground: 0 0% 3.9%;\`)
+      2. Extend colors in tailwind.config.js (e.g., \`background: "hsl(var(--background))"\`, \`foreground: "hsl(var(--foreground))"\`)
+      If you use \`@apply bg-background\` or any shadcn custom class WITHOUT these definitions, you will get PostCSS errors.
+      For SIMPLE projects that don't need the full shadcn color system, use STANDARD Tailwind classes instead (e.g., \`bg-gray-950\`, \`text-white\`, \`bg-slate-900\`).
     * If a shadcn/ui component is pre-built in the template (e.g., Button, Card, Input, Label, Badge, Separator, Textarea, Tabs, Dialog, Select), IMPORT it — do NOT recreate it
     * For components NOT in the template, create them manually in components/ui/ following the shadcn/ui pattern (Radix primitive + cn() + Tailwind classes)
     * Do NOT use \`npx shadcn@latest add\` — it requires interactive prompts that may fail. Write the component file directly instead.
