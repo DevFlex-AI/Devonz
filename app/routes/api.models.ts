@@ -14,12 +14,18 @@ const logger = createScopedLogger('Models');
 
 let cachedProviders: ProviderInfo[] | null = null;
 let cachedDefaultProvider: ProviderInfo | null = null;
+let cachedProvidersTimestamp = 0;
 
 /** Server-side model list cache with short TTL to avoid repeated fetches during startup */
 let cachedModelResponse: { models: ModelInfo[]; timestamp: number } | null = null;
 const MODEL_CACHE_TTL_MS = 30_000; // 30 seconds
 
 function getProviderInfo(llmManager: LLMManager) {
+  if (cachedProviders && Date.now() - cachedProvidersTimestamp > MODEL_CACHE_TTL_MS) {
+    cachedProviders = null;
+    cachedDefaultProvider = null;
+  }
+
   if (!cachedProviders) {
     cachedProviders = llmManager.getAllProviders().map((provider) => ({
       name: provider.name,
@@ -28,6 +34,7 @@ function getProviderInfo(llmManager: LLMManager) {
       labelForGetApiKey: provider.labelForGetApiKey,
       icon: provider.icon,
     }));
+    cachedProvidersTimestamp = Date.now();
   }
 
   if (!cachedDefaultProvider) {

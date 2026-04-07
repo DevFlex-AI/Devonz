@@ -30,6 +30,7 @@ export class PreviewsStore {
   #REFRESH_DELAY = 300;
   #storageChannel?: BroadcastChannel;
   #disposePortEvents: Disposer | undefined;
+  #resetTimer: ReturnType<typeof setTimeout> | undefined;
 
   previews = atom<PreviewInfo[]>([]);
 
@@ -390,7 +391,8 @@ export class PreviewsStore {
 
     // Defer re-subscription so old runtime teardown completes before we
     // start listening to port events again — prevents stale port capture
-    setTimeout(() => {
+    clearTimeout(this.#resetTimer);
+    this.#resetTimer = setTimeout(() => {
       this.#broadcastChannel = this.#maybeCreateChannel(PREVIEW_CHANNEL);
       this.#storageChannel = this.#maybeCreateChannel('storage-sync-channel');
       this.#setupChannelHandlers();

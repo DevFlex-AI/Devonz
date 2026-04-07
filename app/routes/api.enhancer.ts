@@ -113,8 +113,20 @@ async function enhancerAction({ context, request }: ActionFunctionArgs) {
   } catch (error: unknown) {
     logger.error(error);
 
-    if (error instanceof Error && error.message?.includes('API key')) {
-      return errorResponse(new AppError(AppErrorType.UNAUTHORIZED, 'Invalid or missing API key'));
+    if (error instanceof Error) {
+      const msg = error.message.toLowerCase();
+      if (
+        msg.includes('api key') ||
+        msg.includes('api_key') ||
+        msg.includes('unauthorized') ||
+        msg.includes('authentication') ||
+        msg.includes('invalid credentials') ||
+        msg.includes('forbidden') ||
+        msg.includes('access denied') ||
+        msg.includes('401')
+      ) {
+        return errorResponse(new AppError(AppErrorType.UNAUTHORIZED, 'Invalid or missing API key'));
+      }
     }
 
     return errorResponse(error instanceof Error ? error : new AppError(AppErrorType.INTERNAL, 'Internal Server Error'));
