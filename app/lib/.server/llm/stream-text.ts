@@ -726,38 +726,46 @@ ${fileList.map((f) => `- ${f}`).join('\n')}
 
   let result: Awaited<ReturnType<typeof _streamText>>;
 
+  /*
+   * AI SDK v4 wraps certain provider-level HTTP errors (e.g. 404 for
+   * deprecated/removed models) into stream error events instead of
+   * rejecting the streamText() promise.  This helper probes the first
+   * event of the stream and throws if it is an error, enabling the
+   * fallback chain to catch deferred provider errors.
+   */
+  async function probeStreamForErrors(
+    streamResult: Awaited<ReturnType<typeof _streamText>>,
+  ): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rawStream = streamResult.fullStream as any;
+
+    if (typeof rawStream?.tee !== 'function') {
+      return;
+    }
+
+    const [probe, consumer] = rawStream.tee();
+    const reader = probe.getReader();
+    const { done, value } = await reader.read();
+
+    reader.cancel();
+
+    if (!done && value?.type === 'error') {
+      consumer.cancel();
+      throw value.error ?? new Error('Stream returned an error event');
+    }
+
+    // Replace fullStream with the untouched branch so downstream
+    // consumers (monitoring IIFE in api.chat.ts) can still iterate.
+    // mergeIntoDataStream() uses separate internal streams — unaffected.
+    Object.defineProperty(streamResult, 'fullStream', {
+      value: consumer,
+      configurable: true,
+    });
+  }
+
   try {
     result = await _streamText(streamParams);
-
-    /*
-     * AI SDK v4 wraps certain provider-level HTTP errors (e.g. 404 for
-     * deprecated/removed models) into stream error events instead of
-     * rejecting the streamText() promise.  Probe the first stream event
-     * so the fallback chain below can handle these errors.
-     */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rawStream = result.fullStream as any;
-
-    if (typeof rawStream?.tee === 'function') {
-      const [probe, consumer] = rawStream.tee();
-      const reader = probe.getReader();
-      const { done, value } = await reader.read();
-
-      reader.cancel();
-
-      if (!done && value?.type === 'error') {
-        consumer.cancel();
-        throw value.error ?? new Error('Stream returned an error event');
-      }
-
-      // Replace fullStream with the untouched branch so downstream
-      // consumers (monitoring IIFE in api.chat.ts) can still iterate.
-      // mergeIntoDataStream() uses separate internal streams — unaffected.
-      Object.defineProperty(result, 'fullStream', {
-        value: consumer,
-        configurable: true,
-      });
-    }
+    await probeStreamForErrors(result);
   } catch (primaryError: unknown) {
     const errorCategory = categorizeLLMError(primaryError);
     const primaryLabel = `${provider.name}/${modelDetails.name}`;
@@ -771,19 +779,76 @@ ${fileList.map((f) => `- ${f}`).join('\n')}
       throw primaryError;
     }
 
-    // Determine the fallback route — use explicit config or auto-select for model_not_found
+    // Determine fallback candidates — use explicit config or auto-select for model_not_found
     let effectiveFallbackRoute = fallbackRoute;
 
     if (!effectiveFallbackRoute && errorCategory === 'model_not_found') {
-      // No explicit fallback configured, but the model was rejected by the provider.
-      // Auto-select the first available model from the same provider that differs from the failed one.
-      const availableModels = LLMManager.getInstance().getStaticModelListFromProvider(provider);
-      const altModel = availableModels.find((m) => m.name !== modelDetails.name);
+      // No explicit fallback configured — build a list of candidate models to try.
+      // Prefer dynamic/cached models (represent actually-available API models)
+      // over static list (which may contain deprecated models).
+      const llm = LLMManager.getInstance();
+      let candidateModels = llm.getModelList().filter(
+        (m) => m.provider === provider.name && m.name !== modelDetails.name,
+      );
 
-      if (altModel) {
-        effectiveFallbackRoute = { provider: provider.name, model: altModel.name };
-        logger.info(`Auto-selected fallback model: ${provider.name}/${altModel.name}`);
+      // If the full model list has no alternatives for this provider, fall back to static list
+      if (candidateModels.length === 0) {
+        candidateModels = llm.getStaticModelListFromProvider(provider).filter(
+          (m) => m.name !== modelDetails.name,
+        );
       }
+
+      // Try each candidate until one succeeds with stream probing
+      for (const candidate of candidateModels) {
+        logger.info(`Trying fallback candidate: ${provider.name}/${candidate.name}`);
+
+        try {
+          const candidateModelDetails = await resolveModel({
+            provider,
+            currentModel: candidate.name,
+            apiKeys,
+            providerSettings,
+            serverEnv,
+            logger,
+          });
+
+          const candidateModelInstance = provider.getModelInstance({
+            model: candidateModelDetails.name,
+            serverEnv,
+            apiKeys,
+            providerSettings,
+          });
+
+          result = await _streamText({
+            ...streamParams,
+            model: candidateModelInstance,
+          });
+          await probeStreamForErrors(result);
+
+          logger.info(
+            `Fallback succeeded: ${provider.name}/${candidateModelDetails.name} ` +
+              `(primary ${primaryLabel} failed with ${errorCategory})`,
+          );
+
+          // Found a working model — break out of candidate loop and skip the
+          // single-route fallback logic below
+          if (props.wsConnection) {
+            pipeStreamToWebSocket(result, props.wsConnection);
+          }
+
+          return result;
+        } catch (candidateError: unknown) {
+          logger.warn(
+            `Fallback candidate ${provider.name}/${candidate.name} failed: ` +
+              `${candidateError instanceof Error ? candidateError.message : String(candidateError)}`,
+          );
+          // Continue to next candidate
+        }
+      }
+
+      // All candidates exhausted — no effectiveFallbackRoute to try below
+      logger.error(`All ${candidateModels.length} fallback candidates for ${provider.name} failed`);
+      throw primaryError;
     }
 
     if (!effectiveFallbackRoute) {
@@ -818,6 +883,7 @@ ${fileList.map((f) => `- ${f}`).join('\n')}
         ...streamParams,
         model: fallbackModelInstance,
       });
+      await probeStreamForErrors(result);
 
       logger.info(
         `Fallback succeeded: ${effectiveFallbackRoute.provider}/${fallbackModelDetails.name} ` +
