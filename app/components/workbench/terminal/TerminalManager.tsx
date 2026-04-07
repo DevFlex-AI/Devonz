@@ -54,12 +54,15 @@ export const TerminalManager = memo(({ terminal, isActive }: TerminalManagerProp
 
   // Auto-focus terminal when it becomes active
   useEffect(() => {
-    if (isActive && terminal) {
-      // Small delay to ensure DOM is ready
-      setTimeout(() => {
-        terminal.focus();
-      }, 100);
+    if (!isActive || !terminal) {
+      return;
     }
+
+    const timeoutId = setTimeout(() => {
+      terminal?.focus();
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
   }, [isActive, terminal]);
 
   return null; // This is a utility component, no UI

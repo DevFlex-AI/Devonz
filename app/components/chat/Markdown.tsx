@@ -1,6 +1,7 @@
 import { memo, useMemo } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import type { BundledLanguage } from 'shiki';
+import { toast } from 'sonner';
 import { createScopedLogger } from '~/utils/logger';
 import { rehypePlugins, remarkPlugins, allowedHTMLElements } from '~/utils/markdown';
 import { Artifact, openArtifactInWorkbench } from './Artifact';
@@ -165,9 +166,23 @@ export const Markdown = memo(
                   } else if (type === 'link' && typeof href === 'string') {
                     try {
                       const url = new URL(href, window.location.origin);
-                      window.open(url.toString(), '_blank', 'noopener,noreferrer');
+
+                      if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+                        logger.warn('Blocked link with disallowed protocol:', url.protocol, href);
+                        toast.warning('Cannot open link: only http and https URLs are allowed');
+
+                        return;
+                      }
+
+                      const newWindow = window.open(url.toString(), '_blank', 'noopener,noreferrer');
+
+                      if (!newWindow) {
+                        logger.warn('window.open returned null (popup likely blocked):', url.toString());
+                        toast.warning('Unable to open link — your browser may have blocked the popup');
+                      }
                     } catch (error) {
                       logger.error('Invalid URL:', href, error);
+                      toast.error('Cannot open link: the URL is invalid');
                     }
                   }
                 }}

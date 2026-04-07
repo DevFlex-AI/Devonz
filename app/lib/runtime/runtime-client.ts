@@ -467,12 +467,15 @@ export class RuntimeClient implements RuntimeProvider {
       eventSource.addEventListener('message', onConnect);
 
       // If the SSE errors out before connecting, don't block forever
-      eventSource.addEventListener('error', () => {
+      const onConnectError = () => {
         if (eventSource.readyState === EventSource.CLOSED) {
           logger.warn(`SSE failed to connect for session ${sessionId}`);
+          eventSource.removeEventListener('error', onConnectError);
           settle();
         }
-      });
+      };
+
+      eventSource.addEventListener('error', onConnectError);
     });
 
     eventSource.onmessage = (event) => {
@@ -512,6 +515,7 @@ export class RuntimeClient implements RuntimeProvider {
           resolved = true;
           resolve(code);
           eventSource.removeEventListener('message', exitListener);
+          eventSource.removeEventListener('error', onExitError);
         }
       };
 
@@ -535,12 +539,14 @@ export class RuntimeClient implements RuntimeProvider {
        * EventSource auto-reconnects on transient errors but enters CLOSED
        * state when the server returns a non-retryable response.
        */
-      eventSource.addEventListener('error', () => {
+      const onExitError = () => {
         if (eventSource.readyState === EventSource.CLOSED) {
           logger.warn(`SSE connection closed for session ${sessionId}, resolving exit promise`);
           doResolve(1);
         }
-      });
+      };
+
+      eventSource.addEventListener('error', onExitError);
     });
 
     return {
