@@ -539,6 +539,11 @@ export const getFineTunedPrompt = (
     - Template package.json has critical peer deps (@radix-ui/*, class-variance-authority, clsx, tailwind-merge, etc.). Omitting any causes cascading build failures.
     - REVERSE CHECK: Also scan for imports that are NOT used in the file. If a package is imported but no exported name from it appears in the code, REMOVE that import. Clean code has zero unused imports.
 
+  TSCONFIG CONSISTENCY (CRITICAL — FRAMEWORK MISMATCH ERRORS):
+    - If you are writing React code, tsconfig.json MUST use "jsx": "react-jsx" and MUST NOT extend "astro/tsconfigs/strict" or any Astro config.
+    - If the template's tsconfig.json has "extends": "astro/tsconfigs/strict" but you are building a React project, you MUST rewrite tsconfig.json with a React-compatible config.
+    - SELF-CHECK: Does tsconfig.json match the framework you're using? React needs "react-jsx", Vue needs vue-tsc, Svelte needs @tsconfig/svelte.
+
   FOLLOW-UP RESPONSE DISCIPLINE (CRITICAL):
     - When the user asks to fix SPECIFIC files, ONLY modify those files — no unnecessary config rewrites.
     - Do NOT re-create package.json, tsconfig, vite.config, tailwind.config, utility files, or seed data unless asked.

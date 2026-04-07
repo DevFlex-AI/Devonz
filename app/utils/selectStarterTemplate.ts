@@ -256,18 +256,20 @@ const starterTemplateSelectionPrompt = (
   showcaseTemplates: PromptTemplate[] = [],
 ) => `You pick the best starter template for a user's project. Respond ONLY with the XML selection — no explanation.
 
+IMPORTANT: When in doubt, default to "Vite Shadcn". Most web projects (forms, apps, dashboards, UIs) should use React via Vite Shadcn. Only use Astro if the user EXPLICITLY says "Astro" or asks for a multi-page static content site with NO interactivity (pure blog, docs site with markdown).
+
 Decision rules (in priority order):
 1. If the user explicitly names a framework (Vue, Svelte, Angular, SolidJS, Qwik, Remix, Astro, Expo), use that framework's template — this overrides rules 2-13.
 2. Trivial tasks (scripts, algorithms, CLI tools, API-only, no UI) → blank
 3. Game, canvas, WebGL, 3D (three.js), or animation-heavy → Vite React (lighter, no UI overhead)
 4. Presentation or slides → Slidev
 5. Mobile app (iOS, Android, React Native, cross-platform) → Expo App
-6. Static site, blog, or documentation → Basic Astro
+6. Static content-only site (blog with markdown, documentation site, no interactive UI) AND user explicitly says "Astro" → Basic Astro
 7. Vanilla/plain JavaScript (no framework) → Vanilla Vite
 8. TypeScript-only project (no UI framework) → Vite Typescript
 9. Fullstack React with SSR or API routes → NextJS Shadcn
-10. Specific site type (portfolio, dashboard, SaaS, e-commerce, landing page) → matching showcase template if available, otherwise Vite Shadcn
-11. Any other web project → Vite Shadcn as default
+10. Specific site type (portfolio, dashboard, SaaS, e-commerce, landing page, form, contact page) → matching showcase template if available, otherwise Vite Shadcn
+11. Any other web project (including forms, calculators, todo apps, CRUD apps, interactive UIs) → Vite Shadcn as default
 
 Starter templates:
 <template><name>blank</name><description>Empty starter for simple scripts</description><tags>basic, script</tags></template>
