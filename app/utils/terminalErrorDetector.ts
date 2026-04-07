@@ -488,6 +488,9 @@ const IGNORE_PATTERNS: RegExp[] = [
   // Ignore successful messages
   /successfully/i,
   /completed/i,
+
+  // Ignore Ctrl+C signals (^C) — these appear when runtime teardown sends SIGINT
+  /^\^?C$/,
 ];
 
 /**
@@ -604,6 +607,11 @@ export class TerminalErrorDetector {
 
         // Skip errors that match an ignore pattern (deprecation warnings, peer dep warnings, etc.)
         if (IGNORE_PATTERNS.some((ip) => ip.test(errorMessage))) {
+          continue;
+        }
+
+        // Skip absurdly short error messages (likely ANSI artifacts or Ctrl+C remnants)
+        if (errorMessage.trim().length < 3) {
           continue;
         }
 
