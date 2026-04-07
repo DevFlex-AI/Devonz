@@ -524,6 +524,13 @@ export class LocalRuntime implements RuntimeProvider {
 
     this.#sessions.clear();
     this.#portListeners = [];
+
+    // Force-kill any orphaned processes still holding detected ports
+    // (killProcessTree alone doesn't catch detached child processes on Windows)
+    for (const port of this.#detectedPorts) {
+      killPortHolder(port);
+    }
+
     this.#detectedPorts.clear();
   }
 

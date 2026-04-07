@@ -22,9 +22,9 @@ const logger = createScopedLogger('AutoFixStore');
  * retry counter resets. These limits cap total attempts across ALL
  * error types within a rolling time window.
  */
-const MAX_TOTAL_SESSION_ATTEMPTS = 10;
-const SESSION_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
-const SESSION_COOLDOWN_MS = 30_000; // 30 seconds after session ends
+const MAX_TOTAL_SESSION_ATTEMPTS = 5;
+const SESSION_WINDOW_MS = 3 * 60 * 1000; // 3 minutes (was 5)
+const SESSION_COOLDOWN_MS = 60_000; // 60 seconds after session ends (was 30)
 
 /** Threshold: if the same error fingerprint occurs this many times, declare a fix loop. */
 const FIX_LOOP_THRESHOLD = 3;

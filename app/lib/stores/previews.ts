@@ -388,12 +388,13 @@ export class PreviewsStore {
     this.#refreshTimeouts.clear();
     this.#lastUpdate.clear();
 
-    // Re-create channels so the store is usable after reset
-    this.#broadcastChannel = this.#maybeCreateChannel(PREVIEW_CHANNEL);
-    this.#storageChannel = this.#maybeCreateChannel('storage-sync-channel');
-    this.#setupChannelHandlers();
-
-    // Re-subscribe to port events from the runtime
-    this.#init();
+    // Defer re-subscription so old runtime teardown completes before we
+    // start listening to port events again — prevents stale port capture
+    setTimeout(() => {
+      this.#broadcastChannel = this.#maybeCreateChannel(PREVIEW_CHANNEL);
+      this.#storageChannel = this.#maybeCreateChannel('storage-sync-channel');
+      this.#setupChannelHandlers();
+      this.#init();
+    }, 150);
   }
 }

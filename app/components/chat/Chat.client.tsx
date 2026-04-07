@@ -240,13 +240,21 @@ export const ChatImpl = memo(
          * Tear down the old runtime so its dev-server / WebContainer stops
          * and the port is freed. This prevents stale previews and multiple
          * simultaneous localhost instances when switching between chats.
+         *
+         * Order matters: hide workbench first, then teardown runtime (kills
+         * processes and frees ports), THEN reset previews. Resetting previews
+         * before teardown causes the preview store to re-subscribe to port
+         * events and pick up stale ports from the dying runtime.
          */
-        workbenchStore.resetPreviews();
         workbenchStore.showWorkbench.set(false);
 
-        teardownCurrentRuntime().catch((error) => {
-          logger.error('Failed to teardown runtime on chat exit:', error);
-        });
+        teardownCurrentRuntime()
+          .catch((error) => {
+            logger.error('Failed to teardown runtime on chat exit:', error);
+          })
+          .finally(() => {
+            workbenchStore.resetPreviews();
+          });
       };
     }, [currentChatId]);
 

@@ -111,13 +111,13 @@ const ERROR_PATTERNS: ErrorPattern[] = [
     },
   },
 
-  // HMR failed to reload with underlying error
+  // HMR failed to reload with underlying error (self-recovers on next save — don't auto-fix)
   {
     pattern: /\[hmr\]\s*(?:Failed to reload|failed).*?\/(.+?)(?:\.|$)/i,
     type: 'build',
     severity: 'error',
     title: 'HMR Reload Failed',
-    autoFixable: true,
+    autoFixable: false,
     extractDetails: (match, fullOutput) => {
       // Check if there's a SyntaxError or other real error nearby
       const errorIdx = fullOutput.indexOf(match[0]);
@@ -661,7 +661,7 @@ export class TerminalErrorDetector {
           details,
           timestamp: Date.now(),
           hash: errorHash,
-          autoFixable: pattern.autoFixable ?? true, // Default to true for unlabeled patterns
+          autoFixable: pattern.autoFixable ?? false, // Default to false — only explicitly marked patterns trigger auto-fix
         };
 
         newErrors.push(error);
@@ -701,7 +701,11 @@ export class TerminalErrorDetector {
 
     // Check if we should trigger auto-fix instead of showing alert
     const autoFixState = autoFixStore.get();
-    const canAutoFix = primaryError.autoFixable && shouldContinueFix() && globalAutoFixCallback;
+    const canAutoFix =
+      primaryError.autoFixable &&
+      primaryError.severity === 'error' && // Only auto-fix real errors, not warnings
+      shouldContinueFix() &&
+      globalAutoFixCallback;
 
     if (canAutoFix) {
       // Trigger auto-fix instead of showing alert
