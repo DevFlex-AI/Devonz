@@ -45,15 +45,8 @@ export async function resolveModel(options: ResolveModelOptions): Promise<ModelI
     modelDetails = modelsList.find((m) => m.name === currentModel);
 
     if (!modelDetails) {
-      // Provider-specific error messages for common mistakes
-      if (provider.name === 'Google' && currentModel.includes('2.5')) {
-        throw new Error(
-          `Model "${currentModel}" not found. Gemini 2.5 Pro doesn't exist. Available Gemini models include: gemini-1.5-pro, gemini-2.0-flash, gemini-1.5-flash. Please select a valid model.`,
-        );
-      }
-
       logger.warn(
-        `MODEL [${currentModel}] not found in provider [${provider.name}]. Falling back to first model. ${modelsList[0].name}`,
+        `MODEL [${currentModel}] not found in provider [${provider.name}]. Falling back to first model: ${modelsList[0].name}`,
       );
       modelDetails = modelsList[0];
     }

@@ -1,18 +1,17 @@
 import { type ActionFunctionArgs } from 'react-router';
 import { streamText } from '~/lib/.server/llm/stream-text';
-import type { IProviderSetting, ProviderInfo } from '~/types/model';
+import type { ProviderInfo } from '~/types/model';
 import { generateText } from 'ai';
 import { z } from 'zod';
 import { providerSchema } from '~/lib/api/schemas';
 import { PROVIDER_LIST } from '~/utils/constants';
 import {
-  MAX_TOKENS,
   isReasoningModel,
   getThinkingProviderOptions,
   getCompletionTokenLimit,
 } from '~/lib/.server/llm/constants';
-import { LLMManager } from '~/lib/modules/llm/manager';
 import type { ModelInfo } from '~/lib/modules/llm/types';
+import { resolveModel } from '~/lib/.server/llm/resolve-model';
 import { getApiKeysFromCookie, getProviderSettingsFromCookie } from '~/lib/api/cookies';
 import { createScopedLogger } from '~/utils/logger';
 import { withSecurity } from '~/lib/security';
@@ -38,15 +37,6 @@ const llmCallRequestSchema = z.object({
   provider: providerSchema,
   streamOutput: z.boolean().optional().default(false),
 });
-
-async function getModelList(options: {
-  apiKeys?: Record<string, string>;
-  providerSettings?: Record<string, IProviderSetting>;
-  serverEnv?: Env;
-}) {
-  const llmManager = LLMManager.getInstance(import.meta.env);
-  return llmManager.updateModelList(options);
-}
 
 // getCompletionTokenLimit is imported from ~/lib/.server/llm/constants
 
@@ -157,26 +147,28 @@ async function llmCallAction({ context, request }: ActionFunctionArgs) {
     }
   } else {
     try {
-      const models = await getModelList({ apiKeys, providerSettings, serverEnv: context.cloudflare?.env });
-      const modelDetails = models.find((m: ModelInfo) => m.name === model);
+      const providerInfo = PROVIDER_LIST.find((p) => p.name === provider.name);
 
-      if (!modelDetails) {
-        throw new Error('Model not found');
+      if (!providerInfo) {
+        throw new Error('Provider not found');
       }
 
-      const dynamicMaxTokens = modelDetails ? getCompletionTokenLimit(modelDetails) : Math.min(MAX_TOKENS, 16384);
+      const modelDetails = await resolveModel({
+        provider: providerInfo,
+        currentModel: model,
+        apiKeys,
+        providerSettings,
+        serverEnv: context.cloudflare?.env,
+        logger,
+      });
+
+      const dynamicMaxTokens = getCompletionTokenLimit(modelDetails);
 
       // Validate token limits before making API request
       const validation = validateTokenLimits(modelDetails, dynamicMaxTokens);
 
       if (!validation.valid) {
         return errorResponse(new AppError(AppErrorType.VALIDATION, validation.error ?? 'Token limit exceeded'));
-      }
-
-      const providerInfo = PROVIDER_LIST.find((p) => p.name === provider.name);
-
-      if (!providerInfo) {
-        throw new Error('Provider not found');
       }
 
       logger.info(`Generating response Provider: ${provider.name}, Model: ${modelDetails.name}`);
