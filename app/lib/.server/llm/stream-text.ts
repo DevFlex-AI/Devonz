@@ -728,6 +728,36 @@ ${fileList.map((f) => `- ${f}`).join('\n')}
 
   try {
     result = await _streamText(streamParams);
+
+    /*
+     * AI SDK v4 wraps certain provider-level HTTP errors (e.g. 404 for
+     * deprecated/removed models) into stream error events instead of
+     * rejecting the streamText() promise.  Probe the first stream event
+     * so the fallback chain below can handle these errors.
+     */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rawStream = result.fullStream as any;
+
+    if (typeof rawStream?.tee === 'function') {
+      const [probe, consumer] = rawStream.tee();
+      const reader = probe.getReader();
+      const { done, value } = await reader.read();
+
+      reader.cancel();
+
+      if (!done && value?.type === 'error') {
+        consumer.cancel();
+        throw value.error ?? new Error('Stream returned an error event');
+      }
+
+      // Replace fullStream with the untouched branch so downstream
+      // consumers (monitoring IIFE in api.chat.ts) can still iterate.
+      // mergeIntoDataStream() uses separate internal streams — unaffected.
+      Object.defineProperty(result, 'fullStream', {
+        value: consumer,
+        configurable: true,
+      });
+    }
   } catch (primaryError: unknown) {
     const errorCategory = categorizeLLMError(primaryError);
     const primaryLabel = `${provider.name}/${modelDetails.name}`;
