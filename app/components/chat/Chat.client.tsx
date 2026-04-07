@@ -42,8 +42,6 @@ import {
 } from '~/utils/terminalErrorDetector';
 import {
   resetPreviewErrorHandler,
-  registerPreviewAutoFixCallback,
-  unregisterPreviewAutoFixCallback,
 } from '~/utils/previewErrorHandler';
 import { createAutoFixHandler, handleFixSuccess, isAutoFixActive } from '~/lib/services/autoFixService';
 import { hasExceededMaxRetries, recordFixAttempt, resetAutoFix } from '~/lib/stores/autofix';
@@ -941,15 +939,13 @@ export const ChatImpl = memo(
         });
       };
 
-      // Register the callback for both terminal and preview errors
+      // Register the callback for terminal errors only (preview errors show alert to user)
       const handler = createAutoFixHandler(autoFixSendMessage);
       registerAutoFixCallback(handler);
-      registerPreviewAutoFixCallback(handler);
 
       // Cleanup on unmount
       return () => {
         unregisterAutoFixCallback();
-        unregisterPreviewAutoFixCallback();
 
         // Reset auto-fix state so it doesn't stay stuck if component unmounts mid-fix
         if (isAutoFixActive()) {

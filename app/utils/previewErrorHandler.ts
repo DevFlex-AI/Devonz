@@ -22,35 +22,8 @@ import {
   classifyErrorSeverity,
   SEVERITY_CONFIG,
 } from '~/utils/errors/errorConfig';
-import {
-  autoFixStore,
-  startAutoFix,
-  shouldContinueFix,
-  hasExceededMaxRetries,
-  type ErrorSource,
-} from '~/lib/stores/autofix';
-import type { AutoFixCallback } from './terminalErrorDetector';
 
 const logger = createScopedLogger('PreviewErrorHandler');
-
-// Global auto-fix callback - shared with terminal error detector
-let globalPreviewAutoFixCallback: AutoFixCallback | null = null;
-
-/**
- * Register a callback to handle auto-fix requests from preview errors
- */
-export function registerPreviewAutoFixCallback(callback: AutoFixCallback): void {
-  globalPreviewAutoFixCallback = callback;
-  logger.debug('Preview auto-fix callback registered');
-}
-
-/**
- * Unregister the preview auto-fix callback
- */
-export function unregisterPreviewAutoFixCallback(): void {
-  globalPreviewAutoFixCallback = null;
-  logger.debug('Preview auto-fix callback unregistered');
-}
 
 /**
  * Simple hash function for error deduplication
@@ -195,43 +168,11 @@ class PreviewErrorHandler {
     const content = contentParts.join('\n');
 
     /*
-     * Check if we should trigger auto-fix instead of showing alert
-     * Auto-fixable errors are typically code issues (SyntaxError, TypeError, ReferenceError, etc.)
+     * Preview errors are NOT auto-fixed — always show the alert and let the user
+     * decide whether to ask Devonz for help. Auto-fix from previews was too aggressive,
+     * triggering on transient build errors (e.g., missing files while AI is still writing)
+     * and wasting tokens on unnecessary LLM calls.
      */
-    const isAutoFixable = this.#isAutoFixableError(errorMessage);
-    const canAutoFix = isAutoFixable && shouldContinueFix() && globalPreviewAutoFixCallback;
-
-    if (canAutoFix) {
-      // Trigger auto-fix instead of showing alert
-      const started = startAutoFix({
-        source: 'preview' as ErrorSource,
-        type: severity,
-        message: description,
-        content,
-      });
-
-      if (started && globalPreviewAutoFixCallback) {
-        logger.info(`Auto-fix triggered for preview error: ${title}`);
-
-        // Add delay before triggering fix
-        const autoFixState = autoFixStore.get();
-        setTimeout(() => {
-          globalPreviewAutoFixCallback?.({
-            source: 'preview' as ErrorSource,
-            type: severity,
-            message: description,
-            content,
-          });
-        }, autoFixState.settings.delayBetweenAttempts);
-
-        return; // Don't show alert, auto-fix is handling it
-      }
-    }
-
-    // If auto-fix didn't trigger, show max retries warning if applicable
-    if (isAutoFixable && hasExceededMaxRetries()) {
-      logger.warn('Max auto-fix retries exceeded for preview error, showing alert to user');
-    }
 
     /* Lazy import to avoid circular dependency */
     const { workbenchStore } = await import('~/lib/stores/workbench');
@@ -248,36 +189,6 @@ class PreviewErrorHandler {
   }
 
   /**
-   * Check if an error is auto-fixable (code issues that the LLM can fix)
-   */
-  #isAutoFixableError(errorMessage: string): boolean {
-    const autoFixablePatterns = [
-      /SyntaxError/i,
-      /TypeError/i,
-      /ReferenceError/i,
-      /RangeError/i,
-      /Cannot find module/i,
-      /Module not found/i,
-      /does not provide an export/i,
-      /Failed to resolve import/i,
-      /Unexpected token/i,
-      /is not defined/i,
-      /is not a function/i,
-      /Cannot read propert/i,
-      /Element type is invalid/i,
-      /Objects are not valid as a React child/i,
-      /Maximum update depth exceeded/i,
-      /Invalid hook call/i,
-      /must be used within/i,
-      /Invariant Violation/i,
-      /ChunkLoadError/i,
-      /Failed to fetch dynamically imported module/i,
-      /Cannot use import statement outside a module/i,
-    ];
-
-    return autoFixablePatterns.some((pattern) => pattern.test(errorMessage));
-  }
-
   /**
    * Reset the handler state
    * Call this when user clicks "Ask Devonz" so the same error can be caught again
