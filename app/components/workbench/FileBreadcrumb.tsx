@@ -48,9 +48,12 @@ export const FileBreadcrumb = memo<FileBreadcrumbProps>(({ files, pathSegments =
   };
 
   useEffect(() => {
+    if (activeIndex === null) {
+      return;
+    }
+
     const handleOutsideClick = (event: MouseEvent) => {
       if (
-        activeIndex !== null &&
         !contextMenuRef.current?.contains(event.target as Node) &&
         !segmentRefs.current.some((ref) => ref?.contains(event.target as Node))
       ) {

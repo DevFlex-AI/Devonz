@@ -84,6 +84,7 @@ interface DesignControlProps {
 export const DesignControl = memo(({ property, value, onChange, isModified = false }: DesignControlProps) => {
   const [isScrubbing, setIsScrubbing] = useState(false);
   const scrubRef = useRef<{ startX: number; startVal: number } | null>(null);
+  const dragListenersRef = useRef<{ move: (ev: MouseEvent) => void; up: () => void } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const enumOptions = ENUM_OPTIONS[property];
@@ -116,11 +117,13 @@ export const DesignControl = memo(({ property, value, onChange, isModified = fal
       const handleUp = () => {
         setIsScrubbing(false);
         scrubRef.current = null;
+        dragListenersRef.current = null;
         document.removeEventListener('mousemove', handleMove);
         document.removeEventListener('mouseup', handleUp);
         document.body.style.cursor = '';
       };
 
+      dragListenersRef.current = { move: handleMove, up: handleUp };
       document.addEventListener('mousemove', handleMove);
       document.addEventListener('mouseup', handleUp);
       document.body.style.cursor = 'ew-resize';
@@ -153,6 +156,12 @@ export const DesignControl = memo(({ property, value, onChange, isModified = fal
 
   useEffect(() => {
     return () => {
+      if (dragListenersRef.current) {
+        document.removeEventListener('mousemove', dragListenersRef.current.move);
+        document.removeEventListener('mouseup', dragListenersRef.current.up);
+        document.body.style.cursor = '';
+      }
+
       scrubRef.current = null;
     };
   }, []);

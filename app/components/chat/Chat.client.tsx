@@ -167,6 +167,7 @@ export const ChatImpl = memo(
     const prevChatIdRef = useRef<string | undefined>(undefined);
     const planModeRef = useRef(planMode);
     const sendingRef = useRef(false);
+    const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     planModeRef.current = planMode;
 
     const [selectedElement, setSelectedElement] = useState<ElementInfo | null>(null);
@@ -237,6 +238,11 @@ export const ChatImpl = memo(
          * events and pick up stale ports from the dying runtime.
          */
         workbenchStore.showWorkbench.set(false);
+
+        if (pollTimeoutRef.current !== null) {
+          clearTimeout(pollTimeoutRef.current);
+          pollTimeoutRef.current = null;
+        }
 
         teardownCurrentRuntime()
           .catch((error) => {
@@ -399,16 +405,24 @@ export const ChatImpl = memo(
             }
 
             // Schedule next poll
-            setTimeout(pollForErrors, POLL_INTERVAL_MS);
+            pollTimeoutRef.current = setTimeout(pollForErrors, POLL_INTERVAL_MS);
           };
 
           // Start first poll after initial delay for file writes to flush
-          setTimeout(pollForErrors, POLL_INTERVAL_MS);
+          pollTimeoutRef.current = setTimeout(pollForErrors, POLL_INTERVAL_MS);
         }
       },
       initialMessages,
       initialInput: Cookies.get(PROMPT_COOKIE_KEY) || '',
     });
+
+    // Clear error-polling timeout when loading stops
+    useEffect(() => {
+      if (!isLoading && pollTimeoutRef.current !== null) {
+        clearTimeout(pollTimeoutRef.current);
+        pollTimeoutRef.current = null;
+      }
+    }, [isLoading]);
 
     // Watch for pending messages from inspector panel
     useEffect(() => {

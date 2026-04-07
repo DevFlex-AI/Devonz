@@ -113,12 +113,12 @@ const messageParser = new EnhancedStreamingMessageParser({
                     versionsStore.updateCommitSha(version.id, sha);
                   }
                 })
-                .catch(() => {
-                  // Git commit is best-effort -- don't block the UI
+                .catch((error) => {
+                  logger.warn('Git commit failed (best-effort, non-blocking):', error);
                 });
             })
-            .catch(() => {
-              // Dynamic import failed -- non-critical, ignore
+            .catch((error) => {
+              logger.warn('Failed to load git-client module:', error);
             });
         }
 

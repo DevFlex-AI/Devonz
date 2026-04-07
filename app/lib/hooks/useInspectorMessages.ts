@@ -77,8 +77,8 @@ export function useInspectorMessages(iframeRef: React.RefObject<HTMLIFrameElemen
         const element = event.elementInfo;
 
         // Copy the display text to clipboard (best-effort)
-        navigator.clipboard.writeText(element.displayText).catch(() => {
-          /* Clipboard write failed — non-critical */
+        navigator.clipboard.writeText(element.displayText).catch((error) => {
+          console.warn('Clipboard write failed:', error);
         });
 
         selectElement(element);

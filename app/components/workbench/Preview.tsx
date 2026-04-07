@@ -102,9 +102,19 @@ const WINDOW_SIZES: WindowSize[] = [
 
 // Global screenshot request callbacks map
 const screenshotCallbacks = new Map<string, (dataUrl: string, isPlaceholder: boolean) => void>();
+const screenshotTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
 
 // Global iframe reference for screenshot requests
 let globalIframeRef: HTMLIFrameElement | null = null;
+
+function clearAllScreenshotCallbacks() {
+  for (const timeoutId of screenshotTimeouts.values()) {
+    clearTimeout(timeoutId);
+  }
+
+  screenshotTimeouts.clear();
+  screenshotCallbacks.clear();
+}
 
 /**
  * Request a screenshot from the preview iframe.
@@ -139,12 +149,16 @@ export function requestPreviewScreenshot(
     // Set up timeout fallback
     const timeoutId = setTimeout(() => {
       screenshotCallbacks.delete(requestId);
+      screenshotTimeouts.delete(requestId);
       resolve(generateFallbackScreenshot(width, height));
     }, timeout);
+
+    screenshotTimeouts.set(requestId, timeoutId);
 
     // Set up callback
     screenshotCallbacks.set(requestId, (dataUrl, _isPlaceholder) => {
       clearTimeout(timeoutId);
+      screenshotTimeouts.delete(requestId);
       resolve(dataUrl);
     });
 
@@ -459,6 +473,14 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
       globalIframeRef = null;
     };
   });
+
+  // Clean up all pending screenshot callbacks on unmount
+  useEffect(() => {
+    return () => {
+      globalIframeRef = null;
+      clearAllScreenshotCallbacks();
+    };
+  }, []);
 
   const toggleDeviceMode = () => {
     setIsDeviceModeOn((prev) => !prev);

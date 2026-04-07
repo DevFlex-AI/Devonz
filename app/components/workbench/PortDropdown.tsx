@@ -27,23 +27,22 @@ export const PortDropdown = memo(
       .sort((a, b) => a.port - b.port);
 
     // close dropdown if user clicks outside
+    const isDropdownOpenRef = useRef(isDropdownOpen);
+    isDropdownOpenRef.current = isDropdownOpen;
+
     useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
-        if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        if (isDropdownOpenRef.current && dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
           setIsDropdownOpen(false);
         }
       };
 
-      if (isDropdownOpen) {
-        window.addEventListener('mousedown', handleClickOutside);
-      } else {
-        window.removeEventListener('mousedown', handleClickOutside);
-      }
+      window.addEventListener('mousedown', handleClickOutside);
 
       return () => {
         window.removeEventListener('mousedown', handleClickOutside);
       };
-    }, [isDropdownOpen]);
+    }, []);
 
     return (
       <div className="relative z-port-dropdown" ref={dropdownRef}>
