@@ -5,7 +5,7 @@ import { Links, Meta, Outlet, Scripts, ScrollRestoration, useRouteError, isRoute
 import tailwindReset from '@unocss/reset/tailwind-compat.css?url';
 import { themeStore } from './lib/stores/theme';
 import { stripIndents } from './utils/stripIndent';
-import { lazy, Suspense, useEffect } from 'react';
+import { lazy, Suspense, useEffect, type ReactNode } from 'react';
 import { useSentryUser } from './hooks/useSentryUser';
 import { Toaster } from 'sonner';
 
@@ -17,7 +17,7 @@ import 'virtual:uno.css';
 
 const DndWrapper = lazy(async () => {
   if (typeof window === 'undefined') {
-    return { default: ({ children }: { children: React.ReactNode }) => <>{children}</> };
+    return { default: ({ children }: { children: ReactNode }) => <>{children}</> };
   }
 
   return import('./components/DndWrapper.client');

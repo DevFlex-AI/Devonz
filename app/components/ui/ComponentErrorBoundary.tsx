@@ -1,8 +1,8 @@
-import React from 'react';
+import { Component, type ReactNode, type ErrorInfo } from 'react';
 
 interface Props {
-  children: React.ReactNode;
-  fallback?: React.ReactNode;
+  children: ReactNode;
+  fallback?: ReactNode;
   name?: string;
 }
 
@@ -11,14 +11,14 @@ interface State {
   error: Error | null;
 }
 
-export class ComponentErrorBoundary extends React.Component<Props, State> {
+export class ComponentErrorBoundary extends Component<Props, State> {
   state: State = { hasError: false, error: null };
 
   static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, info: React.ErrorInfo) {
+  componentDidCatch(error: Error, info: ErrorInfo) {
     console.error(`[${this.props.name ?? 'Component'}] Error boundary caught:`, error, info);
   }
 
