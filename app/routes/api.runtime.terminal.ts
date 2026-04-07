@@ -120,7 +120,16 @@ async function terminalLoader({ request }: LoaderFunctionArgs) {
                 // Send initial heartbeat
                 controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'connected', sessionId })}\n\n`));
               } catch (err) {
-                logger.error('Error setting up terminal stream:', err);
+                logger.error('Terminal stream error:', err);
+
+                const errorMsg = err instanceof Error ? err.message : String(err);
+
+                try {
+                  controller.enqueue(encoder.encode(`event: error\ndata: ${JSON.stringify({ error: errorMsg })}\n\n`));
+                  controller.close();
+                } catch {
+                  // Controller already closed
+                }
               }
             })();
           }

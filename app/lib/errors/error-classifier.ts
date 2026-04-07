@@ -49,7 +49,7 @@ const CLASSIFICATION_RULES: ClassificationRule[] = [
   {
     pattern: /timeout|ETIMEDOUT|ESOCKETTIMEDOUT|request timed out/i,
     category: 'network',
-    severity: 'warning',
+    severity: 'error',
     recoverable: true,
     suggestion: 'The request took too long. Check your connection or try again.',
   },
@@ -207,6 +207,50 @@ const CLASSIFICATION_RULES: ClassificationRule[] = [
     severity: 'error',
     recoverable: true,
     suggestion: 'A value is outside its allowed range. Check array indices and numeric operations.',
+  },
+
+  // --- System / process errors ---
+  {
+    pattern: /EADDRINUSE/i,
+    category: 'build',
+    severity: 'error',
+    recoverable: true,
+    suggestion: 'Port is already in use. Close the other process or use a different port.',
+  },
+  {
+    pattern: /EACCES/i,
+    category: 'build',
+    severity: 'error',
+    recoverable: true,
+    suggestion: 'Permission denied. Check file permissions.',
+  },
+  {
+    pattern: /ENOMEM|heap out of memory|JavaScript heap/i,
+    category: 'runtime',
+    severity: 'fatal',
+    recoverable: false,
+    suggestion: 'Out of memory. Try closing other applications.',
+  },
+  {
+    pattern: /SIGKILL|SIGTERM/i,
+    category: 'runtime',
+    severity: 'error',
+    recoverable: true,
+    suggestion: 'Process was terminated. Try running again.',
+  },
+  {
+    pattern: /EPERM|operation not permitted/i,
+    category: 'build',
+    severity: 'error',
+    recoverable: true,
+    suggestion: 'Operation not permitted. Check file permissions.',
+  },
+  {
+    pattern: /Circular dependency/i,
+    category: 'build',
+    severity: 'warning',
+    recoverable: true,
+    suggestion: 'Circular dependency detected. This may cause issues.',
   },
 ];
 

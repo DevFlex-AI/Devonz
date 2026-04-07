@@ -49,7 +49,7 @@ function hashError(error: string): string {
  */
 class PreviewErrorHandler {
   #lastAlertTime: number = 0;
-  #recentErrorHashes: Set<string> = new Set();
+  #recentErrorHashes: Map<string, number> = new Map();
   #isEnabled: boolean = true;
   #cleanupIntervalId: ReturnType<typeof setInterval> | null = null;
 
@@ -145,7 +145,7 @@ class PreviewErrorHandler {
     }
 
     // Mark error as seen
-    this.#recentErrorHashes.add(errorHash);
+    this.#recentErrorHashes.set(errorHash, now);
     this.#lastAlertTime = now;
 
     // Get user-friendly message if available
@@ -219,9 +219,12 @@ class PreviewErrorHandler {
   }
 
   #cleanupOldHashes(): void {
-    // Simple cleanup - just clear if too many
-    if (this.#recentErrorHashes.size > 50) {
-      this.#recentErrorHashes.clear();
+    const now = Date.now();
+
+    for (const [hash, timestamp] of this.#recentErrorHashes) {
+      if (now - timestamp > 60_000) {
+        this.#recentErrorHashes.delete(hash);
+      }
     }
   }
 }
@@ -242,11 +245,12 @@ export function getPreviewErrorHandler(): PreviewErrorHandler {
 
 /**
  * Reset the preview error handler state
- * Call this when user requests a fix so the same error can be detected again
+ * Call this when user requests a fix so the same error can be detected again.
+ * Only resets internal state — does NOT destroy the singleton so errors
+ * continue to be caught after the user clicks "Ask Devonz".
  */
 export function resetPreviewErrorHandler(): void {
   if (handlerInstance) {
-    handlerInstance.destroy();
-    handlerInstance = null;
+    handlerInstance.reset();
   }
 }

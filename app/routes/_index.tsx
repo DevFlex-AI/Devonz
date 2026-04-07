@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { type MetaFunction, useRouteError, isRouteErrorResponse } from 'react-router';
 import { BaseChat } from '~/components/chat/BaseChat';
+import { ComponentErrorBoundary } from '~/components/ui/ComponentErrorBoundary';
 import { Header } from '~/components/header/Header';
 import { clientLazy } from '~/utils/react';
 
@@ -100,9 +101,11 @@ export default function Index() {
         <UpdateBanner />
       </Suspense>
       <Header />
-      <Suspense fallback={<BaseChat />}>
-        <Chat />
-      </Suspense>
+      <ComponentErrorBoundary name="Chat">
+        <Suspense fallback={<BaseChat />}>
+          <Chat />
+        </Suspense>
+      </ComponentErrorBoundary>
     </main>
   );
 }

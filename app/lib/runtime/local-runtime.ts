@@ -527,7 +527,13 @@ export class LocalRuntime implements RuntimeProvider {
     }
 
     // Wait for all processes to exit so ports are released
-    await Promise.all(exitPromises);
+    const exitResults = await Promise.allSettled(exitPromises);
+
+    for (const result of exitResults) {
+      if (result.status === 'rejected') {
+        logger.warn('Session cleanup promise rejected:', result.reason);
+      }
+    }
 
     /*
      * On Windows, `taskkill /T /F` may not kill detached child processes
@@ -587,7 +593,13 @@ export class LocalRuntime implements RuntimeProvider {
     }
 
     // Wait for all processes to fully exit so ports are released
-    await Promise.all(exitPromises);
+    const exitResults = await Promise.allSettled(exitPromises);
+
+    for (const result of exitResults) {
+      if (result.status === 'rejected') {
+        logger.warn('Teardown cleanup promise rejected:', result.reason);
+      }
+    }
 
     this.#sessions.clear();
     this.#portListeners = [];

@@ -248,6 +248,16 @@ function App() {
   const theme = useStore(themeStore);
 
   useEffect(() => {
+    const onUnhandledRejection = (event: PromiseRejectionEvent) => {
+      console.error('Unhandled promise rejection:', event.reason);
+    };
+
+    window.addEventListener('unhandledrejection', onUnhandledRejection);
+
+    return () => window.removeEventListener('unhandledrejection', onUnhandledRejection);
+  }, []);
+
+  useEffect(() => {
     logStore.logSystem('Application initialized', {
       theme,
       platform: typeof navigator !== 'undefined' ? navigator.platform : 'unknown',

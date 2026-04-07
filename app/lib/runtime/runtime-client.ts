@@ -312,6 +312,12 @@ class ClientFileSystem implements RuntimeFileSystem {
       };
 
       eventSource.onerror = () => {
+        if (eventSource!.readyState === EventSource.CLOSED) {
+          logger.warn('File watch SSE connection permanently closed');
+
+          return;
+        }
+
         logger.warn('File watch SSE connection error, will attempt reconnect');
       };
     } catch (err) {
@@ -499,7 +505,14 @@ export class RuntimeClient implements RuntimeProvider {
     };
 
     eventSource.onerror = () => {
-      logger.warn(`Terminal SSE error for session ${sessionId}`);
+      if (eventSource.readyState === EventSource.CLOSED) {
+        logger.warn(`Terminal SSE connection permanently closed for session ${sessionId}`);
+        this.#activeSessions.delete(sessionId);
+
+        return;
+      }
+
+      logger.warn(`Terminal SSE error for session ${sessionId}, will retry...`);
     };
 
     this.#activeSessions.set(sessionId, { eventSource, dataListeners });
@@ -714,7 +727,14 @@ export class RuntimeClient implements RuntimeProvider {
     };
 
     this.#portEventSource.onerror = () => {
-      logger.warn('Port event SSE connection error');
+      if (this.#portEventSource?.readyState === EventSource.CLOSED) {
+        logger.warn('Port event SSE connection permanently closed');
+        this.#portEventSource = null;
+
+        return;
+      }
+
+      logger.warn('Port event SSE connection error, will retry...');
     };
   }
 }

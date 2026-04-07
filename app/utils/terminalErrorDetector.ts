@@ -517,7 +517,7 @@ export class TerminalErrorDetector {
   #buffer: string = '';
   #detectedErrors: DetectedError[] = [];
   #lastAlertTime: number = 0;
-  #recentErrorHashes: Set<string> = new Set();
+  #recentErrorHashes: Map<string, number> = new Map();
   #debounceTimer: NodeJS.Timeout | null = null;
   #isEnabled: boolean = true;
   #cleanupIntervalId: ReturnType<typeof setInterval> | null = null;
@@ -636,7 +636,7 @@ export class TerminalErrorDetector {
         };
 
         newErrors.push(error);
-        this.#recentErrorHashes.add(errorHash);
+        this.#recentErrorHashes.set(errorHash, Date.now());
       }
     }
 
@@ -769,9 +769,12 @@ export class TerminalErrorDetector {
   }
 
   #cleanupOldHashes(): void {
-    // Simple cleanup - just clear if too many
-    if (this.#recentErrorHashes.size > 100) {
-      this.#recentErrorHashes.clear();
+    const now = Date.now();
+
+    for (const [hash, timestamp] of this.#recentErrorHashes) {
+      if (now - timestamp > 60_000) {
+        this.#recentErrorHashes.delete(hash);
+      }
     }
   }
 
