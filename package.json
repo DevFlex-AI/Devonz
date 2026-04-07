@@ -141,7 +141,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@blitz/eslint-plugin": "0.1.0",
+    "@blitz/eslint-plugin": "0.1.4",
     "@commitlint/cli": "^20.5.0",
     "@commitlint/config-conventional": "^20.5.0",
     "@iconify-json/ph": "^1.2.1",
