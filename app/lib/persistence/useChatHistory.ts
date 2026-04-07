@@ -388,7 +388,6 @@ export function useChatHistory() {
       isStoringRef.current = true;
 
       try {
-        const { firstArtifact } = workbenchStore;
         messages = messages.filter((m) => !m.annotations?.includes('no-store'));
 
         if (initialMessages.length === 0 && !chatId.get()) {
@@ -470,11 +469,17 @@ export function useChatHistory() {
 
         takeSnapshot(messages[messages.length - 1].id, workbenchStore.files.get(), resolvedUrlId, chatSummary);
 
-        const artifactTitle =
-          firstArtifact?.title && firstArtifact.title !== 'Code Changes' ? firstArtifact.title : '';
+        // Search ALL artifacts for one with a meaningful title.
+        // The structured mode creates a "Code Changes" placeholder BEFORE the XML parser
+        // extracts the real title from <devonzArtifact title="...">, so firstArtifact
+        // always has "Code Changes". We iterate through all artifacts to find the real one.
+        const allArtifactEntries = Object.values(workbenchStore.artifacts.get() ?? {});
+        const meaningfulArtifact = allArtifactEntries.find(
+          (a) => a?.title && a.title !== 'Code Changes',
+        );
+        const artifactTitle = meaningfulArtifact?.title ?? '';
 
         if (artifactTitle) {
-          // Always prefer artifact title — overwrites user-message fallback once available
           description.set(artifactTitle);
         } else if (!description.get()) {
           const firstUserMsg = messages.find((m) => m.role === 'user');
