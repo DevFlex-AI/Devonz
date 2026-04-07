@@ -214,7 +214,16 @@ export const getFineTunedPrompt = (
 </technology_preferences>
 
 <3d_and_motion_preferences>
-  For 3D elements, use React Three Fiber (@react-three/fiber) and ecosystem.
+  DECISION TABLE — framer-motion (FM) vs React Three Fiber (R3F):
+  Use FM for: animating buttons/cards/modals (DOM elements), page/route transitions (AnimatePresence),
+    hover/tap micro-interactions (whileHover, whileTap), drag-and-drop UI (spring physics, snap),
+    scroll-linked animations (useScroll + useTransform), layout shifts/reordering (layout prop),
+    accessible animations (stays in DOM — semantic HTML, ARIA, focus all work).
+  Use R3F for: 3D product viewers/configurators (camera, lighting, mesh), immersive WebGL experiences,
+    particle systems/shaders (GLSL on GPU), objects with X/Y/Z coordinates (3D space),
+    physics simulations/games (@react-three/rapier), loading .glb/.gltf models (useGLTF from drei).
+  Use BOTH for: 3D canvas + animated UI around it (R3F owns canvas, FM animates DOM around it),
+    spring physics inside 3D scene (framer-motion-3d brings FM springs into R3F).
 
   VERSION RULES (match R3F to React — mixing causes runtime errors):
   - React 19: three@^0.183.0, @react-three/fiber@^9.5.0, @react-three/drei@^10.7.7
@@ -226,7 +235,7 @@ export const getFineTunedPrompt = (
   zustand+immer, react-hook-form+@hookform/resolvers+zod, @tanstack/react-query+devtools.
 
   Best Practices: Declarative JSX (<Canvas>, <mesh>), wrap in ErrorBoundary+Suspense, lazy load.
-  For 2D/CSS animations: use Framer Motion or CSS transitions instead.
+  For 2D/CSS animations: use Framer Motion or CSS transitions instead of R3F.
   Note: 3D may show errors in preview due to CDN restrictions — works after deployment.
 </3d_and_motion_preferences>
 
