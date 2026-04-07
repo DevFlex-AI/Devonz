@@ -230,7 +230,7 @@ export interface FallbackEvent {
   fallbackModel: string;
 
   /** Error category from the primary failure */
-  errorCategory: 'rate_limit' | 'auth_failure' | 'timeout' | 'provider_error' | 'unknown';
+  errorCategory: 'rate_limit' | 'auth_failure' | 'timeout' | 'provider_error' | 'model_not_found' | 'unknown';
 
   /** Whether the fallback attempt succeeded */
   fallbackSucceeded: boolean;

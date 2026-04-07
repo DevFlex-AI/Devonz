@@ -17,6 +17,7 @@ import { createFilesContext, extractPropertiesFromMessage } from './utils';
 import { discussPrompt } from '~/lib/common/prompts/discuss-prompt';
 import type { DesignScheme } from '~/types/design-scheme';
 import { resolveModel } from './resolve-model';
+import { LLMManager } from '~/lib/modules/llm/manager';
 import {
   resolveModelForOperation,
   parseFallbackModel,
@@ -70,6 +71,16 @@ function categorizeLLMError(error: unknown): FallbackEvent['errorCategory'] {
     message.includes('network')
   ) {
     return 'timeout';
+  }
+
+  if (
+    status === 404 ||
+    (message.includes('not found') && (message.includes('model') || message.includes('models/'))) ||
+    message.includes('model_not_found') ||
+    message.includes('does not exist') ||
+    message.includes('deprecated')
+  ) {
+    return 'model_not_found';
   }
 
   if (status !== undefined && status >= 500) {
@@ -726,18 +737,39 @@ ${fileList.map((f) => `- ${f}`).join('\n')}
       primaryError instanceof Error ? primaryError.message : String(primaryError),
     );
 
-    if (!fallbackRoute || !shouldAttemptFallback(errorCategory)) {
-      // No fallback configured or error doesn't warrant retry — surface original error
+    if (!shouldAttemptFallback(errorCategory)) {
       throw primaryError;
     }
 
-    logger.info(`Attempting fallback: ${primaryLabel} → ${fallbackRoute.provider}/${fallbackRoute.model}`);
+    // Determine the fallback route — use explicit config or auto-select for model_not_found
+    let effectiveFallbackRoute = fallbackRoute;
+
+    if (!effectiveFallbackRoute && errorCategory === 'model_not_found') {
+      // No explicit fallback configured, but the model was rejected by the provider.
+      // Auto-select the first available model from the same provider that differs from the failed one.
+      const availableModels = LLMManager.getInstance().getStaticModelListFromProvider(provider);
+      const altModel = availableModels.find((m) => m.name !== modelDetails.name);
+
+      if (altModel) {
+        effectiveFallbackRoute = { provider: provider.name, model: altModel.name };
+        logger.info(`Auto-selected fallback model: ${provider.name}/${altModel.name}`);
+      }
+    }
+
+    if (!effectiveFallbackRoute) {
+      throw primaryError;
+    }
+
+    logger.info(
+      `Attempting fallback: ${primaryLabel} → ${effectiveFallbackRoute.provider}/${effectiveFallbackRoute.model}`,
+    );
 
     // Resolve fallback provider + model through the same resolution path as primary
-    const fallbackProvider = PROVIDER_LIST.find((p) => p.name === fallbackRoute.provider) || DEFAULT_PROVIDER;
+    const fallbackProvider =
+      PROVIDER_LIST.find((p) => p.name === effectiveFallbackRoute!.provider) || DEFAULT_PROVIDER;
     const fallbackModelDetails = await resolveModel({
       provider: fallbackProvider,
-      currentModel: fallbackRoute.model,
+      currentModel: effectiveFallbackRoute!.model,
       apiKeys,
       providerSettings,
       serverEnv,
@@ -758,12 +790,12 @@ ${fileList.map((f) => `- ${f}`).join('\n')}
       });
 
       logger.info(
-        `Fallback succeeded: ${fallbackRoute.provider}/${fallbackModelDetails.name} ` +
+        `Fallback succeeded: ${effectiveFallbackRoute.provider}/${fallbackModelDetails.name} ` +
           `(primary ${primaryLabel} failed with ${errorCategory})`,
       );
     } catch (fallbackError: unknown) {
       logger.error(
-        `Fallback model ${fallbackRoute.provider}/${fallbackModelDetails.name} also failed:`,
+        `Fallback model ${effectiveFallbackRoute.provider}/${fallbackModelDetails.name} also failed:`,
         fallbackError instanceof Error ? fallbackError.message : String(fallbackError),
       );
 
