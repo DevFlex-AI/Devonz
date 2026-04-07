@@ -115,6 +115,7 @@ async function enhancerAction({ context, request }: ActionFunctionArgs) {
 
     if (error instanceof Error) {
       const msg = error.message.toLowerCase();
+
       if (
         msg.includes('api key') ||
         msg.includes('api_key') ||

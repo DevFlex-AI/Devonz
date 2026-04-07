@@ -1,29 +1,21 @@
 name: Help / Question
-description: Ask for help using Devonz or understanding a feature
+description: Stuck on something? Ask away — no question is too basic!
 title: "[Question]: "
 labels: ["question", "help"]
 body:
   - type: markdown
     attributes:
       value: |
-        ## Help / Question
+        Need help? Just ask! Only the first field is required.
 
-        Need help with Devonz? Ask here. No question is too basic.
-
-        **Before asking**, please check:
-        - [README](https://github.com/zebbern/Devonz) — Setup and configuration
-        - [Documentation](https://github.com/zebbern/Devonz/tree/main/docs) — Guides and reference
-        - [Existing issues](https://github.com/zebbern/Devonz/issues?q=is%3Aissue+label%3Aquestion) — Someone may have asked already
+        You might also find answers in the [README](https://github.com/zebbern/Devonz), [docs](https://github.com/zebbern/Devonz/tree/main/docs), or [existing issues](https://github.com/zebbern/Devonz/issues?q=is%3Aissue+label%3Aquestion).
 
   - type: textarea
     id: question
     attributes:
       label: What do you need help with?
-      description: |
-        Describe what you're trying to do and where you're stuck.
-      placeholder: |
-        I'm trying to connect my Ollama instance to Devonz, but the models
-        don't appear in the provider dropdown even though Ollama is running locally...
+      description: Describe what you're trying to do and where you're stuck.
+      placeholder: "e.g. I can't get Ollama models to show up in the provider dropdown"
     validations:
       required: true
 
@@ -31,59 +23,26 @@ body:
     id: tried
     attributes:
       label: What have you tried?
-      description: |
-        What steps have you taken or documentation have you read?
-      placeholder: |
-        I've tried:
-        1. Setting OLLAMA_BASE_URL=http://127.0.0.1:11434 in .env.local
-        2. Restarting the dev server with pnpm dev
-        3. Checking Settings → Providers tab
+      description: Any steps you've taken so far? (helps us avoid suggesting things you already did)
+      placeholder: "e.g. Set OLLAMA_BASE_URL in .env.local and restarted the dev server"
     validations:
-      required: true
+      required: false
 
   - type: textarea
     id: error-output
     attributes:
-      label: Relevant output (if any)
-      description: |
-        If you're getting errors, paste the output here (browser console, terminal, etc).
+      label: Error output
+      description: Any errors from the console or terminal?
       render: shell
     validations:
       required: false
 
-  - type: dropdown
-    id: topic
-    attributes:
-      label: Topic area
-      description: What area is your question about?
-      options:
-        - "Installation and setup"
-        - "Docker deployment"
-        - "AI provider configuration"
-        - "Code generation / chat"
-        - "Code editor"
-        - "Terminal usage"
-        - "Live preview"
-        - "Deployment (GitHub, GitLab, Netlify, Vercel)"
-        - "MCP tool integration"
-        - "Template gallery"
-        - "Git integration"
-        - "Environment variables / .env"
-        - "Performance / resource usage"
-        - "Other"
-    validations:
-      required: true
-
   - type: textarea
     id: diagnostics
     attributes:
-      label: Your environment
-      description: |
-        Please provide your setup details:
-        - Node.js version (`node --version`)
-        - pnpm version (`pnpm --version`)
-        - OS and browser
-        - Running via Docker or from source
+      label: Environment info
+      description: OS, browser, Node version — whatever you know.
       render: shell
+      placeholder: "e.g. macOS, Chrome, Node 20, running from source"
     validations:
       required: false

@@ -389,8 +389,10 @@ export class PreviewsStore {
     this.#refreshTimeouts.clear();
     this.#lastUpdate.clear();
 
-    // Defer re-subscription so old runtime teardown completes before we
-    // start listening to port events again — prevents stale port capture
+    /*
+     * Defer re-subscription so old runtime teardown completes before we
+     * start listening to port events again — prevents stale port capture
+     */
     clearTimeout(this.#resetTimer);
     this.#resetTimer = setTimeout(() => {
       this.#broadcastChannel = this.#maybeCreateChannel(PREVIEW_CHANNEL);

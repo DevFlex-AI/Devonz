@@ -469,14 +469,14 @@ export function useChatHistory() {
 
         takeSnapshot(messages[messages.length - 1].id, workbenchStore.files.get(), resolvedUrlId, chatSummary);
 
-        // Search ALL artifacts for one with a meaningful title.
-        // The structured mode creates a "Code Changes" placeholder BEFORE the XML parser
-        // extracts the real title from <devonzArtifact title="...">, so firstArtifact
-        // always has "Code Changes". We iterate through all artifacts to find the real one.
+        /*
+         * Search ALL artifacts for one with a meaningful title.
+         * The structured mode creates a "Code Changes" placeholder BEFORE the XML parser
+         * extracts the real title from <devonzArtifact title="...">, so firstArtifact
+         * always has "Code Changes". We iterate through all artifacts to find the real one.
+         */
         const allArtifactEntries = Object.values(workbenchStore.artifacts.get() ?? {});
-        const meaningfulArtifact = allArtifactEntries.find(
-          (a) => a?.title && a.title !== 'Code Changes',
-        );
+        const meaningfulArtifact = allArtifactEntries.find((a) => a?.title && a.title !== 'Code Changes');
         const artifactTitle = meaningfulArtifact?.title ?? '';
 
         if (artifactTitle) {
@@ -488,8 +488,8 @@ export function useChatHistory() {
             let text =
               typeof firstUserMsg.content === 'string'
                 ? firstUserMsg.content
-                : (firstUserMsg.parts?.find((p: Record<string, unknown>) => p.type === 'text') as { text?: string })
-                    ?.text ?? '';
+                : ((firstUserMsg.parts?.find((p: Record<string, unknown>) => p.type === 'text') as { text?: string })
+                    ?.text ?? '');
 
             // Strip [Model: ...] and [Provider: ...] metadata prefixes
             text = text.replace(MODEL_REGEX, '').replace(PROVIDER_REGEX, '').trim();

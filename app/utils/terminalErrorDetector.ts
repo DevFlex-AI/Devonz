@@ -12,8 +12,6 @@ import { showErrorToast } from '~/lib/errors/error-toast';
 
 const logger = createScopedLogger('TerminalErrorDetector');
 
-
-
 /**
  * Error pattern definition
  */

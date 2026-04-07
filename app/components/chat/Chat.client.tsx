@@ -890,7 +890,6 @@ export const ChatImpl = memo(
       return () => debouncedCachePrompt.cancel();
     }, [debouncedCachePrompt]);
 
-
     /**
      * Watch the plan action atom for approval/rejection/modify events.
      * When the user clicks Approve in the Plan component, this fires

@@ -83,9 +83,7 @@ function stripRawArtifactTags(text: string): string {
     return text;
   }
 
-  let result = text
-    .replace(COMPLETE_ARTIFACT_BLOCK_RE, '')
-    .replace(UNCLOSED_ARTIFACT_RE, '');
+  let result = text.replace(COMPLETE_ARTIFACT_BLOCK_RE, '').replace(UNCLOSED_ARTIFACT_RE, '');
 
   result = result.replace(LEFTOVER_TAG_RE, '');
 

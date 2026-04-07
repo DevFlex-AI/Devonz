@@ -113,8 +113,10 @@ if (!import.meta.env.SSR) {
  * @param projectId - Unique identifier for the project (chat ID or similar)
  */
 export async function bootRuntime(projectId: string): Promise<RuntimeProvider> {
-  // Wait for any in-progress teardown to complete before booting so the old
-  // runtime's ports are fully released and don't cause port escalation.
+  /*
+   * Wait for any in-progress teardown to complete before booting so the old
+   * runtime's ports are fully released and don't cause port escalation.
+   */
   if (teardownInProgress) {
     logger.debug('Waiting for in-progress teardown before booting...');
     await teardownInProgress;
@@ -186,10 +188,14 @@ export function getRuntimeInstance(): RuntimeClient | null {
  * no new project is booted immediately after.
  */
 export async function teardownCurrentRuntime(): Promise<void> {
-  // If teardown is already in progress, return the existing promise to
-  // deduplicate concurrent calls (cleanup useEffect + bootRuntime race).
+  /*
+   * If teardown is already in progress, return the existing promise to
+   * deduplicate concurrent calls (cleanup useEffect + bootRuntime race).
+   */
   if (teardownInProgress) {
-    return teardownInProgress;
+    await teardownInProgress;
+
+    return;
   }
 
   if (!runtimeInstance) {

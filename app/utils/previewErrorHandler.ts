@@ -203,7 +203,9 @@ class PreviewErrorHandler {
       source: 'preview',
     });
 
-    logger.info(`Preview error detected [${severity}/${classified.category}]: ${title} - ${errorMessage.slice(0, 100)}`);
+    logger.info(
+      `Preview error detected [${severity}/${classified.category}]: ${title} - ${errorMessage.slice(0, 100)}`,
+    );
   }
 
   /**
