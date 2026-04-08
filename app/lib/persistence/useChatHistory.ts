@@ -474,9 +474,15 @@ export function useChatHistory() {
          * The structured mode creates a "Code Changes" placeholder BEFORE the XML parser
          * extracts the real title from <devonzArtifact title="...">, so firstArtifact
          * always has "Code Changes". We iterate through all artifacts to find the real one.
+         * Also filter out file-name-style titles (e.g., "index.css", "App.tsx") since
+         * those are not descriptive project names.
          */
+        const FILE_NAME_RE = /^[\w.-]+\.\w{1,5}$/;
+        const SKIP_TITLES = new Set(['Code Changes', 'code changes']);
         const allArtifactEntries = Object.values(workbenchStore.artifacts.get() ?? {});
-        const meaningfulArtifact = allArtifactEntries.find((a) => a?.title && a.title !== 'Code Changes');
+        const meaningfulArtifact = allArtifactEntries.find(
+          (a) => a?.title && !SKIP_TITLES.has(a.title) && !FILE_NAME_RE.test(a.title),
+        );
         const artifactTitle = meaningfulArtifact?.title ?? '';
 
         if (artifactTitle) {
