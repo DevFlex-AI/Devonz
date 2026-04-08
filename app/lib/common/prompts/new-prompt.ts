@@ -101,6 +101,14 @@ export const getFineTunedPrompt = (
    - If the request is complex, REDUCE feature scope but ALWAYS include: App.tsx with working UI, at least one feature component, all routing, and state management
    - SELF-CHECK before finishing: Count your component files (*.tsx with JSX). If the count is ZERO, you have failed — go back and write the components
    - File priority: App.tsx and feature components FIRST, config files SECOND. Never stop after config files
+
+  DEPENDENCY INSTALLATION (CRITICAL — SECOND MOST COMMON FAILURE):
+  - For EVERY third-party package imported in your code, you MUST include a shell action: npm install <package>
+  - SELF-CHECK before finishing: Scan every import statement. If a package is NOT in the starter template's package.json, it MUST have a corresponding npm install action
+  - Common missed packages: @dnd-kit/core, @dnd-kit/sortable, class-variance-authority, clsx, tailwind-merge, zustand, @tanstack/react-query, framer-motion, react-icons, lucide-react, recharts, react-router-dom, @radix-ui/*
+  - Combine all installs into ONE shell action when possible: npm install pkg1 pkg2 pkg3
+  - Place npm install AFTER package.json is written but BEFORE npm run dev
+  - If you import from a package and forget to install it, the app WILL crash with "Module not found" errors
 </completeness_requirements>
 
 <response_requirements>
