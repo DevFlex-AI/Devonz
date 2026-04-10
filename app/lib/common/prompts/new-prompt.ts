@@ -217,7 +217,23 @@ export const getFineTunedPrompt = (
     * Use shadcn/ui components (Button, Card, Dialog, Tabs, Input, etc.) for consistent, accessible UI
     * ALWAYS customize shadcn/ui components with project design tokens — NEVER leave default styling
     * Follow shadcn/ui project structure: components/ui/ for primitives, components/ for composed components
-    * Use the cn() utility from lib/utils.ts for className merging
+    * CRITICAL — cn() UTILITY FILE (MUST CREATE):
+      When using shadcn/ui, you MUST create \`src/lib/utils.ts\` with this EXACT content:
+      \`\`\`
+      import { type ClassValue, clsx } from "clsx";
+      import { twMerge } from "tailwind-merge";
+      export function cn(...inputs: ClassValue[]) { return twMerge(clsx(inputs)); }
+      \`\`\`
+      Also add "clsx" and "tailwind-merge" to package.json dependencies.
+      This file MUST be emitted BEFORE any component that imports cn().
+    * CRITICAL — PATH ALIAS CONFIGURATION (MUST SET UP):
+      When using \`@/\` import paths (standard for shadcn/ui), you MUST configure BOTH:
+      1. tsconfig.json — add: \`"compilerOptions": { "baseUrl": ".", "paths": { "@/*": ["./src/*"] } }\`
+      2. vite.config.ts — add: \`import path from "path"\` and \`resolve: { alias: { "@": path.resolve(__dirname, "./src") } }\`
+      If you skip either, Vite will throw "Failed to resolve import" errors.
+      ALTERNATIVE: Use RELATIVE imports instead of \`@/\` paths. Relative imports work without alias config:
+      \`import { cn } from "../../lib/utils"\` instead of \`import { cn } from "@/lib/utils"\`.
+      Pick ONE approach per project and use it consistently. Relative imports are simpler and recommended for small projects.
     * CRITICAL — CSS VARIABLES REQUIRED: shadcn/ui uses custom Tailwind classes like \`bg-background\`, \`text-foreground\`, \`bg-card\`, \`text-muted-foreground\`, etc. These classes ONLY work if you:
       1. Define CSS variables in index.css under \`:root\` (e.g., \`--background: 0 0% 100%;\`, \`--foreground: 0 0% 3.9%;\`)
       2. Extend colors in tailwind.config.js (e.g., \`background: "hsl(var(--background))"\`, \`foreground: "hsl(var(--foreground))"\`)
