@@ -13,24 +13,25 @@ export default class GoogleProvider extends BaseProvider {
   };
 
   staticModels: ModelInfo[] = [
-    /*
-     * Essential fallback models - only the most reliable/stable ones
-     * Gemini 1.5 Pro: 2M context, 8K output limit (verified from API docs)
-     */
     {
-      name: 'gemini-1.5-pro',
-      label: 'Gemini 1.5 Pro',
+      name: 'gemini-2.5-pro-preview-05-06',
+      label: 'Gemini 2.5 Pro',
       provider: 'Google',
-      maxTokenAllowed: 2000000,
-      maxCompletionTokens: 8192,
+      maxTokenAllowed: 1048576,
+      maxCompletionTokens: 65536,
     },
-
-    // Gemini 1.5 Flash: 1M context, 8K output limit, fast and cost-effective
     {
-      name: 'gemini-1.5-flash',
-      label: 'Gemini 1.5 Flash',
+      name: 'gemini-2.5-flash-preview-04-17',
+      label: 'Gemini 2.5 Flash',
       provider: 'Google',
-      maxTokenAllowed: 1000000,
+      maxTokenAllowed: 1048576,
+      maxCompletionTokens: 65536,
+    },
+    {
+      name: 'gemini-2.0-flash',
+      label: 'Gemini 2.0 Flash',
+      provider: 'Google',
+      maxTokenAllowed: 1048576,
       maxCompletionTokens: 8192,
     },
   ];
