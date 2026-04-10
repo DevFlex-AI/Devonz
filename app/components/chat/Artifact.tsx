@@ -3,8 +3,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { computed, type MapStore } from 'nanostores';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  bundledLanguages,
   getSharedHighlighter,
+  safeCodeToHtml,
   type BundledLanguage,
   type BundledTheme,
   type HighlighterGeneric,
@@ -210,6 +210,8 @@ interface CodeBlockProps {
 }
 
 function CodeBlock({ className, code, language = 'shell', maxLines }: CodeBlockProps) {
+  const [html, setHtml] = useState<string>('');
+
   const displayCode = useMemo(() => {
     if (maxLines && code) {
       const lines = code.split('\n');
@@ -222,8 +224,27 @@ function CodeBlock({ className, code, language = 'shell', maxLines }: CodeBlockP
     return code;
   }, [code, maxLines]);
 
-  // Ensure language is supported, fallback to shell
-  const lang = language in bundledLanguages ? language : 'shell';
+  useEffect(() => {
+    let cancelled = false;
+
+    safeCodeToHtml(displayCode || '', language).then((result) => {
+      if (!cancelled) {
+        setHtml(result);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [displayCode, language]);
+
+  if (!html) {
+    return (
+      <div className={cn('text-xs overflow-x-auto', className)}>
+        <pre><code>{displayCode}</code></pre>
+      </div>
+    );
+  }
 
   /*
    * SECURITY NOTE: dangerouslySetInnerHTML usage is safe here because:
@@ -236,12 +257,7 @@ function CodeBlock({ className, code, language = 'shell', maxLines }: CodeBlockP
   return (
     <div
       className={cn('text-xs overflow-x-auto', className)}
-      dangerouslySetInnerHTML={{
-        __html: codeHighlighter.codeToHtml(displayCode || '', {
-          lang: lang as BundledLanguage,
-          theme: 'dark-plus',
-        }),
-      }}
+      dangerouslySetInnerHTML={{ __html: html }}
     />
   );
 }

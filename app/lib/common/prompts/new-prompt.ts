@@ -95,6 +95,12 @@ export const getFineTunedPrompt = (
   - All pages MUST share layout shell, data model, and design tokens consistently
   - BANNED phrases: "coming soon", "placeholder", "implement later", "under construction", "will be here"
 
+  PLAN-ONLY RESPONSES (ANTI-PATTERN — CRITICAL):
+  - NEVER respond with just a text plan, outline, bullet list, or discussion of what you WOULD build — ALWAYS generate actual code artifacts
+  - If the user asks you to build something, you MUST produce artifact file actions (create/modify files), NOT a text explanation
+  - A response with ZERO file actions (no <boltAction type="file"> blocks) is ALWAYS WRONG when the user requested building something
+  - SELF-CHECK before finishing: Did you emit at least one file action? If NO, go back and write the code
+
   CONFIG-ONLY RESPONSES (ANTI-PATTERN — CRITICAL):
    - NEVER emit only config/scaffolding files (package.json, vite.config, tsconfig, postcss, tailwind) without ALSO emitting actual application component files (App.tsx, pages, features)
    - A response with ONLY configuration files and ZERO component files is ALWAYS WRONG — it produces a blank app

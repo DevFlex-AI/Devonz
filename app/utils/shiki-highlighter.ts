@@ -20,11 +20,9 @@ import {
 /* ------------------------------------------------------------------ */
 
 /**
- * Artifact.tsx uses a small explicit list; ToolInvocations.tsx only needs
- * `json`. CodeBlock.tsx relies on the full `bundledLanguages` map at
- * runtime via `codeToHtml`.  We pre-load the Artifact subset eagerly and
- * let CodeBlock load additional languages on demand through `codeToHtml`
- * (which handles auto-loading).
+ * Languages loaded eagerly when the highlighter is created.
+ * Covers the most commonly generated languages to avoid the cost of
+ * dynamic loading (and the "Language not found" errors it can cause).
  */
 const PRELOADED_LANGS: BundledLanguage[] = [
   'shell',
@@ -37,6 +35,32 @@ const PRELOADED_LANGS: BundledLanguage[] = [
   'json',
   'markdown',
   'python',
+  'xml',
+  'yaml',
+  'sql',
+  'graphql',
+  'rust',
+  'go',
+  'java',
+  'c',
+  'cpp',
+  'csharp',
+  'php',
+  'ruby',
+  'swift',
+  'kotlin',
+  'dockerfile',
+  'toml',
+  'ini',
+  'diff',
+  'bash',
+  'powershell',
+  'lua',
+  'svelte',
+  'vue',
+  'scss',
+  'less',
+  'astro',
 ];
 
 const THEMES: BundledTheme[] = ['light-plus', 'dark-plus'];
@@ -78,6 +102,47 @@ export async function getSharedHighlighter(): Promise<HighlighterGeneric<Bundled
   }
 
   return _initPromise;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Safe highlighting with dynamic language loading fallback          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Highlight code with automatic language loading and plaintext fallback.
+ * If the requested language isn't loaded, attempts to load it dynamically.
+ * Falls back to plaintext on any error to prevent unhandled rejections.
+ */
+export async function safeCodeToHtml(
+  code: string,
+  lang: string,
+  theme: BundledTheme = 'dark-plus',
+): Promise<string> {
+  const highlighter = await getSharedHighlighter();
+
+  let effectiveLang: BundledLanguage | SpecialLanguage = isSpecialLang(lang as SpecialLanguage)
+    ? (lang as SpecialLanguage)
+    : lang in bundledLanguages
+      ? (lang as BundledLanguage)
+      : 'plaintext';
+
+  if (!isSpecialLang(effectiveLang as string) && effectiveLang !== 'plaintext') {
+    const loaded = highlighter.getLoadedLanguages();
+
+    if (!loaded.includes(effectiveLang as string)) {
+      try {
+        await highlighter.loadLanguage(effectiveLang as BundledLanguage);
+      } catch {
+        effectiveLang = 'plaintext';
+      }
+    }
+  }
+
+  try {
+    return highlighter.codeToHtml(code, { lang: effectiveLang, theme });
+  } catch {
+    return highlighter.codeToHtml(code, { lang: 'plaintext', theme });
+  }
 }
 
 /* ------------------------------------------------------------------ */

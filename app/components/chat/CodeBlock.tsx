@@ -1,11 +1,5 @@
 import { memo, useEffect, useState } from 'react';
-import {
-  bundledLanguages,
-  isSpecialLang,
-  getSharedHighlighter,
-  type BundledLanguage,
-  type SpecialLanguage,
-} from '~/utils/shiki-highlighter';
+import { safeCodeToHtml, type BundledLanguage, type SpecialLanguage } from '~/utils/shiki-highlighter';
 import { cn } from '~/utils/cn';
 import { createScopedLogger } from '~/utils/logger';
 
@@ -43,21 +37,19 @@ export const CodeBlock = memo(
     };
 
     useEffect(() => {
-      let effectiveLanguage = language;
+      logger.trace(`Language = ${language}`);
 
-      if (language && !isSpecialLang(language) && !(language in bundledLanguages)) {
-        logger.warn(`Unsupported language '${language}', falling back to plaintext`);
-        effectiveLanguage = 'plaintext';
-      }
+      let cancelled = false;
 
-      logger.trace(`Language = ${effectiveLanguage}`);
+      safeCodeToHtml(code, language ?? 'plaintext', theme).then((result) => {
+        if (!cancelled) {
+          setHTML(result);
+        }
+      });
 
-      const processCode = async () => {
-        const highlighter = await getSharedHighlighter();
-        setHTML(highlighter.codeToHtml(code, { lang: effectiveLanguage, theme }));
+      return () => {
+        cancelled = true;
       };
-
-      processCode();
     }, [code, language, theme]);
 
     return (
