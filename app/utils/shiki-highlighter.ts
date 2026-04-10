@@ -21,8 +21,9 @@ import {
 
 /**
  * Languages loaded eagerly when the highlighter is created.
- * Covers the most commonly generated languages to avoid the cost of
- * dynamic loading (and the "Language not found" errors it can cause).
+ * Keep this list SMALL (~10) to avoid Vite dependency optimisation
+ * thrashing — additional languages are loaded on demand inside
+ * `safeCodeToHtml()` via `highlighter.loadLanguage()`.
  */
 const PRELOADED_LANGS: BundledLanguage[] = [
   'shell',
@@ -35,32 +36,6 @@ const PRELOADED_LANGS: BundledLanguage[] = [
   'json',
   'markdown',
   'python',
-  'xml',
-  'yaml',
-  'sql',
-  'graphql',
-  'rust',
-  'go',
-  'java',
-  'c',
-  'cpp',
-  'csharp',
-  'php',
-  'ruby',
-  'swift',
-  'kotlin',
-  'dockerfile',
-  'toml',
-  'ini',
-  'diff',
-  'bash',
-  'powershell',
-  'lua',
-  'svelte',
-  'vue',
-  'scss',
-  'less',
-  'astro',
 ];
 
 const THEMES: BundledTheme[] = ['light-plus', 'dark-plus'];
