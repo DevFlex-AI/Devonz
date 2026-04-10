@@ -68,8 +68,11 @@ interface AssistantMessageProps {
 }
 
 const COMPLETE_ARTIFACT_BLOCK_RE = /<devonzArtifact[^>]*>[\s\S]*?<\/devonzArtifact>/g;
+const COMPLETE_ACTION_BLOCK_RE = /<devonzAction[^>]*>[\s\S]*?<\/devonzAction>/g;
 const UNCLOSED_ARTIFACT_RE = /<devonzArtifact[^>]*>[\s\S]*$/;
+const UNCLOSED_ACTION_RE = /<devonzAction[^>]*>[\s\S]*$/;
 const LEFTOVER_TAG_RE = /<\/?devonz(?:Artifact|Action)[^>]*>/g;
+const PARTIAL_DEVONZ_TAG_RE = /<devonz[A-Za-z]*(?:\s[^>]*)?$/;
 
 /** Matches complete or partial `</assistant>` / `<assistant>` XML tags that LLMs sometimes emit */
 const ASSISTANT_TAG_RE = /<\/?assist(?:ant)?>|<\/assis(?:t(?:a(?:n(?:t)?)?)?)?\s*$/g;
@@ -78,22 +81,36 @@ const ASSISTANT_TAG_RE = /<\/?assist(?:ant)?>|<\/assis(?:t(?:a(?:n(?:t)?)?)?)?\s
 const CHAIN_OF_THOUGHT_BLOCK_RE = /<chain_of_thought>[\s\S]*?<\/chain_of_thought>/g;
 const CHAIN_OF_THOUGHT_TAG_RE = /<\/?chain_of_thought\s*\/?>/g;
 
+/** Matches complete fenced code blocks that leaked outside artifact wrappers */
+const LEAKED_CODE_BLOCK_RE = /```[\w]*\n[\s\S]*?```/g;
+
+/** Matches unclosed fenced code blocks still being streamed */
+const UNCLOSED_CODE_BLOCK_RE = /```[\w]*\n[\s\S]*$/;
+
 /**
- * Strip raw artifact/action markup that leaks through the parser during
- * streaming.  Complete blocks are removed first, then everything after an
- * unclosed `<devonzArtifact` tag (whose closing tag hasn't arrived yet) is
- * chopped — this prevents code content from appearing in the chat bubble
- * while the AI is still generating.
+ * Strip raw artifact/action markup — including file CONTENT — that leaks
+ * through the parser during streaming.
  *
- * Also strips stray `</assistant>` or partial fragments like `</assis`
- * that some models emit at the end of their response.
+ * 1. Complete `<devonzArtifact>` blocks (wrapper + all actions + content)
+ * 2. Complete `<devonzAction>` blocks (handles cases where the parser
+ *    already consumed the artifact wrapper but left action tags + code)
+ * 3. Everything after an unclosed `<devonzArtifact` or `<devonzAction`
+ *    tag (content still streaming)
+ * 4. Leftover individual open/close tags
+ * 5. Partial `<devonz...` tags mid-stream (e.g. `<devonzArt`)
+ *
+ * Also strips stray `</assistant>` fragments and `<chain_of_thought>` blocks.
  */
 function stripRawArtifactTags(text: string): string {
   let result = text;
 
-  if (result.includes('devonzA')) {
-    result = result.replace(COMPLETE_ARTIFACT_BLOCK_RE, '').replace(UNCLOSED_ARTIFACT_RE, '');
+  if (result.includes('<devonz')) {
+    result = result.replace(COMPLETE_ARTIFACT_BLOCK_RE, '');
+    result = result.replace(COMPLETE_ACTION_BLOCK_RE, '');
+    result = result.replace(UNCLOSED_ARTIFACT_RE, '');
+    result = result.replace(UNCLOSED_ACTION_RE, '');
     result = result.replace(LEFTOVER_TAG_RE, '');
+    result = result.replace(PARTIAL_DEVONZ_TAG_RE, '');
   }
 
   if (result.includes('assis') || result.includes('Assis')) {
@@ -102,6 +119,13 @@ function stripRawArtifactTags(text: string): string {
 
   if (result.includes('chain_of_thought')) {
     result = result.replace(CHAIN_OF_THOUGHT_BLOCK_RE, '').replace(CHAIN_OF_THOUGHT_TAG_RE, '');
+  }
+
+  // Strip leaked code blocks when artifacts are present — code content
+  // should only appear inside artifact actions, never in chat text
+  if (result.includes('__devonzArtifact__')) {
+    result = result.replace(LEAKED_CODE_BLOCK_RE, '');
+    result = result.replace(UNCLOSED_CODE_BLOCK_RE, '');
   }
 
   return result;

@@ -66,6 +66,16 @@ export class EnhancedStreamingMessageParser extends StreamingMessageParser {
         output = super.parse(messageId, enhancedInput);
         logger.debug('After reset, output length:', output.length, 'resetFlag:', this._lastResetOccurred);
       }
+    } else {
+      // Artifacts ARE present — strip any markdown code blocks that leaked
+      // outside artifact tags. These are file contents the AI included in
+      // explanation text instead of inside <devonzArtifact> actions.
+      const stripped = this._stripLeakedCodeBlocks(output);
+
+      if (stripped !== output) {
+        logger.debug('Stripped leaked code blocks from output for message:', messageId);
+        output = stripped;
+      }
     }
 
     return output;
@@ -538,6 +548,21 @@ ${content.trim()}
       // If it looks like a script, let the file detection patterns handle it
       return match;
     });
+  }
+
+  /**
+   * Strip markdown fenced code blocks that leaked outside artifact tags.
+   * When artifacts are present, any code blocks in the text output are
+   * file contents that should have been inside artifact actions.
+   */
+  private _stripLeakedCodeBlocks(output: string): string {
+    // Strip complete fenced code blocks: ```lang\ncode\n```
+    let result = output.replace(/```[\w]*\n[\s\S]*?```/g, '');
+
+    // Strip unclosed fenced code blocks at end (still streaming)
+    result = result.replace(/```[\w]*\n[\s\S]*$/g, '');
+
+    return result;
   }
 
   reset() {
