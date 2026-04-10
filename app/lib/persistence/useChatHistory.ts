@@ -246,6 +246,20 @@ export function useChatHistory() {
     workbenchStore.files.set(mergedFiles);
     workbenchStore.setDocuments(mergedFiles);
 
+    /*
+     * Guard: skip filesystem writes if the runtime is not yet booted
+     * (projectId is empty). The workbench store is already updated above
+     * so the UI will display files correctly. bootRuntime() will handle
+     * the filesystem once boot completes, and the next user action
+     * (e.g. sending a prompt) will re-sync files via action-runner.
+     */
+    if (!container.projectId) {
+      logger.debug('Runtime not yet booted — skipping filesystem writes (workbench store already updated)');
+      workbenchStore.isRestoringSession.set(false);
+
+      return;
+    }
+
     /* Write files to runtime filesystem in parallel */
     const dirPromises: Promise<void>[] = [];
     const filePromises: Promise<void>[] = [];
