@@ -406,6 +406,10 @@ export class RuntimeClient implements RuntimeProvider {
   }
 
   async spawn(command: string, args: string[] = [], options: SpawnOptions = {}): Promise<SpawnedProcess> {
+    if (!this.#projectId) {
+      throw new Error('Runtime not booted yet — call boot() before spawning processes');
+    }
+
     const response = await csrfFetch('/api/runtime/terminal', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
