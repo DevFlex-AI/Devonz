@@ -743,16 +743,18 @@ ${fileList.map((f) => `- ${f}`).join('\n')}
     // their own complete copies when they access the getter later.
     const probeStream = streamResult.fullStream;
     const iterator = probeStream[Symbol.asyncIterator]();
-    const first = await iterator.next();
 
-    if (!first.done && first.value?.type === 'error') {
+    try {
+      const first = await iterator.next();
+
+      if (!first.done && first.value?.type === 'error') {
+        throw first.value.error ?? new Error('Stream returned an error event');
+      }
+    } finally {
+      // Always release the probe iterator to prevent resource leaks,
+      // whether we succeeded, found an error, or hit an unexpected exception.
       await iterator.return?.();
-      throw first.value.error ?? new Error('Stream returned an error event');
     }
-
-    // Release the probe copy — we don't need it. The getter remains
-    // intact so downstream consumers get fresh, complete streams.
-    await iterator.return?.();
   }
 
   try {

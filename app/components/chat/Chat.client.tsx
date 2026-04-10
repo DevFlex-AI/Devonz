@@ -498,7 +498,7 @@ export const ChatImpl = memo(
         runAnimation();
         append({
           role: 'user',
-          content: `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${urlPrompt}`,
+          content: `[Model: ${modelRef.current}]\n\n[Provider: ${providerRef.current.name}]\n\n${urlPrompt}`,
         });
       }
     }, [urlPrompt]);
