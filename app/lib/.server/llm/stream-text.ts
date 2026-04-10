@@ -963,5 +963,13 @@ function pipeStreamToWebSocket(streamResult: Awaited<ReturnType<typeof _streamTe
     }
   })().catch((err) => {
     logger.error('WebSocket stream pipe error:', err instanceof Error ? err.message : String(err));
+
+    try {
+      if (ws.readyState === WS_OPEN || ws.readyState === 0 /* CONNECTING */) {
+        ws.close(1011, 'Stream pipe error');
+      }
+    } catch {
+      /* ignore close errors */
+    }
   });
 }

@@ -300,7 +300,7 @@ export class ActionRunner {
         case 'start': {
           // making the start app non blocking
 
-          this.#runStartAction(action)
+          this.#runStartAction(action, actionId)
             .then(() => this.#updateAction(actionId, { status: 'complete' }))
             .catch((err: Error) => {
               if (action.abortSignal.aborted) {
@@ -488,7 +488,7 @@ export class ActionRunner {
     }
   }
 
-  async #runStartAction(action: ActionState) {
+  async #runStartAction(action: ActionState, actionId: string) {
     if (action.type !== 'start') {
       unreachable('Expected shell action');
     }
@@ -496,6 +496,7 @@ export class ActionRunner {
     // Reject obvious non-commands (error messages mistakenly generated as start actions)
     if (!this.#isLikelyValidCommand(action.content)) {
       logger.warn(`Rejected invalid start command (appears to be error message): ${action.content.substring(0, 80)}`);
+      this.#updateAction(actionId, { status: 'complete', executed: true });
       return undefined;
     }
 
@@ -523,6 +524,7 @@ export class ActionRunner {
         logger.debug(`Skipped duplicate start command: ${action.content.substring(0, 50)}...`);
       }
 
+      this.#updateAction(actionId, { status: 'complete', executed: true });
       return undefined;
     }
 
@@ -584,6 +586,7 @@ export class ActionRunner {
 
     if (result === 'server-running') {
       logger.debug(`${action.type}: Dev server is running (command did not exit within ${SERVER_READY_TIMEOUT}ms)`);
+      this.#updateAction(actionId, { status: 'complete', executed: true });
       return undefined;
     }
 

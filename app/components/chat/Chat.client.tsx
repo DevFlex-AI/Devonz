@@ -204,6 +204,16 @@ export const ChatImpl = memo(
     const providerRef = useRef(provider);
     const sendingRef = useRef(false);
     const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    useEffect(() => {
+      return () => {
+        if (pollTimeoutRef.current !== null) {
+          clearTimeout(pollTimeoutRef.current);
+          pollTimeoutRef.current = null;
+        }
+      };
+    }, []);
+
     planModeRef.current = planMode;
     modelRef.current = model;
     providerRef.current = provider;

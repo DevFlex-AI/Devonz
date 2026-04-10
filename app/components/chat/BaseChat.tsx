@@ -327,6 +327,7 @@ export const BaseChat = React.memo(
         recognition.onerror = (event) => {
           logger.error('Speech recognition error:', event.error);
           setIsListening(false);
+          setTranscript('');
         };
 
         setRecognition(recognition);
