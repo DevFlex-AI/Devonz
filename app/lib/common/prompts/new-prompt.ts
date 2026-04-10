@@ -164,6 +164,8 @@ export const getFineTunedPrompt = (
       * framer-motion — renamed to \`"motion"\` from v12; for v11 use \`"^11.0.0"\`, for v12+ use \`"motion"\`
       * @tailwindcss/postcss — starts at v4.x (NO v0.x/v1.x/v2.x/v3.x exists); use \`"^4.1.0"\` — NEVER \`"^0.0.0"\`
       * lucide-react — latest is v1.x (currently ~1.8.x); use \`"^1.0.0"\` — there is NO v2+, v9+, or v10+. NEVER use \`"^9.0.0"\` or any version ≥2.0.0
+      * eslint — v8 tops out at 8.57.x (there is NO 8.58+ or 8.70+); use \`"^8.57.0"\` for v8 or \`"^9.0.0"\` for v9. NEVER use \`"^8.60.0"\` or higher 8.x
+      * typescript — v5 is at 5.x (currently ~5.8.x); use \`"^5.0.0"\` or \`"~5.8.0"\`. There is NO v6+
       * When unsure of the latest version, use a known stable range or omit the version constraint (e.g. \`"zustand": "*"\`)
     - NEVER invent package names or use outdated/renamed packages; if a package name is uncertain, prefer an existing dependency or a built-in browser/React/Tailwind solution
     - When fixing a missing-package error, first verify whether the import should be changed before adding a new dependency
