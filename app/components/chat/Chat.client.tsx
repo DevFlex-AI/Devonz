@@ -286,6 +286,7 @@ export const ChatImpl = memo(
          * events and pick up stale ports from the dying runtime.
          */
         workbenchStore.showWorkbench.set(false);
+        workbenchStore.resetArtifacts();
 
         if (pollTimeoutRef.current !== null) {
           clearTimeout(pollTimeoutRef.current);

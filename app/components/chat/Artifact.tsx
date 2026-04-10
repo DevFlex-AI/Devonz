@@ -53,7 +53,7 @@ export const Artifact = memo(({ artifactId }: ArtifactProps) => {
         return action.type !== 'supabase' && !(action.type === 'shell' && action.content?.includes('supabase'));
       });
     });
-  }, [artifact]);
+  }, [artifact, artifact?.runner]);
 
   const actions = useStore(filteredActions ?? computed(workbenchStore.artifacts, () => [] as ActionState[]));
 

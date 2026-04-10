@@ -99,6 +99,7 @@ export function usePromptEnhancer() {
     } catch (error) {
       _error = error;
       setInput(originalInput);
+      reader.cancel().catch(() => {});
     } finally {
       if (_error) {
         logger.error(_error);
@@ -107,9 +108,11 @@ export function usePromptEnhancer() {
       setEnhancingPrompt(false);
       setPromptEnhanced(true);
 
-      enhanceTimeoutRef.current = setTimeout(() => {
-        setInput(_input);
-      });
+      if (!_error) {
+        enhanceTimeoutRef.current = setTimeout(() => {
+          setInput(_input);
+        }, 0);
+      }
     }
   };
 

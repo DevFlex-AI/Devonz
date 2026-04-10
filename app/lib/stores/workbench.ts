@@ -133,6 +133,12 @@ export class WorkbenchStore {
     this.#previewsStore.reset();
   }
 
+  resetArtifacts() {
+    this.artifacts.set({});
+    this.artifactIdList = [];
+    this.#reloadedMessages.clear();
+  }
+
   get files() {
     return this.#filesStore.files;
   }

@@ -497,6 +497,11 @@ export const BaseChat = React.memo(
             setUploadedFiles?.([...uploadedFiles, file]);
             setImageDataList?.([...imageDataList, base64Image]);
           };
+
+          reader.onerror = () => {
+            logger.error('Failed to read image file:', reader.error);
+          };
+
           reader.readAsDataURL(file);
         }
       };
@@ -526,6 +531,11 @@ export const BaseChat = React.memo(
                 setUploadedFiles?.([...uploadedFiles, file]);
                 setImageDataList?.([...imageDataList, base64Image]);
               };
+
+              reader.onerror = () => {
+                logger.error('Failed to read pasted image:', reader.error);
+              };
+
               reader.readAsDataURL(file);
             }
 

@@ -280,6 +280,8 @@ export function useChatHistory() {
       await Promise.all(filePromises);
     } catch (error) {
       logger.error('Failed to write snapshot files to runtime filesystem:', error);
+
+      return;
     }
 
     /*
