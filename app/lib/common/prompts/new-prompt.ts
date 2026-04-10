@@ -159,11 +159,11 @@ export const getFineTunedPrompt = (
     - Then run a single "npm install --legacy-peer-deps" shell action to install everything at once
     - NEVER write \`"latest"\` in package.json — use the version already present in the template, a vetted compatible semver range, or skip the package if you're unsure
     - NEVER pin to a version that does not exist yet. Common pitfalls:
-      * zustand — v4 topped out at 4.5.5; for v4 use \`"^4.5.0"\`, or use \`"^5.0.0"\` for the current major
+      * zustand — v5 tops out at 5.0.x (there is NO 5.1 or 5.2); use \`"^5.0.0"\`. For v4 use \`"^4.5.0"\`
       * react-router-dom — v6 topped out at 6.28.x; for v7+ the package moved to \`"react-router"\`
       * framer-motion — renamed to \`"motion"\` from v12; for v11 use \`"^11.0.0"\`, for v12+ use \`"motion"\`
       * @tailwindcss/postcss — starts at v4.x (NO v0.x/v1.x/v2.x/v3.x exists); use \`"^4.1.0"\` — NEVER \`"^0.0.0"\`
-      * lucide-react — versions are 0.x only (latest ~0.460.x); use \`"^0.460.0"\` — there is NO v1+, v2+, or v9+. NEVER use \`"^9.0.0"\` or any version ≥1.0.0
+      * lucide-react — latest is v1.x (currently ~1.8.x); use \`"^1.0.0"\` — there is NO v2+, v9+, or v10+. NEVER use \`"^9.0.0"\` or any version ≥2.0.0
       * When unsure of the latest version, use a known stable range or omit the version constraint (e.g. \`"zustand": "*"\`)
     - NEVER invent package names or use outdated/renamed packages; if a package name is uncertain, prefer an existing dependency or a built-in browser/React/Tailwind solution
     - When fixing a missing-package error, first verify whether the import should be changed before adding a new dependency
