@@ -74,6 +74,10 @@ const LEFTOVER_TAG_RE = /<\/?devonz(?:Artifact|Action)[^>]*>/g;
 /** Matches complete or partial `</assistant>` / `<assistant>` XML tags that LLMs sometimes emit */
 const ASSISTANT_TAG_RE = /<\/?assist(?:ant)?>|<\/assis(?:t(?:a(?:n(?:t)?)?)?)?\s*$/g;
 
+/** Matches `<chain_of_thought>...</chain_of_thought>` blocks and leftover open/close tags (Google Gemini) */
+const CHAIN_OF_THOUGHT_BLOCK_RE = /<chain_of_thought>[\s\S]*?<\/chain_of_thought>/g;
+const CHAIN_OF_THOUGHT_TAG_RE = /<\/?chain_of_thought\s*\/?>/g;
+
 /**
  * Strip raw artifact/action markup that leaks through the parser during
  * streaming.  Complete blocks are removed first, then everything after an
@@ -94,6 +98,10 @@ function stripRawArtifactTags(text: string): string {
 
   if (result.includes('assis') || result.includes('Assis')) {
     result = result.replace(ASSISTANT_TAG_RE, '');
+  }
+
+  if (result.includes('chain_of_thought')) {
+    result = result.replace(CHAIN_OF_THOUGHT_BLOCK_RE, '').replace(CHAIN_OF_THOUGHT_TAG_RE, '');
   }
 
   return result;
