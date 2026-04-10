@@ -728,16 +728,25 @@ export const ChatImpl = memo(
       const attachments = await Promise.all(
         files.map(
           (file) =>
-            new Promise<Attachment>((resolve) => {
+            new Promise<Attachment>((resolve, reject) => {
               const reader = new FileReader();
 
-              reader.onloadend = () => {
+              reader.onload = () => {
                 resolve({
                   name: file.name,
                   contentType: file.type,
                   url: reader.result as string,
                 });
               };
+
+              reader.onerror = () => {
+                reject(new Error(`Failed to read file: ${file.name}`));
+              };
+
+              reader.onabort = () => {
+                reject(new Error(`File read aborted: ${file.name}`));
+              };
+
               reader.readAsDataURL(file);
             }),
         ),
