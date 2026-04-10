@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { ProviderInfo } from '~/types/model';
 import { csrfFetch } from '~/lib/api/csrf-client';
 import { createScopedLogger } from '~/utils/logger';
@@ -8,6 +8,16 @@ const logger = createScopedLogger('usePromptEnhancement');
 export function usePromptEnhancer() {
   const [enhancingPrompt, setEnhancingPrompt] = useState(false);
   const [promptEnhanced, setPromptEnhanced] = useState(false);
+  const enhanceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (enhanceTimeoutRef.current !== null) {
+        clearTimeout(enhanceTimeoutRef.current);
+        enhanceTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   const resetEnhancer = () => {
     setEnhancingPrompt(false);
@@ -97,7 +107,7 @@ export function usePromptEnhancer() {
       setEnhancingPrompt(false);
       setPromptEnhanced(true);
 
-      setTimeout(() => {
+      enhanceTimeoutRef.current = setTimeout(() => {
         setInput(_input);
       });
     }

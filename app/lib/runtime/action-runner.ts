@@ -31,7 +31,7 @@ import {
   type ChangeType,
 } from '~/lib/stores/staging';
 import { workbenchStore } from '~/lib/stores/workbench';
-import { getPreferredPackageVersion } from '~/utils/dependencyCatalog';
+import { getPreferredPackageVersion, SHADCN_PEER_DEPS } from '~/utils/dependencyCatalog';
 
 const logger = createScopedLogger('ActionRunner');
 
@@ -128,6 +128,9 @@ export class ActionRunner {
   onSupabaseAlert?: (alert: SupabaseAlert) => void;
   onDeployAlert?: (alert: DeployAlert) => void;
   buildOutput?: { path: string; exitCode: number; output: string };
+
+  /** Tracks npm install attempts per session — --legacy-peer-deps is only injected on retry (2nd+) */
+  #npmInstallAttemptCount = 0;
 
   /** When true, file actions are skipped (files already on disk from server-side clone). */
   preloaded = false;
@@ -388,10 +391,17 @@ export class ActionRunner {
       action.content = repairResult.command;
     }
 
-    // Inject --legacy-peer-deps into npm install/ci commands to prevent peer dep conflicts
-    if (/^npm\s+(install|ci)\b/.test(action.content.trim()) && !action.content.includes('--legacy-peer-deps')) {
-      action.content = action.content.trim().replace(/^(npm\s+(?:install|ci))/, '$1 --legacy-peer-deps');
-      logger.debug('Injected --legacy-peer-deps into npm install/ci command');
+    // Track npm install attempts; inject --legacy-peer-deps only on retry (2nd+ attempt)
+    // This lets real peer dep conflicts surface first, with --legacy-peer-deps as fallback
+    if (/^npm\s+(install|ci)\b/.test(action.content.trim())) {
+      this.#npmInstallAttemptCount++;
+
+      if (this.#npmInstallAttemptCount > 1 && !action.content.includes('--legacy-peer-deps')) {
+        action.content = action.content.trim().replace(/^(npm\s+(?:install|ci))/, '$1 --legacy-peer-deps');
+        logger.info(
+          `Injected --legacy-peer-deps into npm install/ci command (retry attempt ${this.#npmInstallAttemptCount})`,
+        );
+      }
     }
 
     // --- Step 2: Route to staging or direct execution ---
@@ -427,9 +437,12 @@ export class ActionRunner {
     if (/^npm\s+(install|ci)\b/i.test(action.content.trim())) {
       let npmCommand = action.content.trim();
 
-      // Ensure --legacy-peer-deps is always present to avoid peer dep conflicts
-      if (!npmCommand.includes('--legacy-peer-deps')) {
+      // Inject --legacy-peer-deps only on retry (2nd+ attempt) to surface real conflicts first
+      if (this.#npmInstallAttemptCount > 1 && !npmCommand.includes('--legacy-peer-deps')) {
         npmCommand += ' --legacy-peer-deps';
+        logger.info(
+          `Injected --legacy-peer-deps into exec npm install (retry attempt ${this.#npmInstallAttemptCount})`,
+        );
       }
 
       logger.info(`Running npm install via runtime.exec: ${npmCommand.substring(0, 80)}`);
@@ -860,17 +873,25 @@ export class ActionRunner {
    * Retries up to 3 times with exponential backoff (1s, 2s, 4s) on failure.
    *
    * @param runtime   The runtime provider (local or remote)
-   * @param command   The npm install command to run (default: `npm install --legacy-peer-deps`)
+   * @param command   The npm install command to run (default: `npm install`; --legacy-peer-deps added on internal retry)
    * @param retries   Max retry attempts
    */
   async #execNpmInstall(
     runtime: RuntimeProvider,
-    command = 'npm install --legacy-peer-deps',
+    command = 'npm install',
     retries = 3,
   ): Promise<ProcessResult> {
     for (let attempt = 1; attempt <= retries; attempt++) {
+      // On internal retry (2nd+ attempt), add --legacy-peer-deps as fallback for peer dep conflicts
+      let attemptCommand = command;
+
+      if (attempt > 1 && !attemptCommand.includes('--legacy-peer-deps')) {
+        attemptCommand += ' --legacy-peer-deps';
+        logger.info(`Adding --legacy-peer-deps for internal retry attempt ${attempt}/${retries}`);
+      }
+
       try {
-        const result = await runtime.exec(command);
+        const result = await runtime.exec(attemptCommand);
 
         if (result.exitCode === 0 || attempt === retries) {
           return result;
@@ -1128,46 +1149,66 @@ export class ActionRunner {
         // Root dir read failed
       }
 
-      // Step 3: If missing packages found, inject into package.json and install
+      // Step 3: If missing packages found, categorize and selectively inject
       if (missingPackages.size > 0) {
         const missing = [...missingPackages];
-        const installable: Array<{ name: string; version: string }> = [];
+        const shadcnInstallable: Array<{ name: string; version: string }> = [];
+        const catalogSkipped: string[] = [];
         const unverified: string[] = [];
 
         for (const pkg of missing) {
-          const preferredVersion = getPreferredPackageVersion(pkg);
+          const shadcnVersion = SHADCN_PEER_DEPS[pkg];
 
-          if (preferredVersion) {
-            installable.push({ name: pkg, version: preferredVersion });
+          if (shadcnVersion) {
+            // Package is in shadcn peer deps — safe to auto-inject
+            shadcnInstallable.push({ name: pkg, version: shadcnVersion });
+          } else if (getPreferredPackageVersion(pkg)) {
+            // Package is in the catalog but NOT shadcn peer deps — warn only, don't inject
+            catalogSkipped.push(pkg);
           } else {
+            // Package is not in any catalog — warn only, don't inject
             unverified.push(pkg);
           }
         }
 
         logger.info(
-          `Dependency validator found ${missing.length} missing package(s): ${missing.join(', ')}. Auto-installing ${installable.length} vetted package(s).`,
+          `Dependency validator found ${missing.length} missing package(s): ${missing.join(', ')}`,
         );
 
-        if (unverified.length > 0) {
+        if (shadcnInstallable.length > 0) {
+          for (const { name, version } of shadcnInstallable) {
+            logger.info(`Auto-injecting shadcn peer dependency: ${name}@${version}`);
+          }
+        }
+
+        if (catalogSkipped.length > 0) {
           logger.warn(
-            `Skipped auto-install for ${unverified.length} unverified package(s): ${unverified.join(', ')}. Leaving the import error visible so Devonz can correct the package name instead of installing a hallucinated dependency.`,
+            `Found ${catalogSkipped.length} non-shadcn package(s) in imports but not in package.json: ${catalogSkipped.join(', ')}. ` +
+              `Not auto-injecting — let the AI handle adding these dependencies.`,
           );
         }
 
-        if (installable.length === 0) {
+        if (unverified.length > 0) {
+          logger.warn(
+            `Found ${unverified.length} unknown package(s) in imports: ${unverified.join(', ')}. ` +
+              `Not auto-injecting — package may be hallucinated or outdated. Let the AI correct the import.`,
+          );
+        }
+
+        if (shadcnInstallable.length === 0) {
           return;
         }
 
         const deps = (pkgJson.dependencies as Record<string, string>) || {};
 
-        for (const { name, version } of installable) {
+        for (const { name, version } of shadcnInstallable) {
           deps[name] = version;
         }
 
         pkgJson.dependencies = deps;
 
         await runtime.fs.writeFile('package.json', JSON.stringify(pkgJson, null, 2));
-        logger.info('Updated package.json with missing dependencies');
+        logger.info(`Updated package.json with ${shadcnInstallable.length} shadcn peer dependency/ies`);
 
         // Run npm install via runtime.exec — bypasses the terminal for reliability
         const installResult = await this.#execNpmInstall(runtime);
@@ -1503,22 +1544,35 @@ export class ActionRunner {
       const existingDevCount = Object.keys(existingDevDeps).length;
 
       /*
-       * Only merge if a significant number of deps were dropped (> 5 and > 30%).
-       * This avoids interfering with intentional dependency changes.
+       * Only merge if a majority of deps were dropped (> 50%), suggesting the AI
+       * rewrote package.json from scratch (formatting issue) rather than intentionally
+       * removing specific packages. If <= 50% were dropped, respect the AI's choices.
        * Apply the threshold independently to deps and devDeps.
        */
       let merged = false;
 
-      if (missingCount > 5 && existingCount > 0 && missingCount / existingCount > 0.3) {
+      if (existingCount > 0 && missingCount / existingCount > 0.5) {
         newPkg.dependencies = { ...missingDeps, ...newDeps };
-        logger.info(`Merged ${missingCount} missing dependencies back into package.json`);
+        logger.info(
+          `Merged ${missingCount} missing dependencies back into package.json (${Math.round((missingCount / existingCount) * 100)}% dropped — likely formatting issue, not intentional removal)`,
+        );
         merged = true;
+      } else if (missingCount > 0) {
+        logger.info(
+          `Respecting AI's removal of ${missingCount} dependency/ies from package.json (${Math.round((missingCount / existingCount) * 100)}% dropped — appears intentional)`,
+        );
       }
 
-      if (missingDevCount > 3 && existingDevCount > 0 && missingDevCount / existingDevCount > 0.3) {
+      if (existingDevCount > 0 && missingDevCount / existingDevCount > 0.5) {
         newPkg.devDependencies = { ...missingDevDeps, ...newDevDeps };
-        logger.info(`Merged ${missingDevCount} missing devDependencies back into package.json`);
+        logger.info(
+          `Merged ${missingDevCount} missing devDependencies back into package.json (${Math.round((missingDevCount / existingDevCount) * 100)}% dropped — likely formatting issue, not intentional removal)`,
+        );
         merged = true;
+      } else if (missingDevCount > 0) {
+        logger.info(
+          `Respecting AI's removal of ${missingDevCount} devDependency/ies from package.json (${Math.round((missingDevCount / existingDevCount) * 100)}% dropped — appears intentional)`,
+        );
       }
 
       if (merged) {

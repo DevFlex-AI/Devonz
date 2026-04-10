@@ -200,9 +200,13 @@ export const ChatImpl = memo(
     const skipNextPlanModeSave = useRef(false);
     const prevChatIdRef = useRef<string | undefined>(undefined);
     const planModeRef = useRef(planMode);
+    const modelRef = useRef(model);
+    const providerRef = useRef(provider);
     const sendingRef = useRef(false);
     const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     planModeRef.current = planMode;
+    modelRef.current = model;
+    providerRef.current = provider;
 
     const [selectedElement, setSelectedElement] = useState<ElementInfo | null>(null);
     const mcpSettings = useStore(mcpStore).settings;
@@ -471,18 +475,23 @@ export const ChatImpl = memo(
       }
     }, [pendingMessage, setInput, showChat]);
 
-    useEffect(() => {
-      const prompt = searchParams.get('prompt');
+    const urlPrompt = searchParams.get('prompt');
 
-      if (prompt) {
-        setSearchParams({});
+    useEffect(() => {
+      if (urlPrompt) {
+        try {
+          setSearchParams({});
+        } catch (e) {
+          logger.error('Failed to clear search params:', e);
+        }
+
         runAnimation();
         append({
           role: 'user',
-          content: `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${prompt}`,
+          content: `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${urlPrompt}`,
         });
       }
-    }, [searchParams.get('prompt')]);
+    }, [urlPrompt]);
 
     const { enhancingPrompt, promptEnhanced, enhancePrompt, resetEnhancer } = usePromptEnhancer();
     const { parsedMessages, parseMessages } = useMessageParser();
@@ -960,7 +969,7 @@ export const ChatImpl = memo(
 
         if (action === 'approve') {
           const executeMessage =
-            `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n` +
+            `[Model: ${modelRef.current}]\n\n[Provider: ${providerRef.current.name}]\n\n` +
             `The plan has been approved. Execute all steps in PLAN.md now. ` +
             `Implement each task in order, creating files, writing code, and running commands as needed. ` +
             `After completing each step, update PLAN.md to mark it done with \`- [x]\`.`;

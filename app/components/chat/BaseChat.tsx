@@ -248,8 +248,12 @@ export const BaseChat = React.memo(
 
           // Cap the Set size to prevent unbounded memory growth during long sessions
           if (processedEventIdsRef.current.size > 1000) {
-            const entries = Array.from(processedEventIdsRef.current);
-            processedEventIdsRef.current = new Set(entries.slice(-1000));
+            const entries = Array.from(processedEventIdsRef.current).slice(-1000);
+            processedEventIdsRef.current.clear();
+
+            for (const entry of entries) {
+              processedEventIdsRef.current.add(entry);
+            }
           }
 
           if (event.type === 'error' && typeof event.message === 'string') {
@@ -338,6 +342,8 @@ export const BaseChat = React.memo(
     }, []);
 
     useEffect(() => {
+      const abortController = new AbortController();
+
       if (typeof window !== 'undefined') {
         let parsedApiKeys: Record<string, string> | undefined = {};
 
@@ -363,7 +369,7 @@ export const BaseChat = React.memo(
         }
 
         setIsModelLoading('all');
-        fetch('/api/models')
+        fetch('/api/models', { signal: abortController.signal })
           .then((response) => {
             if (!response.ok) {
               throw new Error(`Model fetch failed: ${response.status}`);
@@ -376,14 +382,21 @@ export const BaseChat = React.memo(
             setModelList(Array.isArray(typedData?.modelList) ? typedData.modelList : []);
           })
           .catch((error) => {
-            logger.error('Error fetching model list:', error);
+            if (!abortController.signal.aborted) {
+              logger.error('Error fetching model list:', error);
+            }
           })
           .finally(() => {
-            setIsModelLoading(undefined);
+            if (!abortController.signal.aborted) {
+              setIsModelLoading(undefined);
+            }
           });
       }
 
       // Fetch models once on mount — provider/key changes are handled by onApiKeysChange
+      return () => {
+        abortController.abort();
+      };
     }, []);
 
     const onApiKeysChange = useCallback(
