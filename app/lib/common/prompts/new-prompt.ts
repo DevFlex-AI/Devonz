@@ -109,12 +109,13 @@ export const getFineTunedPrompt = (
    - File priority: App.tsx and feature components FIRST, config files SECOND. Never stop after config files
 
   DEPENDENCY INSTALLATION (CRITICAL — SECOND MOST COMMON FAILURE):
-  - For EVERY third-party package imported in your code, you MUST include a shell action: npm install <package>
-  - SELF-CHECK before finishing: Scan every import statement. If a package is NOT in the starter template's package.json, it MUST have a corresponding npm install action
+  - For EVERY third-party package imported in your code, you MUST add it to package.json dependencies and run npm install --legacy-peer-deps
+  - SELF-CHECK before finishing: Scan every import statement. If a package is NOT in the starter template's package.json, it MUST be added to package.json and installed
   - Common missed packages: @dnd-kit/core, @dnd-kit/sortable, class-variance-authority, clsx, tailwind-merge, zustand, @tanstack/react-query, framer-motion, react-icons, lucide-react, recharts, react-router-dom, @radix-ui/*
-  - Combine all installs into ONE shell action when possible: npm install pkg1 pkg2 pkg3
-  - Place npm install AFTER package.json is written but BEFORE npm run dev
+  - Add all new packages to package.json, then run ONE shell action: npm install --legacy-peer-deps
+  - Place npm install --legacy-peer-deps AFTER package.json is written but BEFORE npm run dev
   - If you import from a package and forget to install it, the app WILL crash with "Module not found" errors
+  - ALWAYS use --legacy-peer-deps flag — React 19 peer dep conflicts will crash installs without it
 </completeness_requirements>
 
 <response_requirements>
@@ -147,14 +148,15 @@ export const getFineTunedPrompt = (
 
   SHELL COMMAND SYNTAX (CRITICAL):
     - ALWAYS run commands as SEPARATE devonzAction shell blocks, one command per action:
-      * First action: npm install (or npm install --legacy-peer-deps)
+      * First action: npm install --legacy-peer-deps
       * Second action: npm run dev
     - This ensures each command completes before the next one starts
+    - ALWAYS use \`--legacy-peer-deps\` flag with npm install — the template uses React 19 but many popular packages (Radix UI, lucide-react, etc.) still declare React 18 peer deps. Without this flag, ERESOLVE errors will crash the install and prevent the app from starting.
 
   DEPENDENCY INSTALLATION (CRITICAL):
     - NEVER use "npm install <package>" shell commands to add new dependencies
     - Instead, ALWAYS update package.json via a devonzAction type="file" to add packages to "dependencies" or "devDependencies"
-    - Then run a single "npm install" shell action to install everything at once
+    - Then run a single "npm install --legacy-peer-deps" shell action to install everything at once
     - NEVER write \`"latest"\` in package.json — use the version already present in the template, a vetted compatible semver range, or skip the package if you're unsure
     - NEVER pin to a version that does not exist yet. Common pitfalls:
       * zustand — v4 topped out at 4.5.5; for v4 use \`"^4.5.0"\`, or use \`"^5.0.0"\` for the current major
@@ -168,10 +170,11 @@ export const getFineTunedPrompt = (
     - Why: Shell-only npm install does NOT persist dependencies in package.json, causing cascading failures when the dev server restarts
     - Correct workflow for adding new packages:
       1. Write updated package.json with new packages added to dependencies/devDependencies
-      2. Run "npm install" as a shell action
+      2. Run "npm install --legacy-peer-deps" as a shell action
       3. Run "npm run dev" as a separate shell action
     - WRONG: \`npm install react-router-dom zustand\` (packages not in package.json)
-    - RIGHT: Update package.json file to include react-router-dom and zustand, then run \`npm install\`
+    - WRONG: \`npm install\` without --legacy-peer-deps (will fail with ERESOLVE errors on React 19)
+    - RIGHT: Update package.json file to include react-router-dom and zustand, then run \`npm install --legacy-peer-deps\`
 </system_constraints>
 
 <technology_preferences>
@@ -244,7 +247,8 @@ export const getFineTunedPrompt = (
       - @radix-ui/react-accordion (required by Accordion)
       - class-variance-authority (required by Button, Badge, and many components)
       - clsx, tailwind-merge (required by cn() utility)
-      Include ALL Radix packages that your components import in package.json BEFORE running npm install.
+      Include ALL Radix packages that your components import in package.json BEFORE running npm install --legacy-peer-deps.
+      Note: Radix UI packages declare React 18 peer deps but work correctly with React 19 — the --legacy-peer-deps flag handles this.
   - For additional modern React components, reference 21st.dev community components (https://21st.dev)
     * Use these as inspiration for component patterns and implementations
     * Prioritize components with high community adoption
@@ -468,7 +472,7 @@ export const getFineTunedPrompt = (
       5. Core business logic, state management, data/seed files
       6. Shared components and utilities
       7. Configuration files (tsconfig, tailwind.config, postcss.config)
-      8. Shell commands (npm install)
+      8. Shell commands (npm install --legacy-peer-deps)
       9. Start command (npm run dev) — ALWAYS LAST
       * WHY: If output is interrupted, the essential application logic exists rather than only configs
       * The main component file (App.tsx) should NEVER be the last file in the artifact
@@ -497,7 +501,7 @@ export const getFineTunedPrompt = (
     - Self-check: Scan every JSX tag — is EACH one imported or defined locally?
 
   DEPENDENCY CROSS-CHECK (CRITICAL):
-    - After writing ALL source files, BEFORE npm install: scan every .tsx/.ts file for \`import ... from 'package-name'\`.
+    - After writing ALL source files, BEFORE npm install --legacy-peer-deps: scan every .tsx/.ts file for \`import ... from 'package-name'\`.
     - Verify EACH package exists in package.json deps/devDeps. Common missed: react-router-dom, lucide-react, recharts, zustand, framer-motion, @tanstack/react-query, date-fns, clsx, tailwind-merge, class-variance-authority, @tailwindcss/postcss (for Tailwind v4), uuid, @dnd-kit/core, @dnd-kit/sortable.
     - class-variance-authority (cva) is FREQUENTLY imported but NEVER added to package.json — always double-check.
     - @tailwindcss/postcss is required in devDependencies when using Tailwind v4 PostCSS plugin — missing it causes "Cannot find module" errors at build time.
@@ -622,7 +626,7 @@ export default function App() {
   return (<div className="app"><h1>Coffee Shop Menu</h1><div className="menu-grid">{items.map(item => (<MenuItemCard key={item.id} item={item} onDelete={deleteItem} />))}</div></div>);
 }
 </devonzAction>
-<devonzAction type="shell">npm install</devonzAction>
+<devonzAction type="shell">npm install --legacy-peer-deps</devonzAction>
 <devonzAction type="start">npm run dev</devonzAction>
 </devonzArtifact>
 
@@ -666,7 +670,7 @@ The coffee shop menu is now running.</assistant_response>
   PRE-SEND CHECKLIST:
   [ ] Every JSX \`<Tag />\` has a matching import; every \`from 'pkg'\` exists in package.json (incl. companion deps)
   [ ] No unused imports; import complexity matches app; import paths correct (\`../\` count); no duplicate identifiers
-  [ ] File order: package.json → index.html → main.tsx → App.tsx → components → configs → npm install → npm run dev
+  [ ] File order: package.json → index.html → main.tsx → App.tsx → components → configs → npm install --legacy-peer-deps → npm run dev
   [ ] App.tsx renders the FEATURE. No mock arrays, no API keys, no TODOs. COMPLETE in this response
   [ ] Template components: IMPORT, don't recreate. Follow-ups: ONLY modify asked files. File count minimal
 </self_validation>
