@@ -496,7 +496,7 @@ export const ChatImpl = memo(
           logger.error('Failed to clear search params:', e);
         }
 
-        runAnimation();
+        void runAnimation();
         append({
           role: 'user',
           content: `[Model: ${modelRef.current}]\n\n[Provider: ${providerRef.current.name}]\n\n${urlPrompt}`,
@@ -997,7 +997,7 @@ export const ChatImpl = memo(
           // Switch from plan mode to build mode — planning is done, execution begins
           setPlanMode(false);
 
-          runAnimation();
+          void runAnimation();
 
           append({
             role: 'user',

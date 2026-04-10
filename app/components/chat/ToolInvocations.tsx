@@ -332,6 +332,7 @@ const FormattedResultContent = memo(({ text, theme }: { text: string; theme: The
 const ToolResultItem = memo(({ tool, annotation, theme }: ToolResultItemProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
   const resultContainerRef = useRef<HTMLDivElement>(null);
   const [isOverflowing, setIsOverflowing] = useState(false);
 
@@ -367,6 +368,14 @@ const ToolResultItem = memo(({ tool, annotation, theme }: ToolResultItemProps) =
   const isLongResult = lineCount > RESULT_LINE_THRESHOLD;
   const isFormattedLong = (extracted.text?.split('\n').length ?? 0) > RESULT_LINE_THRESHOLD;
 
+  useEffect(() => {
+    return () => {
+      if (copyTimerRef.current) {
+        clearTimeout(copyTimerRef.current);
+      }
+    };
+  }, []);
+
   // Detect whether the result container overflows the collapsed max-height
   useEffect(() => {
     if (resultContainerRef.current) {
@@ -393,7 +402,12 @@ const ToolResultItem = memo(({ tool, annotation, theme }: ToolResultItemProps) =
       const textToCopy = viewMode === 'formatted' && extracted.text ? extracted.text : resultStr;
       await navigator.clipboard.writeText(textToCopy);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+
+      if (copyTimerRef.current) {
+        clearTimeout(copyTimerRef.current);
+      }
+
+      copyTimerRef.current = setTimeout(() => setCopied(false), 2000);
     } catch {
       logger.error('Failed to copy result to clipboard');
     }

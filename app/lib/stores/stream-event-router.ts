@@ -351,6 +351,11 @@ async function persistCheckpointFromEvent(event: AgentCheckpointEvent): Promise<
  * Called from Chat.client.tsx onFinish to clear stale phase badges.
  */
 export function resetStreamEventState(): void {
+  if (parallelBatchClearTimer !== null) {
+    clearTimeout(parallelBatchClearTimer);
+    parallelBatchClearTimer = null;
+  }
+
   latestPlanPhaseChange.set(null);
   latestReviewCycle.set(null);
   structuredStreamingActive.set(false);
