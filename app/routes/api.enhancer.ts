@@ -228,6 +228,10 @@ async function enhancerAction({ context, request }: ActionFunctionArgs) {
       }
     }
 
-    return errorResponse(primaryError instanceof Error ? primaryError : new AppError(AppErrorType.INTERNAL, 'Internal Server Error'));
+    return errorResponse(
+      primaryError instanceof AppError
+        ? primaryError
+        : new AppError(AppErrorType.INTERNAL, primaryError instanceof Error ? primaryError.message : 'Internal Server Error'),
+    );
   }
 }

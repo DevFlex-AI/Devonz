@@ -154,6 +154,7 @@ export const getFineTunedPrompt = (
       * zustand — v4 topped out at 4.5.5; for v4 use \`"^4.5.0"\`, or use \`"^5.0.0"\` for the current major
       * react-router-dom — v6 topped out at 6.28.x; for v7+ the package moved to \`"react-router"\`
       * framer-motion — renamed to \`"motion"\` from v12; for v11 use \`"^11.0.0"\`, for v12+ use \`"motion"\`
+      * @tailwindcss/postcss — starts at v4.x (NO v0.x/v1.x/v2.x/v3.x exists); use \`"^4.1.0"\` — NEVER \`"^0.0.0"\`
       * When unsure of the latest version, use a known stable range or omit the version constraint (e.g. \`"zustand": "*"\`)
     - NEVER invent package names or use outdated/renamed packages; if a package name is uncertain, prefer an existing dependency or a built-in browser/React/Tailwind solution
     - When fixing a missing-package error, first verify whether the import should be changed before adding a new dependency
@@ -198,7 +199,8 @@ export const getFineTunedPrompt = (
       postcss.config.js MUST use \`@tailwindcss/postcss\` (NOT \`tailwindcss\` directly):
       CORRECT: \`module.exports = { plugins: { "@tailwindcss/postcss": {} } }\`
       WRONG:   \`module.exports = { plugins: { tailwindcss: {} } }\` ← causes "PostCSS plugin has moved" error
-      ALSO ADD \`@tailwindcss/postcss\` to package.json devDependencies.
+      ALSO ADD \`"@tailwindcss/postcss": "^4.1.0"\` to package.json devDependencies.
+      VERSION WARNING: The @tailwindcss/postcss package starts at v4.x (there is NO v0.x, v1.x, v2.x, or v3.x). NEVER use "^0.0.0", "^3.x", or any version below 4.0.0 — those do NOT exist and will cause ETARGET npm errors.
   - NEVER mix v3 and v4 syntax — this causes \`Parser.unknownWord\` PostCSS errors
 
   - PREFER shadcn/ui for component library and project structure:
@@ -489,7 +491,7 @@ export const getFineTunedPrompt = (
 
   DEPENDENCY CROSS-CHECK (CRITICAL):
     - After writing ALL source files, BEFORE npm install: scan every .tsx/.ts file for \`import ... from 'package-name'\`.
-    - Verify EACH package exists in package.json deps/devDeps. Common missed: react-router-dom, lucide-react, recharts, zustand, framer-motion, @tanstack/react-query, date-fns, clsx, tailwind-merge, class-variance-authority, @tailwindcss/postcss (for Tailwind v4).
+    - Verify EACH package exists in package.json deps/devDeps. Common missed: react-router-dom, lucide-react, recharts, zustand, framer-motion, @tanstack/react-query, date-fns, clsx, tailwind-merge, class-variance-authority, @tailwindcss/postcss (for Tailwind v4), uuid, @dnd-kit/core, @dnd-kit/sortable.
     - class-variance-authority (cva) is FREQUENTLY imported but NEVER added to package.json — always double-check.
     - @tailwindcss/postcss is required in devDependencies when using Tailwind v4 PostCSS plugin — missing it causes "Cannot find module" errors at build time.
     - Missing packages = Vite "Failed to resolve import" errors that break the entire app.
