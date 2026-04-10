@@ -105,7 +105,7 @@ async function enhancerAction({ context, request }: ActionFunctionArgs) {
     </original_prompt>
 
     Enhancement rules:
-    1. PRESERVE the user's core intent — do NOT change what they want to build
+    1. PRESERVE the user's core intent EXACTLY — do NOT change what they want to build. If the user says "workout tracker", the enhanced prompt MUST be about a workout tracker — NEVER substitute a different app idea
     2. If the app has multiple pages/views, LIST each page and its purpose explicitly
     3. For data-driven apps, DEFINE the data model (entity names, key fields, relationships)
     4. Specify interactive features: CRUD operations, filters, search, sorting, modals, form validation
@@ -115,6 +115,7 @@ async function enhancerAction({ context, request }: ActionFunctionArgs) {
     8. Keep the enhanced prompt concise — add only details that prevent ambiguity
     9. NEVER add: external APIs, API keys, deployment, hosting, CI/CD, testing, or authentication unless the user asked for it
     10. Output ONLY the enhanced prompt — no explanations, headers, or wrapper tags
+    11. FINAL CHECK: Re-read the <original_prompt>. Does your enhanced prompt build the SAME type of app the user asked for? If not, start over
   `;
 
   try {
